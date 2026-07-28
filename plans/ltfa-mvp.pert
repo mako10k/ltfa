@@ -1,0 +1,437 @@
+# Existing .pert plans should normally be maintained through perttool commands; direct DSL editing bypasses goal/DAG owner-confirmation checks.
+project LTFA_MVP:
+  version 4
+  title "LTFA offline MVP prototype"
+  description "Residual implementation plan derived from the reviewed LTFA requirements, basic design delivery slices, and design-review approval conditions. The existing C++17 bootstrap scaffold is the reached frontier. This plan covers the offline model compiler, assurance analyses, observation diagnosis, bounded advanced analysis, and prototype measurement; it excludes live probes, CMDB mutation, adapters, release publication, and performance claims without evidence."
+  as_of 2026-07-28
+  duration_unit day
+  finish MVP_ACCEPTED
+  goal_owner user
+  dag_owner user
+
+
+resource CODEX:
+  title "LTFA implementation capacity"
+  description "Serialize implementation work in this checkout"
+  capacity 1
+
+resource REVIEW:
+  title "Design and acceptance review capacity"
+  description "Serialize cross-cutting contract and acceptance review"
+  capacity 1
+
+
+milestone LEXER_READY:
+  title "Bounded lexer ready"
+  state reached
+
+milestone PARSER_READY:
+  title "DSL statement parser ready"
+
+milestone INCLUDES_READY:
+  title "Safe include resolver ready"
+
+milestone MODEL_COMPILER_READY:
+  title "Validated normalized model ready"
+
+milestone MODEL_OUTPUT_READY:
+  title "Deterministic model outputs ready"
+
+milestone PARSER_HARDENED:
+  title "Parser safety verification ready"
+
+milestone SLICE1_ACCEPTED:
+  title "Model compiler slice accepted"
+
+milestone ASSURANCE_SEMANTICS_READY:
+  title "Requirement and failure-domain semantics ready"
+
+milestone PATH_IMPACT_READY:
+  title "Path and impact analysis ready"
+
+milestone PROPAGATION_READY:
+  title "Failure propagation ready"
+
+milestone SPOF_READY:
+  title "SPOF analysis ready"
+
+milestone SLICE2_INTEGRATED:
+  title "Offline assurance inputs integrated"
+
+milestone SLICE2_ACCEPTED:
+  title "Offline assurance slice accepted"
+
+milestone YYJSON_READY:
+  title "Pinned yyjson source accepted"
+
+milestone OBS_DECODER_READY:
+  title "Observation decoder ready"
+
+milestone EVIDENCE_READY:
+  title "Freshness and conflict evidence ready"
+
+milestone DIAGNOSIS_READY:
+  title "Deterministic diagnosis ready"
+
+milestone AMI_FIXTURE_READY:
+  title "Redacted Ami-A-derived fixture ready"
+
+milestone SLICE3_INTEGRATED:
+  title "Observation diagnosis inputs integrated"
+
+milestone SLICE3_ACCEPTED:
+  title "Observation diagnosis slice accepted"
+
+milestone CUT_READY:
+  title "Bounded cut analysis ready"
+
+milestone NEXT_OBSERVATION_READY:
+  title "Next-observation recommendation ready"
+
+milestone SLICE4_INTEGRATED:
+  title "Advanced analysis inputs integrated"
+
+milestone SLICE4_ACCEPTED:
+  title "Bounded advanced analysis slice accepted"
+
+milestone BENCHMARK_TARGETS_READY:
+  title "Prototype benchmark targets pinned"
+
+milestone MVP_ACCEPTED:
+  title "Offline MVP prototype accepted"
+
+
+
+task M1_DSL_PARSER LEXER_READY -> PARSER_READY:
+  title "Parse DSL v1 statements into typed records"
+  description "Implement header, scope, entity, endpoint, connect, relate, require, failure, probe, and include statements with enumerated fields and x- extension preservation."
+  estimate:
+    optimistic 3d
+    most_likely 5d
+    pessimistic 8d
+  priority 90
+  requires:
+    CODEX 1
+  owner "codex"
+  tags [slice1, parser]
+  source "requirements REQ-DSL-001..003, REQ-DSL-008; basic design sections 7.2..7.3"
+
+task M1_SAFE_INCLUDES PARSER_READY -> INCLUDES_READY:
+  title "Implement model-root-bounded includes"
+  description "Resolve only local canonical paths below the selected model root; reject escapes, URIs, cycles, excessive depth, oversized files, and ambiguous multi-scope defaults."
+  estimate:
+    optimistic 2d
+    most_likely 3d
+    pessimistic 5d
+  priority 90
+  requires:
+    CODEX 1
+  owner "codex"
+  tags [slice1, safety]
+  source "requirements REQ-DSL-004..007, REQ-SAF-004..005; basic design section 7.4"
+
+task M1_MODEL_COMPILER INCLUDES_READY -> MODEL_COMPILER_READY:
+  title "Compile and validate the normalized graph"
+  description "Intern IDs, reject duplicates and unresolved references, validate endpoint and layer semantics, combine availability dependencies, reject dependency cycles, and build deterministic forward and reverse adjacency indices."
+  estimate:
+    optimistic 3d
+    most_likely 5d
+    pessimistic 8d
+  priority 90
+  requires:
+    CODEX 1
+  owner "codex"
+  tags [slice1, model]
+  source "requirements REQ-MOD-001..018, REQ-DSL-005; basic design sections 5, 6, 8, and 9"
+
+task M1_MODEL_OUTPUT MODEL_COMPILER_READY -> MODEL_OUTPUT_READY:
+  title "Emit deterministic model summaries and DOT"
+  description "Add stable human, versioned JSON, and DOT model output with sorted identifiers, escaped labels, explicit inputs, and default omission of restricted evidence."
+  estimate:
+    optimistic 2d
+    most_likely 3d
+    pessimistic 5d
+  priority 90
+  requires:
+    CODEX 1
+  owner "codex"
+  tags [slice1, output]
+  source "requirements REQ-OUT-001..008, REQ-SAF-008; basic design section 12"
+
+task M1_PARSER_HARDENING MODEL_OUTPUT_READY -> PARSER_HARDENED:
+  title "Harden parser and model compiler verification"
+  description "Add malformed-input matrices, fuzz seeds and targets, address/undefined/leak sanitizer configurations, limit failures, and proof that integration tests require no network or secrets."
+  estimate:
+    optimistic 1d
+    most_likely 2d
+    pessimistic 3d
+  priority 100
+  requires:
+    CODEX 1
+  owner "codex"
+  tags [slice1, safety, verification]
+  source "requirements REQ-QLT-001, REQ-QLT-004, AC-002, AC-008; design review prototype condition 6"
+
+task M1_ACCEPTANCE PARSER_HARDENED -> SLICE1_ACCEPTED:
+  title "Accept the model compiler slice"
+  description "Trace model and DSL requirements through synthetic fixtures, exact diagnostics, deterministic normalized output, sanitizer evidence, CLI behavior, and the offline boundary before advancing the plan."
+  estimate:
+    optimistic 1d
+    most_likely 1d
+    pessimistic 2d
+  priority 100
+  requires:
+    CODEX 1
+    REVIEW 1
+  owner "codex"
+  tags [slice1, acceptance]
+  source "basic design slice 1; design review prototype approval conditions"
+
+task M2_REQUIREMENT_SEMANTICS SLICE1_ACCEPTED -> ASSURANCE_SEMANTICS_READY:
+  title "Implement requirement groups and failure domains"
+  description "Implement all/any truth tables, multi-group combination, fixed hold-up metadata, many-to-many failure domains, completeness, evidence quality, and conservative unknown handling."
+  estimate:
+    optimistic 3d
+    most_likely 5d
+    pessimistic 8d
+  priority 90
+  requires:
+    CODEX 1
+  owner "codex"
+  tags [slice2, assurance]
+  source "requirements REQ-MOD-011..018; basic design sections 5.6..5.9"
+
+task M2_PATH_IMPACT SLICE1_ACCEPTED -> PATH_IMPACT_READY:
+  title "Implement filtered path and impact analysis"
+  description "Add deterministic reachability, paths, and removal impact for entities, endpoints, relations, and domains across selected planes, layers, scopes, and availability views."
+  estimate:
+    optimistic 3d
+    most_likely 5d
+    pessimistic 8d
+  priority 80
+  requires:
+    CODEX 1
+  owner "codex"
+  tags [slice2, analysis]
+  source "requirements REQ-ANL-001..002; basic design sections 10.1 and 10.5"
+
+task M2_FAILURE_PROPAGATION ASSURANCE_SEMANTICS_READY -> PROPAGATION_READY:
+  title "Implement deterministic failure propagation"
+  description "Propagate one declared failure through the acyclic dependency graph to a fixed point, retain immediate, degraded, delayed, unaffected, and unknown effects, and order fixed-delay events stably."
+  estimate:
+    optimistic 3d
+    most_likely 5d
+    pessimistic 8d
+  priority 90
+  requires:
+    CODEX 1
+  owner "codex"
+  tags [slice2, analysis]
+  source "requirements REQ-ANL-007..009, AC-004; basic design sections 10.4..10.5"
+
+task M2_SPOF_ANALYSIS PATH_IMPACT_READY -> SPOF_READY:
+  title "Implement articulation, bridge, and qualified SPOF analysis"
+  description "Add linear articulation and bridge analysis, modeled common-cause findings, and completeness-qualified confirmed-spof, model-spof, and not-a-spof-in-view classifications."
+  estimate:
+    optimistic 2d
+    most_likely 3d
+    pessimistic 5d
+  priority 80
+  requires:
+    CODEX 1
+  owner "codex"
+  tags [slice2, analysis]
+  source "requirements REQ-ANL-003, REQ-ANL-006, REQ-ANL-013..014, AC-003; basic design sections 10.2 and 10.6"
+
+gate M2_PROPAGATION_GATE PROPAGATION_READY -> SLICE2_INTEGRATED:
+  reason "Slice 2 acceptance requires failure propagation semantics"
+
+gate M2_SPOF_GATE SPOF_READY -> SLICE2_INTEGRATED:
+  reason "Slice 2 acceptance requires path and qualified SPOF analysis"
+
+task M2_ACCEPTANCE SLICE2_INTEGRATED -> SLICE2_ACCEPTED:
+  title "Accept the offline assurance slice"
+  description "Verify redundant and shared-domain fixtures, breaker immediate and delayed effects, deterministic ordering, bounded resource behavior, and qualified partial-model findings."
+  estimate:
+    optimistic 1d
+    most_likely 2d
+    pessimistic 3d
+  priority 100
+  requires:
+    CODEX 1
+    REVIEW 1
+  owner "codex"
+  tags [slice2, acceptance]
+  source "basic design slice 2; requirements AC-003..004, AC-007..008"
+
+task M3_PIN_YYJSON SLICE2_ACCEPTED -> YYJSON_READY:
+  title "Pin and accept vendored yyjson"
+  description "Record exact release or commit, upstream URL, license, checksum, compile options, warning isolation, and local build/test evidence before introducing the observation decoder."
+  estimate:
+    optimistic 1d
+    most_likely 1d
+    pessimistic 2d
+  priority 100
+  requires:
+    CODEX 1
+    REVIEW 1
+  owner "codex"
+  tags [slice3, dependency]
+  source "requirements REQ-NFR-004, REQ-QLT-006; ADR 0001; design review findings REV-011"
+
+task M3_OBSERVATION_DECODER YYJSON_READY -> OBS_DECODER_READY:
+  title "Implement strict observation JSON Lines decoding"
+  description "Decode bounded UTF-8 records with exact schema, probe, target, vantage, kind, outcome, timestamp, validity, extension, and future-major rejection semantics; never load plugins or open a network."
+  estimate:
+    optimistic 3d
+    most_likely 5d
+    pessimistic 8d
+  priority 90
+  requires:
+    CODEX 1
+  owner "codex"
+  tags [slice3, observation]
+  source "requirements REQ-OBS-001..013, REQ-QLT-005; basic design section 11"
+
+task M3_EVIDENCE_INDEX OBS_DECODER_READY -> EVIDENCE_READY:
+  title "Implement freshness, vantage, and conflict handling"
+  description "Resolve explicit analysis_at, retain history and same-time conflicts, distinguish stale evidence, validate probe contracts, and preserve ICMP timeout as vantage-specific reachability evidence only."
+  estimate:
+    optimistic 2d
+    most_likely 3d
+    pessimistic 5d
+  priority 90
+  requires:
+    CODEX 1
+  owner "codex"
+  tags [slice3, evidence]
+  source "requirements REQ-OBS-002..008, REQ-OBS-013, AC-005..007; basic design section 10.7"
+
+task M3_DIAGNOSIS EVIDENCE_READY -> DIAGNOSIS_READY:
+  title "Implement bounded deterministic diagnosis"
+  description "Generate hypotheses only from causal cones, simulate single failures, rank by contradictions and explained evidence without invented probabilities, report ties, unknowns, and budget exhaustion."
+  estimate:
+    optimistic 3d
+    most_likely 5d
+    pessimistic 8d
+  priority 90
+  requires:
+    CODEX 1
+  owner "codex"
+  tags [slice3, diagnosis]
+  source "requirements REQ-ANL-010..015; basic design section 10.7"
+
+task M3_REDACTED_AMI_FIXTURE OBS_DECODER_READY -> AMI_FIXTURE_READY:
+  title "Create the redacted Ami-A-derived integration fixture"
+  description "Derive only reusable topology and observation structure from approved historical evidence, remove credentials and unrestricted raw detail, and prove the fixture works fully offline."
+  estimate:
+    optimistic 2d
+    most_likely 3d
+    pessimistic 5d
+  priority 80
+  requires:
+    CODEX 1
+    REVIEW 1
+  owner "codex"
+  tags [slice3, fixture, safety]
+  source "requirements AC-006, AC-008..009; design review finding REV-009 and prototype condition 2"
+
+gate M3_DIAGNOSIS_GATE DIAGNOSIS_READY -> SLICE3_INTEGRATED:
+  reason "Slice 3 acceptance requires deterministic diagnosis"
+
+gate M3_FIXTURE_GATE AMI_FIXTURE_READY -> SLICE3_INTEGRATED:
+  reason "Slice 3 acceptance requires the redacted offline fixture"
+
+task M3_ACCEPTANCE SLICE3_INTEGRATED -> SLICE3_ACCEPTED:
+  title "Accept the observation diagnosis slice"
+  description "Verify strict JSON, explicit reference time, freshness, conflicts, timeout qualification, deterministic ranked findings, byte-stable output, redaction, and zero network or secret dependency."
+  estimate:
+    optimistic 1d
+    most_likely 2d
+    pessimistic 3d
+  priority 100
+  requires:
+    CODEX 1
+    REVIEW 1
+  owner "codex"
+  tags [slice3, acceptance]
+  source "basic design slice 3; requirements AC-005..009"
+
+task M4_BOUNDED_CUTS SLICE3_ACCEPTED -> CUT_READY:
+  title "Implement bounded service cuts and domain scenarios"
+  description "Add node splitting and bounded max-flow for node and edge cuts of size one and two, result and work budgets, failure-domain scenario sets, and structured incomplete results."
+  estimate:
+    optimistic 3d
+    most_likely 5d
+    pessimistic 8d
+  priority 90
+  requires:
+    CODEX 1
+  owner "codex"
+  tags [slice4, analysis]
+  source "requirements REQ-ANL-004..006, REQ-PERF-006; basic design section 10.3"
+
+task M4_NEXT_OBSERVATION SLICE3_ACCEPTED -> NEXT_OBSERVATION_READY:
+  title "Implement next-useful-observation recommendations"
+  description "Compare registered but absent probes for tied hypotheses, select deterministic evidence-gathering suggestions, and state clearly that recommendations never execute a probe."
+  estimate:
+    optimistic 2d
+    most_likely 3d
+    pessimistic 5d
+  priority 80
+  requires:
+    CODEX 1
+  owner "codex"
+  tags [slice4, diagnosis]
+  source "requirements MVP-2; basic design section 10.8"
+
+gate M4_CUT_GATE CUT_READY -> SLICE4_INTEGRATED:
+  reason "Slice 4 acceptance requires bounded cut analysis"
+
+gate M4_OBSERVATION_GATE NEXT_OBSERVATION_READY -> SLICE4_INTEGRATED:
+  reason "Slice 4 acceptance requires non-executing observation recommendations"
+
+task M4_ACCEPTANCE SLICE4_INTEGRATED -> SLICE4_ACCEPTED:
+  title "Accept bounded advanced analysis"
+  description "Verify cut-size and work bounds, common-domain scenarios, deterministic incomplete results, recommendation-only observation gaps, output stability, and offline safety."
+  estimate:
+    optimistic 1d
+    most_likely 2d
+    pessimistic 3d
+  priority 100
+  requires:
+    CODEX 1
+    REVIEW 1
+  owner "codex"
+  tags [slice4, acceptance]
+  source "basic design slice 4; requirements REQ-ANL-004..006, REQ-PERF-006"
+
+task MVP_PIN_BENCHMARK_TARGETS SLICE4_ACCEPTED -> BENCHMARK_TARGETS_READY:
+  title "Pin prototype benchmark hosts and fixtures"
+  description "Select and record reproducible x86_64 and aarch64 hosts, compilers, build profiles, 10k/50k graph fixture, 100k observation fixture, measurement commands, and acceptance caveats."
+  estimate:
+    optimistic 1d
+    most_likely 2d
+    pessimistic 3d
+  priority 100
+  requires:
+    CODEX 1
+    REVIEW 1
+  owner "codex"
+  tags [prototype, performance]
+  source "requirements REQ-PERF-001..006, AC-010; design review finding REV-012"
+
+task MVP_BENCHMARK_ACCEPTANCE BENCHMARK_TARGETS_READY -> MVP_ACCEPTED:
+  title "Measure and accept the offline MVP prototype"
+  description "Record binary size, elapsed time, peak RSS, portability, sanitizer and complete acceptance evidence on pinned hosts. Qualify unmet provisional targets instead of claiming success, and retain live probes and release work outside this plan."
+  estimate:
+    optimistic 3d
+    most_likely 5d
+    pessimistic 8d
+  priority 100
+  requires:
+    CODEX 1
+    REVIEW 1
+  owner "codex"
+  tags [prototype, acceptance, performance]
+  source "requirements AC-001..010; basic design section 14; design review prototype approval conditions"
