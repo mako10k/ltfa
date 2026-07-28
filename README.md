@@ -20,6 +20,11 @@ The reviewed design currently lives in the adjacent operations repository:
 The implementation remains subject to those documents until they are
 deliberately migrated into this repository.
 
+Repository-local decisions:
+
+- [Bootstrap boundary](docs/decisions/0001-bootstrap-boundary.md)
+- [CLI contract and first release boundary](docs/decisions/0002-cli-contract-and-first-release-boundary.md)
+
 ## Boundary
 
 The core is intended to:
@@ -92,6 +97,19 @@ perttool dag next plans/ltfa-mvp.pert --capacity CODEX=1 --capacity REVIEW=1
 Use `perttool` mutation commands rather than editing the DSL directly.
 Completed-task evidence is retained in `docs/plans/ltfa-mvp-history.md` before
 `perttool dag advance` removes it from the residual graph.
+
+## Release direction
+
+The accepted first release boundary is `v0.1.0`, an offline model compiler
+preview containing Slice 1 plus descriptor-backed help, stable CLI usage
+diagnostics, and release preparation. The current binary remains `0.0.0` until
+that contract is implemented and accepted. Path, impact, SPOF, and failure
+propagation analysis remain the later `v0.2.0` boundary at `SLICE2_ACCEPTED`.
+
+The detailed CLI and release contract is recorded in
+[`docs/decisions/0002-cli-contract-and-first-release-boundary.md`](docs/decisions/0002-cli-contract-and-first-release-boundary.md).
+Release publication remains outside the residual MVP PERT and requires a
+separate owner-approved plan.
 
 ## Current CLI
 
