@@ -83,6 +83,7 @@ set_target_properties(ltfa_core PROPERTIES CXX_EXTENSIONS OFF)
 ltfa_enable_warnings(ltfa_core)
 
 add_executable(ltfa
+    app/cli.cpp
     app/main.cpp
 )
 target_link_libraries(ltfa PRIVATE ltfa::core)

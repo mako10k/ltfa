@@ -80,12 +80,21 @@ add_test(NAME ltfa.dsl.hardening COMMAND ltfa_parser_hardening_test)
 
 add_test(NAME ltfa.cli.help COMMAND $<TARGET_FILE:ltfa> --help)
 set_tests_properties(ltfa.cli.help PROPERTIES
-    PASS_REGULAR_EXPRESSION "Bootstrap scaffold only"
+    PASS_REGULAR_EXPRESSION "ltfa model --model-root"
 )
 
 add_test(NAME ltfa.cli.version COMMAND $<TARGET_FILE:ltfa> --version)
 set_tests_properties(ltfa.cli.version PROPERTIES
     PASS_REGULAR_EXPRESSION "^ltfa 0\\.0\\.0"
+)
+
+add_test(
+    NAME ltfa.cli.model.acceptance
+    COMMAND ${CMAKE_COMMAND}
+        -DLTFA_CLI=$<TARGET_FILE:ltfa>
+        -DLTFA_VALID_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice1
+        -DLTFA_INVALID_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice1-invalid
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cli_acceptance_test.cmake
 )
 
 add_test(
@@ -108,6 +117,15 @@ if(NOT LTFA_SANITIZERS AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
                 -DLTFA_PROGRAM=$<TARGET_FILE:ltfa_parser_hardening_test>
                 -DLTFA_TRACE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-offline-runtime.trace
                 -P ${PROJECT_SOURCE_DIR}/cmake/verify_offline_runtime.cmake
+        )
+        add_test(
+            NAME ltfa.boundary.cli-offline-runtime
+            COMMAND ${CMAKE_COMMAND}
+                -DLTFA_STRACE=${LTFA_STRACE_EXECUTABLE}
+                -DLTFA_CLI=$<TARGET_FILE:ltfa>
+                -DLTFA_MODEL_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice1
+                -DLTFA_TRACE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-cli-offline-runtime.trace
+                -P ${PROJECT_SOURCE_DIR}/cmake/verify_offline_cli_runtime.cmake
         )
     endif()
 endif()

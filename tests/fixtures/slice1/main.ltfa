@@ -1,0 +1,6 @@
+ltfa 1
+scope site:acceptance kind=site label="Slice 1 Acceptance" completeness=verified evidence-quality=confirmed
+include "facility.ltfa"
+include "communication.ltfa"
+include "control.ltfa"
+include "service.ltfa"

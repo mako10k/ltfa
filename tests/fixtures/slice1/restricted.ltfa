@@ -1,0 +1,3 @@
+ltfa 1
+scope site:restricted completeness=partial evidence-quality=inferred
+entity restricted:device kind=device plane=communication layer=physical scope=site:restricted sensitivity=restricted source-ref=evidence:synthetic

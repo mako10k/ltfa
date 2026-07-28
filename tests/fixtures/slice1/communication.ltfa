@@ -1,0 +1,16 @@
+ltfa 1
+entity device:router kind=device plane=communication layer=physical scope=site:acceptance failure-domain=cabinet:a
+entity device:switch kind=device plane=communication layer=physical scope=site:acceptance failure-domain=cabinet:a
+entity network:vlan10 kind=network-space plane=communication layer=l2 scope=site:acceptance
+entity network:vrf-main kind=network-space plane=communication layer=l3 scope=site:acceptance
+entity tunnel:site-cloud kind=tunnel plane=communication layer=overlay scope=site:acceptance
+entity vnet:operations kind=network-space plane=communication layer=virtual-network scope=site:acceptance label="VPC/VNET Operations"
+endpoint device:router:network owner=device:router kind=network network-space=network:vrf-main address=192.0.2.1
+endpoint device:switch:network owner=device:switch kind=network network-space=network:vrf-main
+endpoint device:router:power owner=device:router kind=power-input
+connect device:router:network -- device:switch:network kind=network
+connect facility:ups:out -> device:router:power kind=power
+relate network:vlan10 -> device:switch kind=carried_by
+relate network:vrf-main -> network:vlan10 kind=carried_by
+relate tunnel:site-cloud -> network:vrf-main kind=uses_underlay
+relate vnet:operations -> tunnel:site-cloud kind=uses_underlay

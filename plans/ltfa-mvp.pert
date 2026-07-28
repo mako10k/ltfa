@@ -26,12 +26,10 @@ resource REVIEW:
 
 
 
-milestone PARSER_HARDENED:
-  title "Parser safety verification ready"
-  state reached
 
 milestone SLICE1_ACCEPTED:
   title "Model compiler slice accepted"
+  state reached
 
 milestone ASSURANCE_SEMANTICS_READY:
   title "Requirement and failure-domain semantics ready"
@@ -97,20 +95,6 @@ milestone MVP_ACCEPTED:
 
 
 
-task M1_ACCEPTANCE PARSER_HARDENED -> SLICE1_ACCEPTED:
-  title "Accept the model compiler slice"
-  description "Trace model and DSL requirements through synthetic fixtures, exact diagnostics, deterministic normalized output, sanitizer evidence, CLI behavior, and the offline boundary before advancing the plan."
-  estimate:
-    optimistic 1d
-    most_likely 1d
-    pessimistic 2d
-  priority 100
-  requires:
-    CODEX 1
-    REVIEW 1
-  owner "codex"
-  tags [slice1, acceptance]
-  source "basic design slice 1; design review prototype approval conditions"
 
 task M2_REQUIREMENT_SEMANTICS SLICE1_ACCEPTED -> ASSURANCE_SEMANTICS_READY:
   title "Implement requirement groups and failure domains"

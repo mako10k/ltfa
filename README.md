@@ -98,10 +98,13 @@ Completed-task evidence is retained in `docs/plans/ltfa-mvp-history.md` before
 ```bash
 ./build/ltfa --help
 ./build/ltfa --version
+./build/ltfa model --model-root tests/fixtures/slice1 --input main.ltfa --format json
 ```
 
-Only `--help` and `--version` exist in the scaffold. Analysis operations will
-be added in reviewed slices.
+The `model` command loads, validates, normalizes, and renders one explicitly
+rooted local topology as human text, JSON, or DOT. It performs no topology
+analysis or network activity. Analysis operations will be added in reviewed
+slices.
 
 ## Layout
 
@@ -112,6 +115,8 @@ include/ltfa/        Public core headers
 src/ltfa/            Core implementation
 tests/               Dependency-free CTest targets
 tests/fuzz/          Parser fuzz harness and synthetic seed corpus
+tests/fixtures/      Synthetic offline acceptance inputs
+docs/acceptance/     Requirement traces and accepted slice boundaries
 docs/decisions/      Project-local architecture decisions
 docs/plans/          Completed PERT task evidence
 plans/               Residual perttool plans

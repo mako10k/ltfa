@@ -265,3 +265,49 @@ ending at 2,694 covered edges and 4,738 features with 137 MiB peak RSS. The
 Release boundary test observed zero network syscalls, and Graphviz 2.43.0
 accepted the generated DOT and produced SVG. The pre-advance plan digest was
 `sha256:4b421b8988decb721156b94d6e419d1d6f8978de9e8de1fabec80ca57ef982d9`.
+
+## 2026-07-28 — M1_ACCEPTANCE
+
+Status: accepted
+
+The eighth critical-path task accepts Slice 1 through the real one-shot CLI and
+a repository-local requirement trace. It does not add assurance analysis,
+observation decoding, live probes, or Graphviz linkage.
+
+Delivered:
+
+- `ltfa model --model-root <directory> --input <file> --format
+  human|json|dot` for bounded local load, validation, normalization, and output
+- stable exit statuses for usage, input/parse, validation, and output failures,
+  with relative file, line, column, diagnostic code, and related location
+- default restricted-object omission and the explicit
+  `--include-restricted` policy
+- a five-file synthetic fixture covering power, network, serial, contact,
+  analog current, VLAN/L3, tunnel, VPC/VNET, and service dependencies
+- end-to-end checks for deterministic JSON/DOT, explicit sorted inputs, human
+  result ordering, invalid models, escaping includes, CLI misuse, and
+  restricted output
+- a Slice 1 requirement-to-test trace that explicitly leaves later assurance,
+  observation, diagnosis, redacted-fixture, and benchmark criteria open
+- `strace` evidence that the complete CLI path performs no network syscall
+
+Verification:
+
+```text
+cmake --preset release && cmake --build --preset release && ctest --preset release
+cmake --build --preset asan-ubsan && ctest --preset asan-ubsan
+cmake --build --preset lsan && ctest --preset lsan
+cmake --build --preset fuzz-seeds && ctest --preset fuzz-seeds
+cmake --build build/libfuzzer
+ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build/libfuzzer --output-on-failure
+ltfa model --model-root tests/fixtures/slice1 --input main.ltfa --format dot | dot -Tsvg
+```
+
+The GNU 13.3.0 Release suite passed all 15 tests, including both runtime
+offline checks. GNU ASan/UBSan and independent LSan passed all 13 applicable
+tests, and the fuzz-seed configuration passed all 14. Clang 18.1.3 ASan/UBSan
+also passed all 13 applicable tests. The accepted fixture normalized to 15
+entities, 14 endpoints, and 15 relations; repeated JSON and DOT were
+byte-stable. Graphviz 2.43.0 accepted DOT emitted through the CLI. The
+pre-advance plan digest was
+`sha256:58e6c9e44ca88b3188ffc06f09027353c6fbd6f9b765921a99e25ad0b2adfd67`.

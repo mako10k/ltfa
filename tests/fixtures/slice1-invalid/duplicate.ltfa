@@ -1,0 +1,4 @@
+ltfa 1
+scope site:test
+entity duplicate scope=site:test
+entity duplicate scope=site:test

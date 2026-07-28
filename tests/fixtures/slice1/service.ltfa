@@ -1,0 +1,10 @@
+ltfa 1
+entity service:monitoring kind=service plane=service layer=application scope=site:acceptance
+entity process:collector kind=process plane=service layer=application scope=site:acceptance
+relate service:monitoring -> process:collector kind=depends_on
+relate process:collector -> vnet:operations kind=depends_on
+relate process:collector -> facility:ups kind=powered_by
+require service:monitoring by process:collector group=runtime mode=all hold-up=30s
+require service:monitoring by device:router group=runtime mode=all hold-up=30s
+failure failure:router target=device:router mode=device-failure
+probe probe:router target=device:router:network vantage=process:collector kind=icmp valid-for=60s

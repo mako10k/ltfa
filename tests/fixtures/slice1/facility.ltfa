@@ -1,0 +1,11 @@
+ltfa 1
+entity facility:utility kind=facility plane=facility layer=physical scope=site:acceptance
+entity facility:panel kind=facility plane=facility layer=physical scope=site:acceptance failure-domain=panel:a
+entity facility:ups kind=facility plane=facility layer=physical scope=site:acceptance failure-domain=ups:a
+endpoint facility:utility:out owner=facility:utility kind=power-output
+endpoint facility:panel:in owner=facility:panel kind=power-input
+endpoint facility:panel:out owner=facility:panel kind=power-output
+endpoint facility:ups:in owner=facility:ups kind=power-input
+endpoint facility:ups:out owner=facility:ups kind=power-output
+connect facility:utility:out -> facility:panel:in kind=power
+connect facility:panel:out -> facility:ups:in kind=power

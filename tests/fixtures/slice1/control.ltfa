@@ -1,0 +1,15 @@
+ltfa 1
+entity control:controller kind=device plane=control-signal layer=physical scope=site:acceptance
+entity control:remote-io kind=device plane=control-signal layer=physical scope=site:acceptance
+entity control:sensor kind=device plane=control-signal layer=physical scope=site:acceptance
+entity bus:rs485 kind=bus plane=control-signal layer=physical scope=site:acceptance
+endpoint control:controller:serial owner=control:controller kind=serial
+endpoint control:remote-io:serial owner=control:remote-io kind=serial
+endpoint control:controller:contact-out owner=control:controller kind=contact-output
+endpoint control:remote-io:contact-in owner=control:remote-io kind=contact-input
+endpoint control:sensor:current-out owner=control:sensor kind=analog-current-output
+endpoint control:controller:current-in owner=control:controller kind=analog-current-input
+connect control:controller:serial -- bus:rs485 kind=serial
+connect control:remote-io:serial -- bus:rs485 kind=serial
+connect control:controller:contact-out -> control:remote-io:contact-in kind=contact
+connect control:sensor:current-out -> control:controller:current-in kind=analog-current
