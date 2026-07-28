@@ -48,6 +48,7 @@ using RequirementGroupId = IndexId<struct RequirementGroupIdTag>;
 using FailureDomainId = IndexId<struct FailureDomainIdTag>;
 using FailureModeId = IndexId<struct FailureModeIdTag>;
 using ProbeId = IndexId<struct ProbeIdTag>;
+using AvailabilityDependencyId = IndexId<struct AvailabilityDependencyIdTag>;
 
 struct IndexRange {
     std::uint32_t begin{0};

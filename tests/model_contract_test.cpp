@@ -187,6 +187,14 @@ void test_model_enum_names() {
         std::pair{ltfa::ProbeKind::metric, std::string_view{"metric"}},
         std::pair{ltfa::ProbeKind::discrete_state, std::string_view{"discrete-state"}},
     });
+    expect_names(std::array{
+        std::pair{ltfa::AttributeValueKind::identifier, std::string_view{"identifier"}},
+        std::pair{ltfa::AttributeValueKind::string, std::string_view{"string"}},
+        std::pair{ltfa::AttributeValueKind::integer, std::string_view{"integer"}},
+        std::pair{ltfa::AttributeValueKind::real, std::string_view{"real"}},
+        std::pair{ltfa::AttributeValueKind::boolean, std::string_view{"boolean"}},
+        std::pair{ltfa::AttributeValueKind::duration, std::string_view{"duration"}},
+    });
 }
 
 void test_failure_mode_names() {

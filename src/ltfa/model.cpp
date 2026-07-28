@@ -318,4 +318,45 @@ std::string_view to_string(ProbeKind value) noexcept {
     return "unknown";
 }
 
+std::string_view to_string(AttributeValueKind value) noexcept {
+    switch (value) {
+    case AttributeValueKind::identifier:
+        return "identifier";
+    case AttributeValueKind::string:
+        return "string";
+    case AttributeValueKind::integer:
+        return "integer";
+    case AttributeValueKind::real:
+        return "real";
+    case AttributeValueKind::boolean:
+        return "boolean";
+    case AttributeValueKind::duration:
+        return "duration";
+    }
+    return "unknown";
+}
+
+std::string_view NormalizedModel::string(StringId id) const noexcept {
+    if (!id.is_valid() || id.value() >= strings.size()) {
+        return {};
+    }
+    return strings[id.value()];
+}
+
+std::string_view NormalizedModel::external_id(ObjectRef object) const noexcept {
+    if (!object.is_valid()) {
+        return {};
+    }
+    if (object.kind == ObjectKind::entity) {
+        if (object.index >= entities.size()) {
+            return {};
+        }
+        return string(entities[object.index].external_id);
+    }
+    if (object.index >= endpoints.size()) {
+        return {};
+    }
+    return string(endpoints[object.index].external_id);
+}
+
 } // namespace ltfa

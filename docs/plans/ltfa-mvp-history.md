@@ -139,3 +139,45 @@ tests with leak detection disabled; LeakSanitizer is not claimed as verified.
 A static source scan found no socket, shell-execution, or environment-access
 calls in the public or core source trees. The pre-advance plan digest was
 `sha256:5f725a093a61374f7b0cb8af96bb47b43bb8eb4acad0e224aa449529d5441660`.
+
+## 2026-07-28 — M1_MODEL_COMPILER
+
+Status: accepted
+
+The fifth critical-path task compiles expanded DSL records into a validated,
+deterministic normalized graph. It does not emit model views or run topology or
+availability analysis.
+
+Delivered:
+
+- globally unique stable IDs, deterministic string interning, and external-ID
+  ordered normalized vectors
+- resolved scopes, endpoint owners, object references, network spaces, and
+  many-to-many failure-domain membership
+- deterministic length-prefixed relation and requirement-group IDs where DSL
+  v1 has no explicit ID field
+- endpoint, direction, plane, same-layer network, and cross-layer validation
+- typed bounded attributes with inert `x-` preservation and versioned built-in
+  failure-mode metadata
+- merged `all` and `any` requirement groups with millisecond durations
+- combined implicit and explicit availability dependencies with cycle rejection
+- relation-kind and availability forward/reverse adjacency ranges
+- fail-closed duplicate, unresolved-reference, semantic, overflow, and limit
+  diagnostics without partial normalized models
+
+Verification:
+
+```text
+cmake -S . -B /tmp/ltfa-model-release.AWUUlC -DCMAKE_BUILD_TYPE=Release
+cmake --build /tmp/ltfa-model-release.AWUUlC
+ctest --test-dir /tmp/ltfa-model-release.AWUUlC --output-on-failure
+ASAN_OPTIONS=detect_leaks=0 ctest --test-dir /tmp/ltfa-model-san.Y2Hh1C --output-on-failure
+```
+
+The clean GNU 13.3.0 Release build passed with warnings treated as errors, and
+all eight tests passed. The AddressSanitizer/UBSan build also passed all eight
+tests with leak detection disabled; LeakSanitizer is not claimed as verified.
+A static source scan found no socket, shell-execution, environment-access,
+database, or plugin-loading calls in the added compiler path. The pre-advance
+plan digest was
+`sha256:87711f9b4e7fe11471884d796224ef338289bf74d61712050315853ff0bf58a6`.

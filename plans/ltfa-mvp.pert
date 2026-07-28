@@ -23,12 +23,10 @@ resource REVIEW:
 
 
 
-milestone INCLUDES_READY:
-  title "Safe include resolver ready"
-  state reached
 
 milestone MODEL_COMPILER_READY:
   title "Validated normalized model ready"
+  state reached
 
 milestone MODEL_OUTPUT_READY:
   title "Deterministic model outputs ready"
@@ -100,19 +98,6 @@ milestone MVP_ACCEPTED:
 
 
 
-task M1_MODEL_COMPILER INCLUDES_READY -> MODEL_COMPILER_READY:
-  title "Compile and validate the normalized graph"
-  description "Intern IDs, reject duplicates and unresolved references, validate endpoint and layer semantics, combine availability dependencies, reject dependency cycles, and build deterministic forward and reverse adjacency indices."
-  estimate:
-    optimistic 3d
-    most_likely 5d
-    pessimistic 8d
-  priority 90
-  requires:
-    CODEX 1
-  owner "codex"
-  tags [slice1, model]
-  source "requirements REQ-MOD-001..018, REQ-DSL-005; basic design sections 5, 6, 8, and 9"
 
 task M1_MODEL_OUTPUT MODEL_COMPILER_READY -> MODEL_OUTPUT_READY:
   title "Emit deterministic model summaries and DOT"

@@ -3,8 +3,12 @@
 #include "ltfa/ids.hpp"
 #include "ltfa/source.hpp"
 
+#include <array>
+#include <cstddef>
 #include <cstdint>
+#include <string>
 #include <string_view>
+#include <vector>
 
 namespace ltfa {
 
@@ -166,6 +170,18 @@ enum class ProbeKind {
     discrete_state,
 };
 
+enum class AttributeValueKind {
+    identifier,
+    string,
+    integer,
+    real,
+    boolean,
+    duration,
+};
+
+inline constexpr std::size_t kRelationKindCount =
+    static_cast<std::size_t>(RelationKind::powered_by) + 1;
+
 [[nodiscard]] std::string_view to_string(ScopeKind value) noexcept;
 [[nodiscard]] std::string_view to_string(Completeness value) noexcept;
 [[nodiscard]] std::string_view to_string(EvidenceQuality value) noexcept;
@@ -182,6 +198,7 @@ enum class ProbeKind {
 [[nodiscard]] std::string_view to_string(FailureDomainKind value) noexcept;
 [[nodiscard]] std::string_view to_string(FailureModeKind value) noexcept;
 [[nodiscard]] std::string_view to_string(ProbeKind value) noexcept;
+[[nodiscard]] std::string_view to_string(AttributeValueKind value) noexcept;
 
 struct ObjectRef {
     ObjectKind kind{ObjectKind::entity};
@@ -200,6 +217,22 @@ struct ObjectRef {
     }
 };
 
+[[nodiscard]] constexpr bool operator==(ObjectRef left, ObjectRef right) noexcept {
+    return left.kind == right.kind && left.index == right.index;
+}
+
+[[nodiscard]] constexpr bool operator!=(ObjectRef left, ObjectRef right) noexcept {
+    return !(left == right);
+}
+
+struct ModelAttribute {
+    StringId key;
+    StringId value;
+    AttributeValueKind kind{AttributeValueKind::identifier};
+    bool extension{false};
+    SourceSpan source;
+};
+
 struct Scope {
     ScopeId id;
     StringId external_id;
@@ -207,6 +240,7 @@ struct Scope {
     ScopeKind kind{ScopeKind::other};
     Completeness completeness{Completeness::unknown};
     EvidenceQuality evidence_quality{EvidenceQuality::unknown};
+    IndexRange attributes;
     SourceSpan source;
 };
 
@@ -218,7 +252,7 @@ struct Entity {
     Plane plane{Plane::communication};
     Layer layer{Layer::none};
     ScopeId scope;
-    StringId network_space;
+    EntityId network_space;
     IndexRange failure_domains;
     IndexRange attributes;
     Sensitivity sensitivity{Sensitivity::internal};
@@ -229,9 +263,15 @@ struct Entity {
 struct Endpoint {
     EndpointId id;
     StringId external_id;
+    StringId label;
     EntityId owner;
     EndpointKind kind{EndpointKind::logical};
+    ScopeId scope;
+    EntityId network_space;
+    IndexRange failure_domains;
     IndexRange attributes;
+    Sensitivity sensitivity{Sensitivity::internal};
+    StringId source_ref;
     SourceSpan source;
 };
 
@@ -253,6 +293,7 @@ struct RequirementGroup {
     RequirementMode mode{RequirementMode::all};
     IndexRange providers;
     std::uint64_t hold_up_ms{0};
+    IndexRange attributes;
     SourceSpan source;
 };
 
@@ -269,7 +310,9 @@ struct FailureMode {
     StringId external_id;
     ObjectRef target;
     FailureModeKind kind{FailureModeKind::extension};
+    StringId extension_kind;
     std::uint64_t delay_ms{0};
+    IndexRange attributes;
     SourceSpan source;
 };
 
@@ -280,7 +323,68 @@ struct Probe {
     ObjectRef vantage;
     ProbeKind kind{ProbeKind::icmp};
     std::uint64_t valid_for_ms{0};
+    IndexRange attributes;
     SourceSpan source;
+};
+
+struct RelationAdjacencyEntry {
+    ObjectRef object;
+    RelationId relation;
+};
+
+struct ObjectRelationAdjacency {
+    std::array<IndexRange, kRelationKindCount> forward;
+    std::array<IndexRange, kRelationKindCount> reverse;
+};
+
+struct AvailabilityDependency {
+    AvailabilityDependencyId id;
+    ObjectRef provider;
+    ObjectRef consumer;
+    RelationId relation;
+    RequirementGroupId requirement_group;
+    SourceSpan source;
+};
+
+struct AvailabilityAdjacencyEntry {
+    ObjectRef object;
+    AvailabilityDependencyId dependency;
+};
+
+struct ObjectAvailabilityAdjacency {
+    IndexRange forward;
+    IndexRange reverse;
+};
+
+struct NormalizedModel {
+    std::uint32_t schema_major_version{1};
+    std::uint32_t failure_mode_catalog_version{1};
+    std::vector<std::string> strings;
+    std::vector<Scope> scopes;
+    std::vector<Entity> entities;
+    std::vector<Endpoint> endpoints;
+    std::vector<Relation> relations;
+    std::vector<RequirementGroup> requirement_groups;
+    std::vector<FailureDomain> failure_domains;
+    std::vector<FailureMode> failure_modes;
+    std::vector<Probe> probes;
+
+    std::vector<ModelAttribute> attributes;
+    std::vector<FailureDomainId> object_failure_domains;
+    std::vector<ObjectRef> failure_domain_members;
+    std::vector<EntityId> requirement_providers;
+
+    std::vector<RelationAdjacencyEntry> relation_adjacency_entries;
+    std::vector<ObjectRelationAdjacency> entity_relation_adjacency;
+    std::vector<ObjectRelationAdjacency> endpoint_relation_adjacency;
+
+    std::vector<AvailabilityDependency> availability_dependencies;
+    std::vector<AvailabilityAdjacencyEntry> availability_adjacency_entries;
+    std::vector<ObjectAvailabilityAdjacency> entity_availability_adjacency;
+    std::vector<ObjectAvailabilityAdjacency> endpoint_availability_adjacency;
+
+    [[nodiscard]] std::string_view string(StringId id) const noexcept;
+    [[nodiscard]] std::string_view external_id(ObjectRef object) const noexcept;
 };
 
 } // namespace ltfa
