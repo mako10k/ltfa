@@ -3,10 +3,10 @@
 LTFA is the working name for a lightweight multilayer topology and fault
 analyzer.
 
-This repository is currently a **bootstrap scaffold**. It contains a native
-C++17 core boundary, a small CLI with help and version output, and a
-dependency-free CTest smoke test. It does not yet parse topology, run analysis,
-or perform network access.
+This repository is an early offline prototype. It contains a native C++17 core,
+a bounded DSL v1 lexer and statement parser, a small CLI with help and version
+output, and dependency-free CTest coverage. It does not yet resolve includes,
+compile a validated topology model, run analysis, or perform network access.
 
 ## Design source
 

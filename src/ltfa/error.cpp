@@ -26,6 +26,16 @@ std::string_view to_string(DiagnosticCode value) noexcept {
         return "E_DSL_UNTERMINATED_STRING";
     case DiagnosticCode::dsl_invalid_character:
         return "E_DSL_INVALID_CHARACTER";
+    case DiagnosticCode::dsl_unknown_statement:
+        return "E_DSL_UNKNOWN_STATEMENT";
+    case DiagnosticCode::dsl_invalid_attribute:
+        return "E_DSL_INVALID_ATTRIBUTE";
+    case DiagnosticCode::dsl_duplicate_attribute:
+        return "E_DSL_DUPLICATE_ATTRIBUTE";
+    case DiagnosticCode::dsl_invalid_value:
+        return "E_DSL_INVALID_VALUE";
+    case DiagnosticCode::dsl_missing_required_field:
+        return "E_DSL_MISSING_REQUIRED_FIELD";
     case DiagnosticCode::include_escape:
         return "E_INCLUDE_ESCAPE";
     case DiagnosticCode::include_cycle:

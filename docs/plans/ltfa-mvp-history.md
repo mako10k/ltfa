@@ -66,3 +66,38 @@ tests with leak detection disabled; LeakSanitizer itself was unavailable under
 the ptrace-based execution environment and is not claimed as verified. The
 pre-advance plan digest was
 `sha256:447836960e02a9a40f71ceb92fe24e236d54b617c788f9334146668899104525`.
+
+## 2026-07-28 — M1_DSL_PARSER
+
+Status: accepted
+
+The third critical-path task converts bounded lexer output into typed DSL v1
+records. It preserves include paths but does not resolve them, intern IDs,
+resolve references, or compile the normalized model.
+
+Delivered:
+
+- exact `ltfa 1` header validation
+- typed records for scope, entity, endpoint, connect, relate, require, failure,
+  probe, and include statements
+- required owner, direction, provider, target, and vantage fields
+- statement-specific known-attribute allowlists and repeatable failure domains
+- preserved `x-` extension attributes with lexical value kinds and source spans
+- fail-closed stable diagnostics for unknown statements, fields, duplicates,
+  missing fields, and invalid values
+- configured attribute-count and string-byte limits
+
+Verification:
+
+```text
+cmake -S . -B /tmp/ltfa-parser-release.NezL4N -DCMAKE_BUILD_TYPE=Release
+cmake --build /tmp/ltfa-parser-release.NezL4N
+ctest --test-dir /tmp/ltfa-parser-release.NezL4N --output-on-failure
+ASAN_OPTIONS=detect_leaks=0 ctest --test-dir /tmp/ltfa-parser-san.RbfP3u --output-on-failure
+```
+
+The clean GNU 13.3.0 Release build passed with warnings treated as errors, and
+all six tests passed. The AddressSanitizer/UBSan build also passed all six tests
+with leak detection disabled; LeakSanitizer is not claimed as verified. The
+pre-advance plan digest was
+`sha256:db3fdc37e402ddb0763f1d1b2031862f08731b484bf12f271a62eae8b8d81313`.

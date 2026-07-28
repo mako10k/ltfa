@@ -21,12 +21,10 @@ resource REVIEW:
   capacity 1
 
 
-milestone LEXER_READY:
-  title "Bounded lexer ready"
-  state reached
 
 milestone PARSER_READY:
   title "DSL statement parser ready"
+  state reached
 
 milestone INCLUDES_READY:
   title "Safe include resolver ready"
@@ -102,19 +100,6 @@ milestone MVP_ACCEPTED:
 
 
 
-task M1_DSL_PARSER LEXER_READY -> PARSER_READY:
-  title "Parse DSL v1 statements into typed records"
-  description "Implement header, scope, entity, endpoint, connect, relate, require, failure, probe, and include statements with enumerated fields and x- extension preservation."
-  estimate:
-    optimistic 3d
-    most_likely 5d
-    pessimistic 8d
-  priority 90
-  requires:
-    CODEX 1
-  owner "codex"
-  tags [slice1, parser]
-  source "requirements REQ-DSL-001..003, REQ-DSL-008; basic design sections 7.2..7.3"
 
 task M1_SAFE_INCLUDES PARSER_READY -> INCLUDES_READY:
   title "Implement model-root-bounded includes"

@@ -26,6 +26,7 @@ endfunction()
 
 add_library(ltfa_core STATIC
     src/ltfa/dsl/lexer.cpp
+    src/ltfa/dsl/parser.cpp
     src/ltfa/error.cpp
     src/ltfa/model.cpp
     src/ltfa/version.cpp

@@ -28,6 +28,16 @@ ltfa_enable_warnings(ltfa_lexer_test)
 
 add_test(NAME ltfa.dsl.lexer COMMAND ltfa_lexer_test)
 
+add_executable(ltfa_parser_test
+    parser_test.cpp
+)
+target_link_libraries(ltfa_parser_test PRIVATE ltfa::core)
+target_compile_features(ltfa_parser_test PRIVATE cxx_std_17)
+set_target_properties(ltfa_parser_test PROPERTIES CXX_EXTENSIONS OFF)
+ltfa_enable_warnings(ltfa_parser_test)
+
+add_test(NAME ltfa.dsl.parser COMMAND ltfa_parser_test)
+
 add_test(NAME ltfa.cli.help COMMAND $<TARGET_FILE:ltfa> --help)
 set_tests_properties(ltfa.cli.help PROPERTIES
     PASS_REGULAR_EXPRESSION "Bootstrap scaffold only"
