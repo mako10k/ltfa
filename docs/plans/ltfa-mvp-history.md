@@ -101,3 +101,41 @@ all six tests passed. The AddressSanitizer/UBSan build also passed all six tests
 with leak detection disabled; LeakSanitizer is not claimed as verified. The
 pre-advance plan digest was
 `sha256:db3fdc37e402ddb0763f1d1b2031862f08731b484bf12f271a62eae8b8d81313`.
+
+## 2026-07-28 — M1_SAFE_INCLUDES
+
+Status: accepted
+
+The fourth critical-path task adds bounded local include loading. It expands
+parsed statements but does not intern IDs, resolve object references, validate
+relation semantics, or compile the normalized model.
+
+Delivered:
+
+- explicit model-root and entry-file API with canonical source-path mapping
+- depth-first textual expansion while preserving per-file source spans
+- relative-only paths with URI, environment expansion, absolute path, lexical
+  escape, and symlink escape rejection
+- active-stack cycle detection with primary and secondary source locations
+- depth 16, per-file 16 MiB, and total-load 64 MiB defaults checked before
+  allocation
+- exact-read checks that fail closed when a file changes during loading
+- multi-scope validation requiring explicit entity `scope=` attributes
+- source tables retained for nested-file diagnostics without exposing partial
+  statements
+
+Verification:
+
+```text
+cmake -S . -B /tmp/ltfa-includes-release.k4Cj1q -DCMAKE_BUILD_TYPE=Release
+cmake --build /tmp/ltfa-includes-release.k4Cj1q
+ctest --test-dir /tmp/ltfa-includes-release.k4Cj1q --output-on-failure
+ASAN_OPTIONS=detect_leaks=0 ctest --test-dir /tmp/ltfa-includes-san.rSzRVs --output-on-failure
+```
+
+The clean GNU 13.3.0 Release build passed with warnings treated as errors, and
+all seven tests passed. The AddressSanitizer/UBSan build also passed all seven
+tests with leak detection disabled; LeakSanitizer is not claimed as verified.
+A static source scan found no socket, shell-execution, or environment-access
+calls in the public or core source trees. The pre-advance plan digest was
+`sha256:5f725a093a61374f7b0cb8af96bb47b43bb8eb4acad0e224aa449529d5441660`.

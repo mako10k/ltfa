@@ -36,10 +36,18 @@ std::string_view to_string(DiagnosticCode value) noexcept {
         return "E_DSL_INVALID_VALUE";
     case DiagnosticCode::dsl_missing_required_field:
         return "E_DSL_MISSING_REQUIRED_FIELD";
+    case DiagnosticCode::dsl_ambiguous_scope:
+        return "E_DSL_AMBIGUOUS_SCOPE";
+    case DiagnosticCode::include_invalid:
+        return "E_INCLUDE_INVALID";
     case DiagnosticCode::include_escape:
         return "E_INCLUDE_ESCAPE";
     case DiagnosticCode::include_cycle:
         return "E_INCLUDE_CYCLE";
+    case DiagnosticCode::include_depth:
+        return "E_INCLUDE_DEPTH";
+    case DiagnosticCode::include_io:
+        return "E_INCLUDE_IO";
     case DiagnosticCode::id_invalid:
         return "E_ID_INVALID";
     case DiagnosticCode::id_duplicate:
@@ -56,6 +64,8 @@ std::string_view to_string(DiagnosticCode value) noexcept {
         return "E_LIMIT_EXCEEDED";
     case DiagnosticCode::limit_source_file_bytes:
         return "E_LIMIT_SOURCE_FILE_BYTES";
+    case DiagnosticCode::limit_total_source_bytes:
+        return "E_LIMIT_TOTAL_SOURCE_BYTES";
     case DiagnosticCode::limit_line_bytes:
         return "E_LIMIT_LINE_BYTES";
     case DiagnosticCode::observation_invalid:

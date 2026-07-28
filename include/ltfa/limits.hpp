@@ -7,6 +7,7 @@ namespace ltfa {
 
 struct ModelLimits {
     std::uint64_t max_source_file_bytes{16U * 1024U * 1024U};
+    std::uint64_t max_total_source_bytes{64U * 1024U * 1024U};
     std::size_t max_line_bytes{8U * 1024U};
     std::uint32_t max_include_depth{16};
     std::uint32_t max_entities{100'000};

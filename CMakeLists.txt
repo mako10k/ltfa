@@ -25,6 +25,7 @@ function(ltfa_enable_warnings target)
 endfunction()
 
 add_library(ltfa_core STATIC
+    src/ltfa/dsl/include_resolver.cpp
     src/ltfa/dsl/lexer.cpp
     src/ltfa/dsl/parser.cpp
     src/ltfa/error.cpp

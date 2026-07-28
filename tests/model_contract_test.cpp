@@ -60,6 +60,8 @@ void test_ids_and_spans() {
 void test_default_limits() {
     expect(ltfa::kDefaultModelLimits.max_source_file_bytes == 16U * 1024U * 1024U,
            "source file limit must match the reviewed design");
+    expect(ltfa::kDefaultModelLimits.max_total_source_bytes == 64U * 1024U * 1024U,
+           "total source limit must remain explicit and bounded");
     expect(ltfa::kDefaultModelLimits.max_line_bytes == 8U * 1024U,
            "line limit must match the reviewed design");
     expect(ltfa::kDefaultModelLimits.max_include_depth == 16,
@@ -250,8 +252,13 @@ void test_diagnostic_codes() {
         std::pair{ltfa::DiagnosticCode::dsl_invalid_value, std::string_view{"E_DSL_INVALID_VALUE"}},
         std::pair{ltfa::DiagnosticCode::dsl_missing_required_field,
                   std::string_view{"E_DSL_MISSING_REQUIRED_FIELD"}},
+        std::pair{ltfa::DiagnosticCode::dsl_ambiguous_scope,
+                  std::string_view{"E_DSL_AMBIGUOUS_SCOPE"}},
+        std::pair{ltfa::DiagnosticCode::include_invalid, std::string_view{"E_INCLUDE_INVALID"}},
         std::pair{ltfa::DiagnosticCode::include_escape, std::string_view{"E_INCLUDE_ESCAPE"}},
         std::pair{ltfa::DiagnosticCode::include_cycle, std::string_view{"E_INCLUDE_CYCLE"}},
+        std::pair{ltfa::DiagnosticCode::include_depth, std::string_view{"E_INCLUDE_DEPTH"}},
+        std::pair{ltfa::DiagnosticCode::include_io, std::string_view{"E_INCLUDE_IO"}},
         std::pair{ltfa::DiagnosticCode::id_invalid, std::string_view{"E_ID_INVALID"}},
         std::pair{ltfa::DiagnosticCode::id_duplicate, std::string_view{"E_ID_DUPLICATE"}},
         std::pair{ltfa::DiagnosticCode::reference_unresolved,
@@ -264,6 +271,8 @@ void test_diagnostic_codes() {
         std::pair{ltfa::DiagnosticCode::limit_exceeded, std::string_view{"E_LIMIT_EXCEEDED"}},
         std::pair{ltfa::DiagnosticCode::limit_source_file_bytes,
                   std::string_view{"E_LIMIT_SOURCE_FILE_BYTES"}},
+        std::pair{ltfa::DiagnosticCode::limit_total_source_bytes,
+                  std::string_view{"E_LIMIT_TOTAL_SOURCE_BYTES"}},
         std::pair{ltfa::DiagnosticCode::limit_line_bytes, std::string_view{"E_LIMIT_LINE_BYTES"}},
         std::pair{ltfa::DiagnosticCode::observation_invalid,
                   std::string_view{"E_OBSERVATION_INVALID"}},

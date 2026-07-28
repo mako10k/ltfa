@@ -22,12 +22,10 @@ resource REVIEW:
 
 
 
-milestone PARSER_READY:
-  title "DSL statement parser ready"
-  state reached
 
 milestone INCLUDES_READY:
   title "Safe include resolver ready"
+  state reached
 
 milestone MODEL_COMPILER_READY:
   title "Validated normalized model ready"
@@ -101,19 +99,6 @@ milestone MVP_ACCEPTED:
 
 
 
-task M1_SAFE_INCLUDES PARSER_READY -> INCLUDES_READY:
-  title "Implement model-root-bounded includes"
-  description "Resolve only local canonical paths below the selected model root; reject escapes, URIs, cycles, excessive depth, oversized files, and ambiguous multi-scope defaults."
-  estimate:
-    optimistic 2d
-    most_likely 3d
-    pessimistic 5d
-  priority 90
-  requires:
-    CODEX 1
-  owner "codex"
-  tags [slice1, safety]
-  source "requirements REQ-DSL-004..007, REQ-SAF-004..005; basic design section 7.4"
 
 task M1_MODEL_COMPILER INCLUDES_READY -> MODEL_COMPILER_READY:
   title "Compile and validate the normalized graph"
