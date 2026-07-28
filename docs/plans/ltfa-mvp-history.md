@@ -181,3 +181,44 @@ A static source scan found no socket, shell-execution, environment-access,
 database, or plugin-loading calls in the added compiler path. The pre-advance
 plan digest was
 `sha256:87711f9b4e7fe11471884d796224ef338289bf74d61712050315853ff0bf58a6`.
+
+## 2026-07-28 — M1_MODEL_OUTPUT
+
+Status: accepted
+
+The sixth critical-path task renders a compiled model through deterministic
+value-oriented core APIs. It does not add topology analysis, invoke Graphviz,
+or select files through the CLI.
+
+Delivered:
+
+- result-first human summaries with scope completeness, evidence quality,
+  unknowns, explicit inputs, and omission counts
+- a byte-stable `ltfa.model/v1` JSON envelope with stable fields, sorted object
+  arrays and attributes, explicit input sets, and no implicit timestamp
+- escaped DOT text with versioned graph metadata, stable plane and relation
+  styles, scope/plane/layer/failure-domain grouping, filters, focus, and
+  highlights
+- default omission of restricted objects and evidence references, including
+  transitive suppression through restricted network-space identity
+- an explicit opt-in policy for restricted JSON and human artifacts while DOT
+  labels remain evidence-free
+- golden human, JSON, and DOT tests plus declaration-order, input-order,
+  escaping, view-selection, and restricted-data fixtures
+
+Verification:
+
+```text
+cmake -S . -B /tmp/ltfa-output-release.6bc1S2 -DCMAKE_BUILD_TYPE=Release
+cmake --build /tmp/ltfa-output-release.6bc1S2
+ctest --test-dir /tmp/ltfa-output-release.6bc1S2 --output-on-failure
+ASAN_OPTIONS=detect_leaks=0 ctest --test-dir /tmp/ltfa-output-san.6pmwcq --output-on-failure
+```
+
+The clean GNU 13.3.0 Release build passed with warnings treated as errors, and
+all nine tests passed. The AddressSanitizer/UBSan build also passed all nine
+tests with leak detection disabled; LeakSanitizer is not claimed as verified.
+The added path contains no socket, shell-execution, environment-access, file
+I/O, database, plugin, or Graphviz linkage. The host had no `dot` executable,
+so no external rendering result is claimed. The pre-advance plan digest was
+`sha256:7b1e139ca0b7f41366f163c9f73b6a1fa6e38b3bf3afac0c68c2297ddb796315`.

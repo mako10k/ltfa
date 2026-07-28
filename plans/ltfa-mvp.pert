@@ -24,12 +24,10 @@ resource REVIEW:
 
 
 
-milestone MODEL_COMPILER_READY:
-  title "Validated normalized model ready"
-  state reached
 
 milestone MODEL_OUTPUT_READY:
   title "Deterministic model outputs ready"
+  state reached
 
 milestone PARSER_HARDENED:
   title "Parser safety verification ready"
@@ -99,19 +97,6 @@ milestone MVP_ACCEPTED:
 
 
 
-task M1_MODEL_OUTPUT MODEL_COMPILER_READY -> MODEL_OUTPUT_READY:
-  title "Emit deterministic model summaries and DOT"
-  description "Add stable human, versioned JSON, and DOT model output with sorted identifiers, escaped labels, explicit inputs, and default omission of restricted evidence."
-  estimate:
-    optimistic 2d
-    most_likely 3d
-    pessimistic 5d
-  priority 90
-  requires:
-    CODEX 1
-  owner "codex"
-  tags [slice1, output]
-  source "requirements REQ-OUT-001..008, REQ-SAF-008; basic design section 12"
 
 task M1_PARSER_HARDENING MODEL_OUTPUT_READY -> PARSER_HARDENED:
   title "Harden parser and model compiler verification"

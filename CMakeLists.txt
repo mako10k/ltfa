@@ -31,6 +31,7 @@ add_library(ltfa_core STATIC
     src/ltfa/error.cpp
     src/ltfa/model.cpp
     src/ltfa/model_compiler.cpp
+    src/ltfa/model_output.cpp
     src/ltfa/version.cpp
 )
 add_library(ltfa::core ALIAS ltfa_core)

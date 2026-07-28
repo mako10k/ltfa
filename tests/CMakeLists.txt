@@ -58,6 +58,16 @@ ltfa_enable_warnings(ltfa_model_compiler_test)
 
 add_test(NAME ltfa.model.compiler COMMAND ltfa_model_compiler_test)
 
+add_executable(ltfa_model_output_test
+    model_output_test.cpp
+)
+target_link_libraries(ltfa_model_output_test PRIVATE ltfa::core)
+target_compile_features(ltfa_model_output_test PRIVATE cxx_std_17)
+set_target_properties(ltfa_model_output_test PROPERTIES CXX_EXTENSIONS OFF)
+ltfa_enable_warnings(ltfa_model_output_test)
+
+add_test(NAME ltfa.model.output COMMAND ltfa_model_output_test)
+
 add_test(NAME ltfa.cli.help COMMAND $<TARGET_FILE:ltfa> --help)
 set_tests_properties(ltfa.cli.help PROPERTIES
     PASS_REGULAR_EXPRESSION "Bootstrap scaffold only"
