@@ -1,0 +1,112 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 20,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "BUILD_TESTING": "ON",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
+      "name": "release",
+      "inherits": "base",
+      "displayName": "Release validation",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "asan-ubsan",
+      "inherits": "base",
+      "displayName": "Address and undefined-behavior sanitizers",
+      "cacheVariables": {
+        "LTFA_SANITIZERS": "address;undefined"
+      }
+    },
+    {
+      "name": "lsan",
+      "inherits": "base",
+      "displayName": "Leak sanitizer",
+      "cacheVariables": {
+        "LTFA_SANITIZERS": "leak"
+      }
+    },
+    {
+      "name": "fuzz-seeds",
+      "inherits": "asan-ubsan",
+      "displayName": "Standalone parser fuzz seed replay",
+      "cacheVariables": {
+        "LTFA_BUILD_FUZZERS": "ON",
+        "LTFA_FUZZ_ENGINE": "standalone"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "asan-ubsan",
+      "configurePreset": "asan-ubsan"
+    },
+    {
+      "name": "lsan",
+      "configurePreset": "lsan"
+    },
+    {
+      "name": "fuzz-seeds",
+      "configurePreset": "fuzz-seeds"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "asan-ubsan",
+      "configurePreset": "asan-ubsan",
+      "environment": {
+        "ASAN_OPTIONS": "detect_leaks=0:halt_on_error=1",
+        "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
+      },
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "lsan",
+      "configurePreset": "lsan",
+      "environment": {
+        "LSAN_OPTIONS": "exitcode=23"
+      },
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "fuzz-seeds",
+      "configurePreset": "fuzz-seeds",
+      "environment": {
+        "ASAN_OPTIONS": "detect_leaks=0:halt_on_error=1",
+        "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
+      },
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

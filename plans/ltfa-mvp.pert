@@ -25,12 +25,10 @@ resource REVIEW:
 
 
 
-milestone MODEL_OUTPUT_READY:
-  title "Deterministic model outputs ready"
-  state reached
 
 milestone PARSER_HARDENED:
   title "Parser safety verification ready"
+  state reached
 
 milestone SLICE1_ACCEPTED:
   title "Model compiler slice accepted"
@@ -98,19 +96,6 @@ milestone MVP_ACCEPTED:
 
 
 
-task M1_PARSER_HARDENING MODEL_OUTPUT_READY -> PARSER_HARDENED:
-  title "Harden parser and model compiler verification"
-  description "Add malformed-input matrices, fuzz seeds and targets, address/undefined/leak sanitizer configurations, limit failures, and proof that integration tests require no network or secrets."
-  estimate:
-    optimistic 1d
-    most_likely 2d
-    pessimistic 3d
-  priority 100
-  requires:
-    CODEX 1
-  owner "codex"
-  tags [slice1, safety, verification]
-  source "requirements REQ-QLT-001, REQ-QLT-004, AC-002, AC-008; design review prototype condition 6"
 
 task M1_ACCEPTANCE PARSER_HARDENED -> SLICE1_ACCEPTED:
   title "Accept the model compiler slice"

@@ -4,10 +4,10 @@ LTFA is the working name for a lightweight multilayer topology and fault
 analyzer.
 
 This repository is an early offline prototype. It contains a native C++17 core,
-a bounded DSL v1 lexer, statement parser, and model-root-safe include loader, a
-small CLI with help and version output, and dependency-free CTest coverage. It
-does not yet compile a validated topology model, run analysis, or perform
-network access.
+a bounded DSL v1 parser and model-root-safe include loader, deterministic
+normalized-model compilation, human/JSON/DOT model output, a small CLI with
+help and version output, and dependency-free CTest coverage. It does not yet
+run topology analysis or perform network access.
 
 ## Design source
 
@@ -51,11 +51,33 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
 
+Equivalent committed presets are available with `cmake --preset release` and
+`cmake --build --preset release`.
+
 ## Test
 
 ```bash
 ctest --test-dir build --output-on-failure
 ```
+
+Run the explicit sanitizer configurations with:
+
+```bash
+cmake --preset asan-ubsan
+cmake --build --preset asan-ubsan
+ctest --preset asan-ubsan
+
+cmake --preset lsan
+cmake --build --preset lsan
+ctest --preset lsan
+```
+
+`cmake --preset fuzz-seeds` enables deterministic corpus replay. Clang
+libFuzzer commands and corpus rules are documented in `tests/fuzz/README.md`.
+The test suite statically rejects network, process-launch, plugin-loading, and
+environment-access symbols. On Linux with `strace`, it also verifies that the
+parser integration test makes no network syscall. Graphviz remains optional;
+when `dot` is installed, CTest validates generated LTFA DOT by rendering SVG.
 
 ## Plan
 
@@ -89,6 +111,7 @@ cmake/               Generated-build configuration templates
 include/ltfa/        Public core headers
 src/ltfa/            Core implementation
 tests/               Dependency-free CTest targets
+tests/fuzz/          Parser fuzz harness and synthetic seed corpus
 docs/decisions/      Project-local architecture decisions
 docs/plans/          Completed PERT task evidence
 plans/               Residual perttool plans

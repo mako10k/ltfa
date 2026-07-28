@@ -222,3 +222,46 @@ The added path contains no socket, shell-execution, environment-access, file
 I/O, database, plugin, or Graphviz linkage. The host had no `dot` executable,
 so no external rendering result is claimed. The pre-advance plan digest was
 `sha256:7b1e139ca0b7f41366f163c9f73b6a1fa6e38b3bf3afac0c68c2297ddb796315`.
+
+## 2026-07-28 — M1_PARSER_HARDENING
+
+Status: accepted
+
+The seventh critical-path task closes the first parser slice with explicit
+malformed-input, resource-limit, fuzz, sanitizer, and offline-boundary
+verification. It does not add observation decoding, analysis, or network
+behavior.
+
+Delivered:
+
+- deterministic malformed parser and compiler matrices with exact diagnostic
+  codes and source locations and no partial document or model
+- exact-boundary and limit-plus-one checks for source, line, attribute, object,
+  relation, and total byte limits, complementing existing include limits
+- a bounded parser/compiler/output fuzz harness, four synthetic corpus seeds,
+  standalone replay, and an isolated Clang/libFuzzer-instrumented core
+- committed Release, ASan/UBSan, LSan, and fuzz-seed CMake presets
+- static source and binary-import checks for network, process-launch,
+  plugin-loading, environment-access, and credential-shaped literals
+- Linux `strace` verification that the parser integration test performs no
+  network syscall
+- optional external Graphviz validation that renders generated LTFA DOT to SVG
+  without linking Graphviz into the core
+
+Verification:
+
+```text
+cmake --preset release && cmake --build --preset release && ctest --preset release
+cmake --preset asan-ubsan && cmake --build --preset asan-ubsan && ctest --preset asan-ubsan
+cmake --preset lsan && cmake --build --preset lsan && ctest --preset lsan
+cmake --preset fuzz-seeds && cmake --build --preset fuzz-seeds && ctest --preset fuzz-seeds
+build/libfuzzer/tests/ltfa_parser_fuzz <temporary-corpus> -runs=1000 -max_len=65536
+```
+
+The GNU 13.3.0 Release and fuzz-seed suites passed all 13 tests. The GNU
+ASan/UBSan and independent LSan suites passed all 12 applicable tests. Clang
+18.1.3 libFuzzer completed 1,000 runs without a crash or sanitizer finding,
+ending at 2,694 covered edges and 4,738 features with 137 MiB peak RSS. The
+Release boundary test observed zero network syscalls, and Graphviz 2.43.0
+accepted the generated DOT and produced SVG. The pre-advance plan digest was
+`sha256:4b421b8988decb721156b94d6e419d1d6f8978de9e8de1fabec80ca57ef982d9`.

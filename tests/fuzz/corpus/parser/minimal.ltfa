@@ -1,0 +1,3 @@
+ltfa 1
+scope site:a kind=site completeness=verified evidence-quality=confirmed
+entity device:a kind=device plane=communication layer=physical scope=site:a

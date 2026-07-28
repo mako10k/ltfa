@@ -293,7 +293,22 @@ void test_dot_views() {
 
 } // namespace
 
-int main() {
+int main(int argc, char **argv) {
+    if (argc == 2 && std::string_view{argv[1]} == "--emit-dot") {
+        const auto model = compile(minimal_source());
+        if (!model.has_value()) {
+            return 1;
+        }
+        ltfa::ModelOutputContext context;
+        context.model_inputs = {"z.ltfa", "a.ltfa", "a.ltfa"};
+        std::cout << ltfa::render_model_dot(*model, context);
+        return failures == 0 ? 0 : 1;
+    }
+    if (argc != 1) {
+        std::cerr << "usage: ltfa_model_output_test [--emit-dot]\n";
+        return 2;
+    }
+
     test_golden_outputs();
     test_restricted_policy();
     test_determinism_and_escaping();

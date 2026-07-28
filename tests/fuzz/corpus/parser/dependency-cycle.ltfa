@@ -1,0 +1,6 @@
+ltfa 1
+scope site:a
+entity device:a kind=device plane=communication layer=l3 scope=site:a
+entity device:b kind=device plane=communication layer=l3 scope=site:a
+relate device:a -> device:b kind=depends-on
+relate device:b -> device:a kind=depends-on
