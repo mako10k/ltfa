@@ -54,6 +54,15 @@ foreach(document LICENSE README.md RELEASE_NOTES.md)
     endif()
 endforeach()
 
+set(installed_development
+    "${LTFA_INSTALL_PREFIX}/${LTFA_INSTALL_DOCDIR}/docs/development.md"
+)
+if(NOT EXISTS "${installed_development}")
+    message(FATAL_ERROR
+        "installed development guide not found: ${installed_development}"
+    )
+endif()
+
 execute_process(
     COMMAND "${installed_cli}" --version
     RESULT_VARIABLE version_result

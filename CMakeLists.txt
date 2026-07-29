@@ -106,6 +106,10 @@ install(FILES
     RELEASE_NOTES.md
     DESTINATION ${CMAKE_INSTALL_DOCDIR}
 )
+install(FILES
+    docs/development.md
+    DESTINATION ${CMAKE_INSTALL_DOCDIR}/docs
+)
 
 if(BUILD_TESTING)
     add_subdirectory(tests)

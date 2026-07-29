@@ -39,10 +39,11 @@ ctest --preset release
 cmake --install build/release --prefix /path/to/ltfa
 ```
 
-The installed executable is `/path/to/ltfa/bin/ltfa`. License, README, and
-release notes are installed under `/path/to/ltfa/share/doc/ltfa`. The install
-smoke test exercises installed version and help output, model compilation, and
-one complete assurance analysis.
+The installed executable is `/path/to/ltfa/bin/ltfa`. License, README, release
+notes, and the development guide are installed under
+`/path/to/ltfa/share/doc/ltfa`. The install smoke test exercises installed
+version and help output, model compilation, and one complete assurance
+analysis.
 
 Tag creation and release publication remain pending separate authorization.
 
