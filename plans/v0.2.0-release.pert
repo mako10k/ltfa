@@ -19,28 +19,7 @@ resource REVIEW:
 
 
 
-milestone R020_METADATA_READY:
-  title "v0.2 release metadata and install contract ready"
-  state reached
 
 milestone R020_CANDIDATE_ACCEPTED:
   title "v0.2.0 release candidate accepted"
-
-
-
-
-task R020_CANDIDATE_ACCEPTANCE R020_METADATA_READY -> R020_CANDIDATE_ACCEPTED:
-  title "Accept the immutable v0.2.0 candidate"
-  description "Run Release, ASan/UBSan, LSan, fuzz-seed, install-tree, offline-runtime, CLI contract, and Graphviz gates against one exact commit and record the candidate evidence. Tagging and publication remain excluded."
-  estimate:
-    optimistic 0.5d
-    most_likely 1d
-    pessimistic 2d
-  status done
-  priority 100
-  requires:
-    CODEX 1
-    REVIEW 1
-  owner "codex"
-  tags ["v0.2.0", release, acceptance]
-  source "v0.2 release preparation; publication restart requires separate owner instruction"
+  state reached
