@@ -52,7 +52,7 @@ task CLI_ASSURANCE_FIELD_INVENTORY V020_REVIEWED -> OUTPUT_CONTRACT_READY:
     optimistic 0.5d
     most_likely 1d
     pessimistic 1.5d
-  status active
+  status done
   priority 95
   requires:
     CODEX 1
@@ -108,3 +108,9 @@ work_event CLI_ASSURANCE_FIELD_INVENTORY_START:
   kind start
   occurred_at 2026-07-29T18:26:57+09:00
   planned_value 1d
+
+work_event CLI_ASSURANCE_FIELD_INVENTORY_FINISH:
+  model 1
+  task CLI_ASSURANCE_FIELD_INVENTORY
+  kind finish
+  occurred_at 2026-07-29T18:34:56+09:00

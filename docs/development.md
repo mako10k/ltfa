@@ -160,6 +160,7 @@ Accepted implementation and release evidence is retained under
 - [v0.2 candidate acceptance](acceptance/v0.2.0-release-candidate.md)
 - [v0.2 release history](plans/v0.2.0-release-history.md)
 - [Issue #1 CLI repair wave 1](acceptance/issue-1-cli-repair-wave1.md)
+- [Issue #1 assurance field inventory](acceptance/issue-1-assurance-field-inventory.md)
 
 ## Plan maintenance
 
