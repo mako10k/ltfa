@@ -26,6 +26,7 @@ resource REVIEW:
 
 milestone BUDGET_REPAIR_READY:
   title "Shared cumulative budgets repaired"
+  state reached
 
 milestone OUTPUT_CONTRACT_READY:
   title "Assurance public field inventory accepted"
@@ -35,6 +36,7 @@ milestone OUTPUT_PARITY_READY:
 
 milestone HELP_COVERAGE_READY:
   title "Exact help and CLI acceptance coverage ready"
+  state reached
 
 milestone CLI_REPAIR_INTEGRATED:
   title "CLI repair workstreams integrated"
@@ -42,21 +44,6 @@ milestone CLI_REPAIR_INTEGRATED:
 milestone CLI_REPAIR_ACCEPTED:
   title "Assurance CLI consistency repair accepted"
 
-task CLI_SHARED_BUDGET_REPAIR V020_REVIEWED -> BUDGET_REPAIR_READY:
-  title "Enforce shared path and SPOF work budgets"
-  description "Reproduce the v0.2.0 overrun, carry remaining object and relation work into SPOF analysis, preserve deterministic incomplete results, and add boundary and exhaustion regressions proving combined path and SPOF usage never exceeds either configured cumulative limit."
-  estimate:
-    optimistic 1d
-    most_likely 2d
-    pessimistic 3d
-  status done
-  priority 100
-  requires:
-    CODEX 1
-    REVIEW 1
-  owner "codex"
-  tags [cli, budget, regression, patch]
-  source "GitHub Issue #1; ADR 0003 cumulative-work contract; post-v0.2.0 CLI review"
 
 task CLI_ASSURANCE_FIELD_INVENTORY V020_REVIEWED -> OUTPUT_CONTRACT_READY:
   title "Define the assurance public field inventory"
@@ -65,6 +52,7 @@ task CLI_ASSURANCE_FIELD_INVENTORY V020_REVIEWED -> OUTPUT_CONTRACT_READY:
     optimistic 0.5d
     most_likely 1d
     pessimistic 1.5d
+  status active
   priority 95
   requires:
     CODEX 1
@@ -87,20 +75,6 @@ task CLI_OUTPUT_PARITY OUTPUT_CONTRACT_READY -> OUTPUT_PARITY_READY:
   tags [cli, human, json, regression]
   source "GitHub Issue #1; accepted assurance public field inventory"
 
-task CLI_HELP_AND_ACCEPTANCE_COVERAGE V020_REVIEWED -> HELP_COVERAGE_READY:
-  title "Complete analyze help and CLI acceptance coverage"
-  description "Expand the descriptor-backed analyze usage to list every budget option, validate structured detailed analyze help, cover every budget option and invalid value, exercise all source, target, scope, endpoint, and declared-failure rejection branches, and rename or split the CTest acceptance target to match its scope."
-  estimate:
-    optimistic 1d
-    most_likely 2d
-    pessimistic 3d
-  status done
-  priority 90
-  requires:
-    CODEX 1
-  owner "codex"
-  tags [cli, help, acceptance, coverage]
-  source "GitHub Issue #1; ADR 0003 CLI conventions; post-v0.2.0 CLI review"
 
 gate CLI_BUDGET_REPAIR_GATE BUDGET_REPAIR_READY -> CLI_REPAIR_INTEGRATED:
   reason "Integration requires the cumulative-budget contract repair"
@@ -126,28 +100,11 @@ task CLI_REPAIR_ACCEPTANCE CLI_REPAIR_INTEGRATED -> CLI_REPAIR_ACCEPTED:
   tags [cli, acceptance, offline, patch]
   source "GitHub Issue #1 acceptance criteria; AGENTS.md build and offline boundaries"
 
-work_event CLI_SHARED_BUDGET_REPAIR_START:
+
+
+work_event CLI_ASSURANCE_FIELD_INVENTORY_START:
   model 1
-  task CLI_SHARED_BUDGET_REPAIR
+  task CLI_ASSURANCE_FIELD_INVENTORY
   kind start
-  occurred_at 2026-07-29T18:13:45+09:00
-  planned_value 2d
-
-work_event CLI_HELP_AND_ACCEPTANCE_COVERAGE_START:
-  model 1
-  task CLI_HELP_AND_ACCEPTANCE_COVERAGE
-  kind start
-  occurred_at 2026-07-29T18:13:56+09:00
-  planned_value 2d
-
-work_event CLI_SHARED_BUDGET_REPAIR_FINISH:
-  model 1
-  task CLI_SHARED_BUDGET_REPAIR
-  kind finish
-  occurred_at 2026-07-29T18:24:55+09:00
-
-work_event CLI_HELP_AND_ACCEPTANCE_COVERAGE_FINISH:
-  model 1
-  task CLI_HELP_AND_ACCEPTANCE_COVERAGE
-  kind finish
-  occurred_at 2026-07-29T18:25:13+09:00
+  occurred_at 2026-07-29T18:26:57+09:00
+  planned_value 1d
