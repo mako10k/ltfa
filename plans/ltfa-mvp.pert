@@ -32,12 +32,10 @@ resource REVIEW:
 
 
 
-milestone SLICE2_INTEGRATED:
-  title "Offline assurance inputs integrated"
-  state reached
 
 milestone SLICE2_ACCEPTED:
   title "Offline assurance slice accepted"
+  state reached
 
 milestone YYJSON_READY:
   title "Pinned yyjson source accepted"
@@ -92,20 +90,6 @@ milestone MVP_ACCEPTED:
 
 
 
-task M2_ACCEPTANCE SLICE2_INTEGRATED -> SLICE2_ACCEPTED:
-  title "Accept the offline assurance slice"
-  description "Verify redundant and shared-domain fixtures, breaker immediate and delayed effects, deterministic ordering, bounded resource behavior, and qualified partial-model findings."
-  estimate:
-    optimistic 1d
-    most_likely 2d
-    pessimistic 3d
-  priority 100
-  requires:
-    CODEX 1
-    REVIEW 1
-  owner "codex"
-  tags [slice2, acceptance]
-  source "basic design slice 2; requirements AC-003..004, AC-007..008"
 
 task M3_PIN_YYJSON SLICE2_ACCEPTED -> YYJSON_READY:
   title "Pin and accept vendored yyjson"

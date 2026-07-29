@@ -472,3 +472,39 @@ relations, redundant object and edge removal, shared-domain common-cause loss,
 stable repeat output and usage, all three classifications, qualification,
 resource budgets, and malformed input. The pre-advance plan digest was
 `sha256:7099c1f3c176b5c591bca82939d9e8f5d48e8f7fb9a7f512b259ff6b2323a126`.
+
+## 2026-07-29 — M2_ACCEPTANCE
+
+Status: accepted
+
+The Slice 2 acceptance task combines the four assurance-core increments in one
+synthetic, reviewable, model-root-loaded fixture. It closes the offline
+assurance implementation boundary without exposing a new CLI command or
+starting observation, diagnosis, or cut-set work.
+
+Accepted:
+
+- a redundant single relation retains a selected path
+- shared route members produce a common-cause SPOF
+- one breaker produces exact immediate and 30-second delayed service loss
+- independent backup power survives one breaker while a shared-domain loss
+  removes both providers
+- verified, partial, inferred, and view-limited SPOF claims remain distinct
+- repeated analysis facts, work usage, JSON, and DOT remain deterministic
+- path, SPOF, and propagation budgets return explicit incomplete results
+- the integrated executable makes no network syscall and uses no secret
+
+Verification:
+
+```text
+cmake --preset release && cmake --build --preset release && ctest --preset release
+cmake --preset asan-ubsan && cmake --build --preset asan-ubsan && ctest --preset asan-ubsan
+cmake --preset lsan && cmake --build --preset lsan && ctest --preset lsan
+cmake --preset fuzz-seeds && cmake --build --preset fuzz-seeds && ctest --preset fuzz-seeds
+```
+
+The GNU 13.3.0 Release suite passed all 22 tests. ASan/UBSan and independent
+LSan passed all 19 applicable tests, and the fuzz-seed configuration passed all
+20. Release includes a dedicated `strace` check for the Slice 2 integration
+executable. The pre-advance plan digest was
+`sha256:46217f47a88d7745fcdb46c0e341e06231392d85c5d502a9ad15e56fbd01479d`.

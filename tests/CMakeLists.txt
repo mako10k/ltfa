@@ -58,6 +58,19 @@ ltfa_enable_warnings(ltfa_spof_analysis_test)
 
 add_test(NAME ltfa.analysis.spof COMMAND ltfa_spof_analysis_test)
 
+add_executable(ltfa_slice2_acceptance_test
+    slice2_acceptance_test.cpp
+)
+target_link_libraries(ltfa_slice2_acceptance_test PRIVATE ltfa::core)
+target_compile_features(ltfa_slice2_acceptance_test PRIVATE cxx_std_17)
+target_compile_definitions(ltfa_slice2_acceptance_test PRIVATE
+    LTFA_SLICE2_FIXTURE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice2"
+)
+set_target_properties(ltfa_slice2_acceptance_test PROPERTIES CXX_EXTENSIONS OFF)
+ltfa_enable_warnings(ltfa_slice2_acceptance_test)
+
+add_test(NAME ltfa.acceptance.slice2 COMMAND ltfa_slice2_acceptance_test)
+
 add_executable(ltfa_lexer_test
     lexer_test.cpp
 )
@@ -182,6 +195,14 @@ if(NOT LTFA_SANITIZERS AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
                 -DLTFA_MODEL_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice1
                 -DLTFA_TRACE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-cli-offline-runtime.trace
                 -P ${PROJECT_SOURCE_DIR}/cmake/verify_offline_cli_runtime.cmake
+        )
+        add_test(
+            NAME ltfa.boundary.slice2-offline-runtime
+            COMMAND ${CMAKE_COMMAND}
+                -DLTFA_STRACE=${LTFA_STRACE_EXECUTABLE}
+                -DLTFA_PROGRAM=$<TARGET_FILE:ltfa_slice2_acceptance_test>
+                -DLTFA_TRACE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-slice2-offline-runtime.trace
+                -P ${PROJECT_SOURCE_DIR}/cmake/verify_offline_runtime.cmake
         )
     endif()
 endif()

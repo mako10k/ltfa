@@ -1,0 +1,42 @@
+ltfa 1
+scope site:verified kind=site label="Slice 2 Verified View" completeness=verified evidence-quality=confirmed
+scope site:partial kind=site label="Slice 2 Partial View" completeness=partial evidence-quality=inferred
+
+entity facility:breaker kind=facility plane=facility layer=physical scope=site:verified failure-domain=shared-power
+entity facility:backup kind=facility plane=facility layer=physical scope=site:verified failure-domain=shared-power
+entity service:immediate kind=service plane=service layer=application scope=site:verified
+entity service:held kind=service plane=service layer=application scope=site:verified
+entity service:held-child kind=service plane=service layer=application scope=site:verified
+entity service:redundant kind=service plane=service layer=application scope=site:verified
+
+entity device:path-source kind=device plane=communication layer=physical scope=site:verified
+entity device:path-a kind=device plane=communication layer=physical scope=site:verified failure-domain=shared-route
+entity device:path-b kind=device plane=communication layer=physical scope=site:verified failure-domain=shared-route
+entity device:path-target kind=device plane=communication layer=physical scope=site:verified
+entity device:path-tail kind=device plane=communication layer=physical scope=site:verified
+
+entity device:partial-source kind=device plane=communication layer=physical scope=site:partial
+entity device:partial-a kind=device plane=communication layer=physical scope=site:partial failure-domain=partial-route
+entity device:partial-b kind=device plane=communication layer=physical scope=site:partial failure-domain=partial-route
+entity device:partial-target kind=device plane=communication layer=physical scope=site:partial
+entity device:partial-tail kind=device plane=communication layer=physical scope=site:partial
+
+require service:immediate by facility:breaker group=power mode=all
+require service:held by facility:breaker group=power mode=all hold-up=30s
+require service:redundant by facility:breaker group=power mode=any
+require service:redundant by facility:backup group=power mode=any
+relate service:held-child -> service:held kind=depends_on
+
+relate device:path-source -> device:path-a kind=depends_on
+relate device:path-source -> device:path-b kind=depends_on
+relate device:path-a -> device:path-target kind=depends_on
+relate device:path-b -> device:path-target kind=depends_on
+relate device:path-target -> device:path-tail kind=depends_on
+
+relate device:partial-source -> device:partial-a kind=depends_on
+relate device:partial-source -> device:partial-b kind=depends_on
+relate device:partial-a -> device:partial-target kind=depends_on
+relate device:partial-b -> device:partial-target kind=depends_on
+relate device:partial-target -> device:partial-tail kind=depends_on
+
+failure failure:breaker target=facility:breaker mode=breaker-trip

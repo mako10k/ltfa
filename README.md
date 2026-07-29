@@ -123,8 +123,10 @@ The accepted `v0.1.0` release candidate is an offline model compiler preview
 containing Slice 1 plus descriptor-backed help, stable CLI usage diagnostics,
 MIT licensing, release notes, and install-tree validation. The commit
 containing the candidate evidence is its immutable candidate; it has not been
-tagged or published. Integrated path, impact, SPOF, and failure-propagation
-analysis remains the later `v0.2.0` boundary at `SLICE2_ACCEPTED`.
+tagged or published. The offline assurance core is now accepted at the
+`SLICE2_ACCEPTED` implementation boundary and defines the later `v0.2.0`
+functional scope. This does not change the binary version or authorize a tag
+or publication.
 
 The detailed CLI and release contract is recorded in
 [`docs/decisions/0002-cli-contract-and-first-release-boundary.md`](docs/decisions/0002-cli-contract-and-first-release-boundary.md).
@@ -138,6 +140,8 @@ Deterministic failure-propagation evidence is recorded in
 [`docs/acceptance/m2-failure-propagation.md`](docs/acceptance/m2-failure-propagation.md).
 Qualified articulation, bridge, and SPOF evidence is recorded in
 [`docs/acceptance/m2-spof-analysis.md`](docs/acceptance/m2-spof-analysis.md).
+The integrated offline-assurance acceptance is recorded in
+[`docs/acceptance/m2-offline-assurance-slice.md`](docs/acceptance/m2-offline-assurance-slice.md).
 The release plan and current candidate evidence are recorded in
 [`docs/plans/v0.1.0-release.md`](docs/plans/v0.1.0-release.md) and
 [`docs/acceptance/v0.1.0-release-candidate.md`](docs/acceptance/v0.1.0-release-candidate.md).
@@ -170,8 +174,9 @@ failure-domain, or declared-mode injection can be propagated to a fixed point
 with stable immediate and delayed findings. Undirected graph views expose
 articulation points and bridges, while source-to-target removal checks
 distinguish `confirmed-spof`, `model-spof`, and `not-a-spof-in-view`, including
-shared failure-domain candidates. CLI exposure remains deferred until Slice 2
-acceptance is integrated.
+shared failure-domain candidates. These capabilities have passed one
+cross-feature offline acceptance fixture. CLI exposure remains deferred to a
+separately reviewed interface slice.
 
 ## Layout
 
