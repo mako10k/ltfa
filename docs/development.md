@@ -162,6 +162,17 @@ Accepted implementation and release evidence is retained under
 
 ## Plan maintenance
 
+The post-v0.2.0 assurance CLI repair is tracked by
+[GitHub Issue #1](https://github.com/mako10k/ltfa/issues/1) and the independent
+`plans/v0.2.1-cli-consistency.pert` plan. Validate and select its repair
+frontier with:
+
+```sh
+perttool document check plans/v0.2.1-cli-consistency.pert --warnings-as-errors
+perttool dag next plans/v0.2.1-cli-consistency.pert \
+    --capacity CODEX=1 --capacity REVIEW=1
+```
+
 The residual offline-MVP plan is `plans/ltfa-mvp.pert`. Validate it and select
 the next capacity-feasible task with:
 
