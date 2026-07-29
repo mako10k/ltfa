@@ -29,6 +29,7 @@ Repository-local decisions:
 
 - [Bootstrap boundary](docs/decisions/0001-bootstrap-boundary.md)
 - [CLI contract and first release boundary](docs/decisions/0002-cli-contract-and-first-release-boundary.md)
+- [v0.2 offline assurance CLI contract](docs/decisions/0003-v0.2-assurance-cli.md)
 - [v0.1.0 release notes](RELEASE_NOTES.md)
 
 ## Boundary
@@ -147,6 +148,9 @@ The release plan and current candidate evidence are recorded in
 [`docs/acceptance/v0.1.0-release-candidate.md`](docs/acceptance/v0.1.0-release-candidate.md).
 Release publication remains outside the residual MVP PERT and requires a
 separate authorization after candidate acceptance.
+
+The separately authorized local `v0.2.0` candidate-preparation path is tracked
+in `plans/v0.2.0-release.pert`. It excludes tag creation and publication.
 
 ## Current CLI
 

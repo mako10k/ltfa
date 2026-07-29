@@ -1,0 +1,92 @@
+# Existing .pert plans should normally be maintained through perttool commands; direct DSL editing bypasses goal/DAG owner-confirmation checks.
+project LTFA_RELEASE_020:
+  version 4
+  title "LTFA v0.2.0 release preparation"
+  duration_unit day
+  finish R020_CANDIDATE_ACCEPTED
+  goal_owner user
+  dag_owner user
+  dag_delegates [codex]
+
+milestone SLICE2_ACCEPTED:
+  title "Offline assurance slice accepted"
+  state reached
+
+resource CODEX:
+  title "Codex implementation capacity"
+  capacity 1
+
+resource REVIEW:
+  title "Review and acceptance capacity"
+  capacity 1
+
+milestone R020_CLI_CONTRACT_ACCEPTED:
+  title "v0.2 assurance CLI contract accepted"
+
+milestone R020_CLI_READY:
+  title "v0.2 assurance CLI ready"
+
+milestone R020_METADATA_READY:
+  title "v0.2 release metadata and install contract ready"
+
+milestone R020_CANDIDATE_ACCEPTED:
+  title "v0.2.0 release candidate accepted"
+
+task R020_CLI_CONTRACT SLICE2_ACCEPTED -> R020_CLI_CONTRACT_ACCEPTED:
+  title "Accept the v0.2 assurance CLI contract"
+  description "Fix one descriptor-backed offline analyze command with stable human and JSON output, help, errors, explicit scope, source, target, optional declared failure, restricted-data policy, and work budgets."
+  estimate:
+    optimistic 0.5d
+    most_likely 1d
+    pessimistic 2d
+  status done
+  priority 100
+  requires:
+    CODEX 1
+    REVIEW 1
+  owner "codex"
+  tags ["v0.2.0", cli, contract]
+  source "ADR 0002; secexec and perttool current help and error conventions; Slice 2 acceptance"
+
+task R020_CLI_IMPLEMENTATION R020_CLI_CONTRACT_ACCEPTED -> R020_CLI_READY:
+  title "Implement the offline assurance CLI"
+  description "Implement model loading, selected-view path and qualified SPOF analysis, optional declared failure propagation, deterministic ltfa.assurance/v1 human and JSON results, diagnostics, and contract tests without network or command execution."
+  estimate:
+    optimistic 2d
+    most_likely 3d
+    pessimistic 5d
+  priority 100
+  requires:
+    CODEX 1
+  owner "codex"
+  tags ["v0.2.0", cli, implementation]
+  source "R020 CLI contract; AC-003, AC-004, AC-007, AC-008"
+
+task R020_RELEASE_METADATA R020_CLI_READY -> R020_METADATA_READY:
+  title "Prepare v0.2 version, notes, and install contract"
+  description "Set version 0.2.0, add source-faithful release notes, install-smoke the analyze command and documentation, and retain v0.1 historical scope without creating a tag."
+  estimate:
+    optimistic 0.5d
+    most_likely 1d
+    pessimistic 2d
+  priority 100
+  requires:
+    CODEX 1
+  owner "codex"
+  tags ["v0.2.0", release, install]
+  source "ADR 0002; v0.1 release preparation controls"
+
+task R020_CANDIDATE_ACCEPTANCE R020_METADATA_READY -> R020_CANDIDATE_ACCEPTED:
+  title "Accept the immutable v0.2.0 candidate"
+  description "Run Release, ASan/UBSan, LSan, fuzz-seed, install-tree, offline-runtime, CLI contract, and Graphviz gates against one exact commit and record the candidate evidence. Tagging and publication remain excluded."
+  estimate:
+    optimistic 0.5d
+    most_likely 1d
+    pessimistic 2d
+  priority 100
+  requires:
+    CODEX 1
+    REVIEW 1
+  owner "codex"
+  tags ["v0.2.0", release, acceptance]
+  source "v0.2 release preparation; publication restart requires separate owner instruction"
