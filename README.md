@@ -4,8 +4,8 @@ LTFA is a lightweight multilayer topology and fault analyzer. It compiles a
 strict local topology model and runs bounded offline path, impact, SPOF, and
 declared-failure analysis.
 
-The current `v0.2.0` candidate is a native C++17 one-shot CLI with no production
-runtime dependencies beyond the C++ runtime. It does not access the network.
+LTFA v0.2.0 is a native C++17 one-shot CLI with no production runtime
+dependencies beyond the C++ runtime. It does not access the network.
 
 ## Capabilities
 
@@ -115,12 +115,11 @@ The detailed assurance interface is recorded in the
 
 ## Release status
 
-The `v0.2.0` candidate has been accepted locally but has not been tagged or
-published. See the [current release notes](RELEASE_NOTES.md) for included and
-excluded behavior. The accepted but unpublished v0.1.0 scope remains in the
-[historical release notes](docs/releases/v0.1.0.md).
-
-Tag creation and publication require separate authorization.
+`v0.2.0` is the current release. See the
+[current release notes](RELEASE_NOTES.md) and
+[GitHub release](https://github.com/mako10k/ltfa/releases/tag/v0.2.0) for the
+included and excluded behavior. The accepted but unpublished v0.1.0 scope
+remains in the [historical release notes](docs/releases/v0.1.0.md).
 
 ## Development
 

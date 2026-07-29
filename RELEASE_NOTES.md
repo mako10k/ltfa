@@ -1,6 +1,6 @@
 # LTFA v0.2.0
 
-Release date: not yet published
+Release date: 2026-07-29
 
 LTFA v0.2.0 is the first offline assurance candidate. It keeps the deterministic
 local model compiler from v0.1.0 and adds explicit, bounded path, impact, SPOF,
@@ -45,7 +45,8 @@ notes, and the development guide are installed under
 version and help output, model compilation, and one complete assurance
 analysis.
 
-Tag creation and release publication remain pending separate authorization.
+The `v0.2.0` tag identifies the immutable candidate recorded in
+`docs/acceptance/v0.2.0-release-candidate.md`.
 
 ## Public Contract
 
