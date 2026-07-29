@@ -29,19 +29,12 @@ resource REVIEW:
 
 
 
-milestone PATH_IMPACT_READY:
-  title "Path and impact analysis ready"
-  state reached
 
-milestone PROPAGATION_READY:
-  title "Failure propagation ready"
-  state reached
 
-milestone SPOF_READY:
-  title "SPOF analysis ready"
 
 milestone SLICE2_INTEGRATED:
   title "Offline assurance inputs integrated"
+  state reached
 
 milestone SLICE2_ACCEPTED:
   title "Offline assurance slice accepted"
@@ -96,25 +89,8 @@ milestone MVP_ACCEPTED:
 
 
 
-task M2_SPOF_ANALYSIS PATH_IMPACT_READY -> SPOF_READY:
-  title "Implement articulation, bridge, and qualified SPOF analysis"
-  description "Add linear articulation and bridge analysis, modeled common-cause findings, and completeness-qualified confirmed-spof, model-spof, and not-a-spof-in-view classifications."
-  estimate:
-    optimistic 2d
-    most_likely 3d
-    pessimistic 5d
-  priority 80
-  requires:
-    CODEX 1
-  owner "codex"
-  tags [slice2, analysis]
-  source "requirements REQ-ANL-003, REQ-ANL-006, REQ-ANL-013..014, AC-003; basic design sections 10.2 and 10.6"
 
-gate M2_PROPAGATION_GATE PROPAGATION_READY -> SLICE2_INTEGRATED:
-  reason "Slice 2 acceptance requires failure propagation semantics"
 
-gate M2_SPOF_GATE SPOF_READY -> SLICE2_INTEGRATED:
-  reason "Slice 2 acceptance requires path and qualified SPOF analysis"
 
 task M2_ACCEPTANCE SLICE2_INTEGRATED -> SLICE2_ACCEPTED:
   title "Accept the offline assurance slice"

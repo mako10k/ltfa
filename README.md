@@ -9,9 +9,10 @@ normalized-model compilation, human/JSON/DOT model output, a small CLI with
 help and version output, requirement-group availability semantics,
 failure-domain expansion, filtered reachability and path analysis,
 connectivity-removal impact analysis, and dependency-free CTest coverage. The
-core also runs deterministic immediate and fixed-delay failure propagation.
-The CLI does not yet expose assurance analysis, and the core does not yet run
-SPOF analysis. LTFA performs no network access.
+core also runs deterministic immediate and fixed-delay failure propagation,
+linear articulation and bridge analysis, and completeness-qualified SPOF
+analysis. The CLI does not yet expose assurance analysis. LTFA performs no
+network access.
 
 ## Design source
 
@@ -135,6 +136,8 @@ Filtered path and removal-impact evidence is recorded in
 [`docs/acceptance/m2-path-impact.md`](docs/acceptance/m2-path-impact.md).
 Deterministic failure-propagation evidence is recorded in
 [`docs/acceptance/m2-failure-propagation.md`](docs/acceptance/m2-failure-propagation.md).
+Qualified articulation, bridge, and SPOF evidence is recorded in
+[`docs/acceptance/m2-spof-analysis.md`](docs/acceptance/m2-spof-analysis.md).
 The release plan and current candidate evidence are recorded in
 [`docs/plans/v0.1.0-release.md`](docs/plans/v0.1.0-release.md) and
 [`docs/acceptance/v0.1.0-release-candidate.md`](docs/acceptance/v0.1.0-release-candidate.md).
@@ -164,8 +167,11 @@ evaluated through the core API. The core also supports bounded filtered
 reachability, deterministic representative paths, and modeled connectivity
 impact for object, relation, and failure-domain removal. One object, relation,
 failure-domain, or declared-mode injection can be propagated to a fixed point
-with stable immediate and delayed findings. CLI exposure remains deferred until
-SPOF analysis and Slice 2 acceptance are integrated.
+with stable immediate and delayed findings. Undirected graph views expose
+articulation points and bridges, while source-to-target removal checks
+distinguish `confirmed-spof`, `model-spof`, and `not-a-spof-in-view`, including
+shared failure-domain candidates. CLI exposure remains deferred until Slice 2
+acceptance is integrated.
 
 ## Layout
 

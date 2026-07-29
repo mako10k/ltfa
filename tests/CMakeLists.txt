@@ -48,6 +48,16 @@ ltfa_enable_warnings(ltfa_failure_propagation_test)
 
 add_test(NAME ltfa.analysis.failure-propagation COMMAND ltfa_failure_propagation_test)
 
+add_executable(ltfa_spof_analysis_test
+    spof_analysis_test.cpp
+)
+target_link_libraries(ltfa_spof_analysis_test PRIVATE ltfa::core)
+target_compile_features(ltfa_spof_analysis_test PRIVATE cxx_std_17)
+set_target_properties(ltfa_spof_analysis_test PROPERTIES CXX_EXTENSIONS OFF)
+ltfa_enable_warnings(ltfa_spof_analysis_test)
+
+add_test(NAME ltfa.analysis.spof COMMAND ltfa_spof_analysis_test)
+
 add_executable(ltfa_lexer_test
     lexer_test.cpp
 )

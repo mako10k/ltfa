@@ -430,3 +430,45 @@ stable repeat output and usage, redundancy, every MVP injection target kind,
 unknown extensions, qualification, probes, resource budgets, malformed input,
 and time overflow. The pre-advance plan digest was
 `sha256:44e356227f936c6e9088d6c814d9cfa5d1a1a26af5cafc07fa9275ecabd6b31f`.
+
+## 2026-07-29 — M2_SPOF_ANALYSIS
+
+Status: accepted
+
+The fourth Slice 2 core task adds iterative linear articulation and bridge
+analysis plus qualified source-to-target SPOF checks over an explicit
+undirected view. It distinguishes verified findings, model-limited findings,
+and surviving paths without turning a selected-view result into a global
+safety claim.
+
+Delivered:
+
+- deterministic iterative Tarjan articulation and bridge analysis
+- parallel-relation identity handling without false bridges
+- automatic articulation, bridge, and shared failure-domain candidates
+- explicit object, relation, and failure-domain candidate checks
+- baseline and retained path evidence
+- affected objects and targets, common domains, and common-cause members
+- `confirmed-spof`, `model-spof`, and `not-a-spof-in-view`
+- completeness, evidence-quality, unknown-state, and filter-exclusion
+  qualification
+- candidate, visited-object, and examined-relation budgets
+- malformed-input and terminal-candidate fail-closed handling
+
+Verification:
+
+```text
+cmake --preset release && cmake --build --preset release && ctest --preset release
+cmake --preset asan-ubsan && cmake --build --preset asan-ubsan && ctest --preset asan-ubsan
+cmake --preset lsan && cmake --build --preset lsan && ctest --preset lsan
+cmake --preset fuzz-seeds && cmake --build --preset fuzz-seeds && ctest --preset fuzz-seeds
+```
+
+The GNU 13.3.0 Release suite passed all 20 tests, including static and runtime
+offline checks, install-tree smoke, and Graphviz validation. ASan/UBSan and
+independent LSan passed all 18 applicable tests, and the fuzz-seed configuration
+passed all 19. The focused test covered exact structural results, parallel
+relations, redundant object and edge removal, shared-domain common-cause loss,
+stable repeat output and usage, all three classifications, qualification,
+resource budgets, and malformed input. The pre-advance plan digest was
+`sha256:7099c1f3c176b5c591bca82939d9e8f5d48e8f7fb9a7f512b259ff6b2323a126`.
