@@ -164,6 +164,7 @@ add_test(
         -DLTFA_INSTALL_CONFIG=$<CONFIG>
         -DLTFA_EXPECTED_VERSION=${PROJECT_VERSION}
         -DLTFA_MODEL_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice1
+        -DLTFA_SLICE2_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice2
         -P ${PROJECT_SOURCE_DIR}/cmake/verify_install_smoke.cmake
 )
 

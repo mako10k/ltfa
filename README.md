@@ -31,6 +31,7 @@ Repository-local decisions:
 - [CLI contract and first release boundary](docs/decisions/0002-cli-contract-and-first-release-boundary.md)
 - [v0.2 offline assurance CLI contract](docs/decisions/0003-v0.2-assurance-cli.md)
 - [Current release notes](RELEASE_NOTES.md)
+- [Historical v0.1.0 release notes](docs/releases/v0.1.0.md)
 
 ## Boundary
 
@@ -120,14 +121,11 @@ Completed-task evidence is retained in `docs/plans/ltfa-mvp-history.md` before
 
 ## Release direction
 
-The accepted `v0.1.0` release candidate is an offline model compiler preview
-containing Slice 1 plus descriptor-backed help, stable CLI usage diagnostics,
-MIT licensing, release notes, and install-tree validation. The commit
-containing the candidate evidence is its immutable candidate; it has not been
-tagged or published. The offline assurance core is now accepted at the
-`SLICE2_ACCEPTED` implementation boundary and defines the later `v0.2.0`
-functional scope. This does not change the binary version or authorize a tag
-or publication.
+The accepted but unpublished `v0.1.0` candidate is preserved as the first
+offline model compiler preview. The local project version is now `0.2.0` for
+the separately authorized assurance candidate-preparation path. Its functional
+scope is the accepted `SLICE2_ACCEPTED` core plus the reviewed `analyze` CLI.
+This version change does not authorize a tag or publication.
 
 The detailed CLI and release contract is recorded in
 [`docs/decisions/0002-cli-contract-and-first-release-boundary.md`](docs/decisions/0002-cli-contract-and-first-release-boundary.md).
@@ -143,7 +141,7 @@ Qualified articulation, bridge, and SPOF evidence is recorded in
 [`docs/acceptance/m2-spof-analysis.md`](docs/acceptance/m2-spof-analysis.md).
 The integrated offline-assurance acceptance is recorded in
 [`docs/acceptance/m2-offline-assurance-slice.md`](docs/acceptance/m2-offline-assurance-slice.md).
-The release plan and current candidate evidence are recorded in
+The v0.1 release plan and candidate evidence are recorded in
 [`docs/plans/v0.1.0-release.md`](docs/plans/v0.1.0-release.md) and
 [`docs/acceptance/v0.1.0-release-candidate.md`](docs/acceptance/v0.1.0-release-candidate.md).
 Release publication remains outside the residual MVP PERT and requires a
@@ -210,6 +208,7 @@ tests/fixtures/      Synthetic offline acceptance inputs
 docs/acceptance/     Requirement traces and accepted slice boundaries
 docs/decisions/      Project-local architecture decisions
 docs/plans/          Completed PERT task evidence
+docs/releases/       Historical release notes
 plans/               Residual perttool plans
 third_party/         Pinned source dependencies when approved
 ```

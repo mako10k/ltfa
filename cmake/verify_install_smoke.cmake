@@ -4,7 +4,8 @@ foreach(required
         LTFA_INSTALL_BINDIR
         LTFA_INSTALL_DOCDIR
         LTFA_EXPECTED_VERSION
-        LTFA_MODEL_ROOT)
+        LTFA_MODEL_ROOT
+        LTFA_SLICE2_ROOT)
     if(NOT DEFINED ${required} OR "${${required}}" STREQUAL "")
         message(FATAL_ERROR "missing required setting ${required}")
     endif()
@@ -105,5 +106,46 @@ string(JSON model_schema ERROR_VARIABLE model_json_error GET "${model_output}" s
 if(model_json_error OR NOT model_schema STREQUAL "ltfa.model/v1")
     message(FATAL_ERROR
         "installed model output is not ltfa.model/v1: ${model_json_error}"
+    )
+endif()
+
+execute_process(
+    COMMAND
+        "${installed_cli}"
+        analyze
+        --model-root "${LTFA_SLICE2_ROOT}"
+        --input main.ltfa
+        --scope site:verified
+        --source device:path-source
+        --target device:path-tail
+        --failure failure:breaker
+        --format json
+    RESULT_VARIABLE analyze_result
+    OUTPUT_VARIABLE analyze_output
+    ERROR_VARIABLE analyze_error
+)
+if(NOT analyze_result EQUAL 0 OR NOT analyze_error STREQUAL "")
+    message(FATAL_ERROR
+        "installed analyze check failed: status=${analyze_result}\n"
+        "stdout=${analyze_output}\nstderr=${analyze_error}"
+    )
+endif()
+
+string(JSON analyze_schema ERROR_VARIABLE analyze_json_error
+    GET "${analyze_output}" schema
+)
+string(JSON analyze_result_value GET "${analyze_output}" result)
+string(JSON analyze_reachable GET "${analyze_output}" path reachable)
+string(JSON analyze_spof_count LENGTH "${analyze_output}" spof findings)
+string(JSON analyze_event_count LENGTH "${analyze_output}" propagation events)
+if(analyze_json_error OR
+   NOT analyze_schema STREQUAL "ltfa.assurance/v1" OR
+   NOT analyze_result_value STREQUAL "complete" OR
+   NOT analyze_reachable OR
+   NOT analyze_spof_count EQUAL 3 OR
+   NOT analyze_event_count EQUAL 4)
+    message(FATAL_ERROR
+        "installed analyze output does not satisfy the release contract: "
+        "${analyze_json_error}"
     )
 endif()

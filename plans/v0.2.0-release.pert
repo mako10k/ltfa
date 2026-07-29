@@ -17,12 +17,10 @@ resource REVIEW:
   title "Review and acceptance capacity"
   capacity 1
 
-milestone R020_CLI_CONTRACT_ACCEPTED:
-  title "v0.2 assurance CLI contract accepted"
-  state reached
 
 milestone R020_CLI_READY:
   title "v0.2 assurance CLI ready"
+  state reached
 
 milestone R020_METADATA_READY:
   title "v0.2 release metadata and install contract ready"
@@ -31,20 +29,6 @@ milestone R020_CANDIDATE_ACCEPTED:
   title "v0.2.0 release candidate accepted"
 
 
-task R020_CLI_IMPLEMENTATION R020_CLI_CONTRACT_ACCEPTED -> R020_CLI_READY:
-  title "Implement the offline assurance CLI"
-  description "Implement model loading, selected-view path and qualified SPOF analysis, optional declared failure propagation, deterministic ltfa.assurance/v1 human and JSON results, diagnostics, and contract tests without network or command execution."
-  estimate:
-    optimistic 2d
-    most_likely 3d
-    pessimistic 5d
-  status done
-  priority 100
-  requires:
-    CODEX 1
-  owner "codex"
-  tags ["v0.2.0", cli, implementation]
-  source "R020 CLI contract; AC-003, AC-004, AC-007, AC-008"
 
 task R020_RELEASE_METADATA R020_CLI_READY -> R020_METADATA_READY:
   title "Prepare v0.2 version, notes, and install contract"
@@ -53,6 +37,7 @@ task R020_RELEASE_METADATA R020_CLI_READY -> R020_METADATA_READY:
     optimistic 0.5d
     most_likely 1d
     pessimistic 2d
+  status done
   priority 100
   requires:
     CODEX 1
