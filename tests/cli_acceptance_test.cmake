@@ -95,6 +95,85 @@ if(NOT help_schema STREQUAL "ltfa.command-help/v1" OR NOT help_contract EQUAL 2 
     message(FATAL_ERROR "structured root help contract is incorrect")
 endif()
 
+run_cli(analyze_help_json_first help analyze --format json)
+run_cli(analyze_help_json_second help analyze --format=json)
+if(NOT analyze_help_json_first_result EQUAL 0 OR
+   NOT analyze_help_json_second_result EQUAL 0 OR
+   NOT analyze_help_json_first_error STREQUAL "" OR
+   NOT analyze_help_json_second_error STREQUAL "" OR
+   NOT analyze_help_json_first_output STREQUAL analyze_help_json_second_output)
+    message(FATAL_ERROR "structured analyze help must be byte-stable")
+endif()
+string(JSON analyze_help_query GET "${analyze_help_json_first_output}" query command)
+string(JSON analyze_help_count LENGTH "${analyze_help_json_first_output}" commands)
+string(JSON analyze_help_operation
+    GET "${analyze_help_json_first_output}" commands 0 operation
+)
+string(JSON analyze_help_effect GET "${analyze_help_json_first_output}" commands 0 effect)
+string(JSON analyze_help_payload
+    GET "${analyze_help_json_first_output}" commands 0 output payload
+)
+string(JSON analyze_help_option_count
+    LENGTH "${analyze_help_json_first_output}" commands 0 options
+)
+string(JSON analyze_help_schema_count
+    LENGTH "${analyze_help_json_first_output}" commands 0 result_schemas
+)
+string(JSON analyze_help_exit_count
+    LENGTH "${analyze_help_json_first_output}" commands 0 exit_statuses
+)
+string(JSON analyze_help_usage GET "${analyze_help_json_first_output}" commands 0 usage)
+string(CONCAT expected_analyze_usage
+    "ltfa analyze --model-root <directory> --input <file> --scope <scope-id> "
+    "--source <object-id> --target <object-id> [--failure <failure-id>] "
+    "[--format human|json] [--include-restricted] [--max-candidates <count>] "
+    "[--max-visited-objects <count>] [--max-examined-relations <count>] "
+    "[--max-events <count>] [--max-state-transitions <count>]"
+)
+if(NOT analyze_help_query STREQUAL "analyze" OR NOT analyze_help_count EQUAL 1 OR
+   NOT analyze_help_operation STREQUAL "analyze" OR
+   NOT analyze_help_effect STREQUAL "read" OR
+   NOT analyze_help_payload STREQUAL "assurance" OR
+   NOT analyze_help_option_count EQUAL 14 OR
+   NOT analyze_help_schema_count EQUAL 2 OR NOT analyze_help_exit_count EQUAL 5 OR
+   NOT analyze_help_usage STREQUAL expected_analyze_usage)
+    message(FATAL_ERROR "structured analyze help is incomplete")
+endif()
+
+set(analyze_budget_names
+    max-candidates
+    max-visited-objects
+    max-examined-relations
+    max-events
+    max-state-transitions
+)
+set(analyze_budget_defaults
+    1024
+    2000000
+    10000000
+    1000000
+    300000
+)
+foreach(index RANGE 0 4)
+    math(EXPR option_index "${index} + 9")
+    list(GET analyze_budget_names ${index} expected_name)
+    list(GET analyze_budget_defaults ${index} expected_default)
+    string(JSON actual_name
+        GET "${analyze_help_json_first_output}" commands 0 options ${option_index} name
+    )
+    string(JSON actual_type
+        GET "${analyze_help_json_first_output}" commands 0 options ${option_index} value_type
+    )
+    string(JSON actual_default
+        GET "${analyze_help_json_first_output}" commands 0 options ${option_index} default
+    )
+    if(NOT actual_name STREQUAL expected_name OR
+       NOT actual_type STREQUAL "positive-integer" OR
+       NOT actual_default STREQUAL expected_default)
+        message(FATAL_ERROR "structured analyze budget option ${expected_name} is incorrect")
+    endif()
+endforeach()
+
 set(analyze_command
     analyze
     --model-root "${LTFA_SLICE2_ROOT}"
@@ -167,28 +246,45 @@ if(NOT analyze_unreachable_result EQUAL 0 OR NOT unreachable_result STREQUAL "co
     message(FATAL_ERROR "unreachable must be a successful non-SPOF finding")
 endif()
 
-run_cli(analyze_limited
-    analyze --model-root "${LTFA_SLICE2_ROOT}" --input main.ltfa
-    --scope site:verified --source device:path-source --target device:path-tail
-    --max-candidates 1 --format json
-)
-string(JSON limited_result GET "${analyze_limited_output}" result)
-string(JSON limited_count LENGTH "${analyze_limited_output}" spof findings)
-if(NOT analyze_limited_result EQUAL 0 OR NOT limited_result STREQUAL "incomplete" OR
-   NOT limited_count EQUAL 1)
-    message(FATAL_ERROR "bounded incompleteness must remain a successful result")
-endif()
+function(check_bounded_budget option)
+    run_cli(bounded_budget ${analyze_command} "--${option}" 1 --format json)
+    if(NOT bounded_budget_result EQUAL 0 OR NOT bounded_budget_error STREQUAL "")
+        message(FATAL_ERROR "valid --${option} budget must remain a successful result")
+    endif()
+    string(JSON budget_result GET "${bounded_budget_output}" result)
+    if(NOT budget_result STREQUAL "incomplete")
+        message(FATAL_ERROR "--${option}=1 must report bounded incompleteness")
+    endif()
+endfunction()
 
-run_cli(analyze_bad_budget
-    analyze --model-root "${LTFA_SLICE2_ROOT}" --input main.ltfa
-    --scope site:verified --source device:path-source --target device:path-tail
-    --max-candidates 0
-)
-if(NOT analyze_bad_budget_result EQUAL 2 OR NOT analyze_bad_budget_output STREQUAL "" OR
-   NOT analyze_bad_budget_error MATCHES
-       "^LTCLI-001 error: option --max-candidates must be a positive base-10 integer")
-    message(FATAL_ERROR "invalid analyze budgets must be stable usage errors")
-endif()
+foreach(option IN LISTS analyze_budget_names)
+    check_bounded_budget("${option}")
+endforeach()
+
+function(check_invalid_budget option value)
+    run_cli(invalid_budget ${analyze_command} "--${option}" "${value}" --format json)
+    if(NOT invalid_budget_result EQUAL 2 OR NOT invalid_budget_error STREQUAL "")
+        message(FATAL_ERROR "invalid --${option}=${value} must be a JSON usage error")
+    endif()
+    string(JSON invalid_schema GET "${invalid_budget_output}" schema)
+    string(JSON invalid_status GET "${invalid_budget_output}" exit_status)
+    string(JSON invalid_kind GET "${invalid_budget_output}" usage kind)
+    string(JSON invalid_token GET "${invalid_budget_output}" usage token)
+    string(JSON invalid_message GET "${invalid_budget_output}" diagnostics 0 message)
+    if(NOT invalid_schema STREQUAL "ltfa.cli-error/v1" OR NOT invalid_status EQUAL 2 OR
+       NOT invalid_kind STREQUAL "invalid_option_value" OR
+       NOT invalid_token STREQUAL value OR
+       NOT invalid_message STREQUAL
+           "option --${option} must be a positive base-10 integer")
+        message(FATAL_ERROR "invalid --${option}=${value} diagnostic is incorrect")
+    endif()
+endfunction()
+
+foreach(option IN LISTS analyze_budget_names)
+    check_invalid_budget("${option}" 0)
+endforeach()
+check_invalid_budget("max-candidates" "not-a-count")
+check_invalid_budget("max-events" "18446744073709551616")
 
 run_cli(analyze_unknown_scope
     analyze --model-root "${LTFA_SLICE2_ROOT}" --input main.ltfa
@@ -204,6 +300,49 @@ if(NOT selection_schema STREQUAL "ltfa.cli-error/v1" OR
    NOT selection_code STREQUAL "LTANL-001")
     message(FATAL_ERROR "analysis selection diagnostic contract is incorrect")
 endif()
+
+function(check_selection_rejection expected_message)
+    run_cli(selection_rejection
+        analyze --model-root "${LTFA_SLICE2_ROOT}" --input main.ltfa
+        --scope site:verified ${ARGN} --format json
+    )
+    if(NOT selection_rejection_result EQUAL 4 OR
+       NOT selection_rejection_error STREQUAL "")
+        message(FATAL_ERROR "analysis selection rejection must use exit 4 on JSON stdout")
+    endif()
+    string(JSON rejection_schema GET "${selection_rejection_output}" schema)
+    string(JSON rejection_operation GET "${selection_rejection_output}" operation)
+    string(JSON rejection_status GET "${selection_rejection_output}" exit_status)
+    string(JSON rejection_code GET "${selection_rejection_output}" diagnostics 0 code)
+    string(JSON rejection_message GET "${selection_rejection_output}" diagnostics 0 message)
+    if(NOT rejection_schema STREQUAL "ltfa.cli-error/v1" OR
+       NOT rejection_operation STREQUAL "analyze" OR NOT rejection_status EQUAL 4 OR
+       NOT rejection_code STREQUAL "LTANL-001" OR
+       NOT rejection_message STREQUAL expected_message)
+        message(FATAL_ERROR "analysis selection rejection is incorrect: ${expected_message}")
+    endif()
+endfunction()
+
+check_selection_rejection(
+    "source object not found: device:missing"
+    --source device:missing --target device:path-tail
+)
+check_selection_rejection(
+    "target object not found: device:missing"
+    --source device:path-source --target device:missing
+)
+check_selection_rejection(
+    "source and target must be distinct"
+    --source device:path-source --target device:path-source
+)
+check_selection_rejection(
+    "source and target must both belong to scope site:verified"
+    --source device:partial-source --target device:path-tail
+)
+check_selection_rejection(
+    "declared failure not found: failure:missing"
+    --source device:path-source --target device:path-tail --failure failure:missing
+)
 
 set(restricted_analyze
     analyze --model-root "${LTFA_SLICE2_ROOT}" --input restricted.ltfa

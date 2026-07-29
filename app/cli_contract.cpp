@@ -134,7 +134,9 @@ constexpr std::array<CommandDescriptor, 3> kCommands{{
      "Run bounded path, qualified SPOF, and optional declared-failure analysis.",
      "ltfa analyze --model-root <directory> --input <file> --scope <scope-id> "
      "--source <object-id> --target <object-id> [--failure <failure-id>] "
-     "[--format human|json] [--include-restricted] [budget options]",
+     "[--format human|json] [--include-restricted] [--max-candidates <count>] "
+     "[--max-visited-objects <count>] [--max-examined-relations <count>] "
+     "[--max-events <count>] [--max-state-transitions <count>]",
      CommandHandler::analyze, nullptr, 0, kAnalyzeOptions.data(), kAnalyzeOptions.size(),
      "local-model-tree", "human|json", "assurance", "read", "ltfa.assurance/v1|ltfa.cli-error/v1",
      kAnalyzeExitStatuses.data(), kAnalyzeExitStatuses.size(), kAnalyzeExamples.data(),

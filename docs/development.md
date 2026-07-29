@@ -170,7 +170,7 @@ frontier with:
 ```sh
 perttool document check plans/v0.2.1-cli-consistency.pert --warnings-as-errors
 perttool dag next plans/v0.2.1-cli-consistency.pert \
-    --capacity CODEX=1 --capacity REVIEW=1
+    --capacity CODEX=2 --capacity REVIEW=1
 ```
 
 The residual offline-MVP plan is `plans/ltfa-mvp.pert`. Validate it and select

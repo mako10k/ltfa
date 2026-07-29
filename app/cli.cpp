@@ -128,6 +128,10 @@ int finish_output(std::ostream &output, std::ostream &error, std::string_view ki
     return kExitOutput;
 }
 
+[[nodiscard]] std::size_t remaining_work_budget(std::size_t limit, std::size_t used) noexcept {
+    return used >= limit ? 0 : limit - used;
+}
+
 bool parse_command_arguments(const CommandDescriptor &command, int argc, char *argv[], int begin,
                              ParsedArguments &parsed, UsageError &usage) {
     bool options_ended = false;
@@ -726,7 +730,12 @@ int run_analyze(const CommandDescriptor &command, const ParsedArguments &parsed,
         spof_request.source = *source;
         spof_request.targets.push_back(*target);
         spof_request.view = view;
-        report.spof = analyze_spof(model, snapshot, spof_request, options->budgets.spof);
+        auto spof_budget = options->budgets.spof;
+        spof_budget.max_total_visited_objects = remaining_work_budget(
+            spof_budget.max_total_visited_objects, report.path.usage.visited_objects);
+        spof_budget.max_total_examined_relations = remaining_work_budget(
+            spof_budget.max_total_examined_relations, report.path.usage.examined_relations);
+        report.spof = analyze_spof(model, snapshot, spof_request, spof_budget);
         if (report.spof->status == AnalysisStatus::invalid) {
             return emit_analysis_diagnostic(output, error, command,
                                             "SPOF analysis rejected the selected normalized view",

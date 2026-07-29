@@ -143,7 +143,7 @@ set_tests_properties(ltfa.cli.version PROPERTIES
 )
 
 add_test(
-    NAME ltfa.cli.model.acceptance
+    NAME ltfa.cli.acceptance
     COMMAND ${CMAKE_COMMAND}
         -DLTFA_CLI=$<TARGET_FILE:ltfa>
         -DLTFA_EXPECTED_VERSION=${PROJECT_VERSION}
@@ -151,6 +151,14 @@ add_test(
         -DLTFA_INVALID_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice1-invalid
         -DLTFA_SLICE2_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice2
         -P ${CMAKE_CURRENT_SOURCE_DIR}/cli_acceptance_test.cmake
+)
+
+add_test(
+    NAME ltfa.cli.analyze.budget-acceptance
+    COMMAND ${CMAKE_COMMAND}
+        -DLTFA_CLI=$<TARGET_FILE:ltfa>
+        -DLTFA_SLICE2_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice2
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cli_budget_acceptance_test.cmake
 )
 
 add_test(

@@ -1,6 +1,6 @@
 # Existing .pert plans should normally be maintained through perttool commands; direct DSL editing bypasses goal/DAG owner-confirmation checks.
 project LTFA_CLI_REPAIR:
-  version 4
+  version 5
   title "LTFA assurance CLI consistency repair"
   description "Independent repair plan for GitHub Issue #1 after the v0.2.0 CLI consistency, symmetry, and completeness review. It covers cumulative work-budget enforcement, assurance output parity, exact help grammar, acceptance coverage, and repair acceptance. It excludes observation features, network or execution effects, schema-version changes without a separate compatibility decision, tag creation, and release publication."
   as_of 2026-07-29
@@ -17,7 +17,7 @@ milestone V020_REVIEWED:
 resource CODEX:
   title "LTFA implementation capacity"
   description "Serialize implementation and test changes in this checkout"
-  capacity 1
+  capacity 2
 
 resource REVIEW:
   title "Contract and acceptance review capacity"
@@ -49,6 +49,7 @@ task CLI_SHARED_BUDGET_REPAIR V020_REVIEWED -> BUDGET_REPAIR_READY:
     optimistic 1d
     most_likely 2d
     pessimistic 3d
+  status active
   priority 100
   requires:
     CODEX 1
@@ -93,6 +94,7 @@ task CLI_HELP_AND_ACCEPTANCE_COVERAGE V020_REVIEWED -> HELP_COVERAGE_READY:
     optimistic 1d
     most_likely 2d
     pessimistic 3d
+  status active
   priority 90
   requires:
     CODEX 1
@@ -123,3 +125,17 @@ task CLI_REPAIR_ACCEPTANCE CLI_REPAIR_INTEGRATED -> CLI_REPAIR_ACCEPTED:
   owner "codex"
   tags [cli, acceptance, offline, patch]
   source "GitHub Issue #1 acceptance criteria; AGENTS.md build and offline boundaries"
+
+work_event CLI_SHARED_BUDGET_REPAIR_START:
+  model 1
+  task CLI_SHARED_BUDGET_REPAIR
+  kind start
+  occurred_at 2026-07-29T18:13:45+09:00
+  planned_value 2d
+
+work_event CLI_HELP_AND_ACCEPTANCE_COVERAGE_START:
+  model 1
+  task CLI_HELP_AND_ACCEPTANCE_COVERAGE
+  kind start
+  occurred_at 2026-07-29T18:13:56+09:00
+  planned_value 2d
