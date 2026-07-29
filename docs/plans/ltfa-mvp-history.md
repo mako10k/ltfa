@@ -389,3 +389,44 @@ cross-layer paths, every declared view filter, all traversal directions,
 entity, endpoint, relation, and domain removal, redundant paths, common-cause
 loss, qualification, budgets, and invalid input. The pre-advance plan digest
 was `sha256:e903ebbe44e22ae59cb26c74c6ca095dc539eaa9ac6d88ba093ee3d8cf519dbc`.
+
+## 2026-07-29 — M2_FAILURE_PROPAGATION
+
+Status: accepted
+
+The third Slice 2 core task adds deterministic propagation of one object,
+endpoint, relation, failure-domain, or declared failure-mode injection through
+the normalized acyclic availability graph. It retains immediate, degraded,
+delayed, unaffected, detection-gap, lost-probe, and unknown outcomes without
+adding observation inference or changing the accepted `v0.1.0` CLI contract.
+
+Delivered:
+
+- fixed built-in failure-mode result semantics and conservative `x-` unknown
+- direct typed dependency and `all`/`any` requirement-group propagation
+- fixed hold-up with time-and-stable-ID event ordering
+- atomic failure-domain injection and relation-failure inputs
+- fixed-point final snapshots and stable event timelines
+- immediate and delayed unavailable or degraded classifications
+- unaffected, unknown, lost-probe, and direct-probe detection-gap findings
+- completeness and evidence-quality qualification
+- explicit event and state-transition budgets with fail-closed validation
+
+Verification:
+
+```text
+cmake --preset release && cmake --build --preset release && ctest --preset release
+cmake --preset asan-ubsan && cmake --build --preset asan-ubsan && ctest --preset asan-ubsan
+cmake --preset lsan && cmake --build --preset lsan && ctest --preset lsan
+cmake --preset fuzz-seeds && cmake --build --preset fuzz-seeds && ctest --preset fuzz-seeds
+```
+
+The GNU 13.3.0 Release suite passed all 19 tests, including static and runtime
+offline checks, install-tree smoke, and Graphviz validation. ASan/UBSan and
+independent LSan passed all 17 applicable tests, and the fuzz-seed configuration
+passed all 18. The focused test covered every built-in failure mode, immediate
+and delayed unavailable and degraded transitions, simultaneous hold-up expiry,
+stable repeat output and usage, redundancy, every MVP injection target kind,
+unknown extensions, qualification, probes, resource budgets, malformed input,
+and time overflow. The pre-advance plan digest was
+`sha256:44e356227f936c6e9088d6c814d9cfa5d1a1a26af5cafc07fa9275ecabd6b31f`.

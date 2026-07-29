@@ -28,9 +28,6 @@ resource REVIEW:
 
 
 
-milestone ASSURANCE_SEMANTICS_READY:
-  title "Requirement and failure-domain semantics ready"
-  state reached
 
 milestone PATH_IMPACT_READY:
   title "Path and impact analysis ready"
@@ -38,6 +35,7 @@ milestone PATH_IMPACT_READY:
 
 milestone PROPAGATION_READY:
   title "Failure propagation ready"
+  state reached
 
 milestone SPOF_READY:
   title "SPOF analysis ready"
@@ -97,19 +95,6 @@ milestone MVP_ACCEPTED:
 
 
 
-task M2_FAILURE_PROPAGATION ASSURANCE_SEMANTICS_READY -> PROPAGATION_READY:
-  title "Implement deterministic failure propagation"
-  description "Propagate one declared failure through the acyclic dependency graph to a fixed point, retain immediate, degraded, delayed, unaffected, and unknown effects, and order fixed-delay events stably."
-  estimate:
-    optimistic 3d
-    most_likely 5d
-    pessimistic 8d
-  priority 90
-  requires:
-    CODEX 1
-  owner "codex"
-  tags [slice2, analysis]
-  source "requirements REQ-ANL-007..009, AC-004; basic design sections 10.4..10.5"
 
 task M2_SPOF_ANALYSIS PATH_IMPACT_READY -> SPOF_READY:
   title "Implement articulation, bridge, and qualified SPOF analysis"

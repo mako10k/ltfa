@@ -38,6 +38,16 @@ ltfa_enable_warnings(ltfa_path_analysis_test)
 
 add_test(NAME ltfa.analysis.path-impact COMMAND ltfa_path_analysis_test)
 
+add_executable(ltfa_failure_propagation_test
+    failure_propagation_test.cpp
+)
+target_link_libraries(ltfa_failure_propagation_test PRIVATE ltfa::core)
+target_compile_features(ltfa_failure_propagation_test PRIVATE cxx_std_17)
+set_target_properties(ltfa_failure_propagation_test PROPERTIES CXX_EXTENSIONS OFF)
+ltfa_enable_warnings(ltfa_failure_propagation_test)
+
+add_test(NAME ltfa.analysis.failure-propagation COMMAND ltfa_failure_propagation_test)
+
 add_executable(ltfa_lexer_test
     lexer_test.cpp
 )

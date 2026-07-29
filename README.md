@@ -9,8 +9,9 @@ normalized-model compilation, human/JSON/DOT model output, a small CLI with
 help and version output, requirement-group availability semantics,
 failure-domain expansion, filtered reachability and path analysis,
 connectivity-removal impact analysis, and dependency-free CTest coverage. The
-CLI does not yet expose assurance analysis, and the core does not yet run SPOF
-or failure-propagation analysis. LTFA performs no network access.
+core also runs deterministic immediate and fixed-delay failure propagation.
+The CLI does not yet expose assurance analysis, and the core does not yet run
+SPOF analysis. LTFA performs no network access.
 
 ## Design source
 
@@ -132,6 +133,8 @@ The first Slice 2 core evidence is recorded in
 [`docs/acceptance/m2-requirement-semantics.md`](docs/acceptance/m2-requirement-semantics.md).
 Filtered path and removal-impact evidence is recorded in
 [`docs/acceptance/m2-path-impact.md`](docs/acceptance/m2-path-impact.md).
+Deterministic failure-propagation evidence is recorded in
+[`docs/acceptance/m2-failure-propagation.md`](docs/acceptance/m2-failure-propagation.md).
 The release plan and current candidate evidence are recorded in
 [`docs/plans/v0.1.0-release.md`](docs/plans/v0.1.0-release.md) and
 [`docs/acceptance/v0.1.0-release-candidate.md`](docs/acceptance/v0.1.0-release-candidate.md).
@@ -159,8 +162,10 @@ Development after the accepted `v0.1.0` candidate is building the offline
 assurance core for `v0.2.0`. Requirement groups and failure domains can now be
 evaluated through the core API. The core also supports bounded filtered
 reachability, deterministic representative paths, and modeled connectivity
-impact for object, relation, and failure-domain removal. CLI exposure remains
-deferred until SPOF and propagation tasks are integrated.
+impact for object, relation, and failure-domain removal. One object, relation,
+failure-domain, or declared-mode injection can be propagated to a fixed point
+with stable immediate and delayed findings. CLI exposure remains deferred until
+SPOF analysis and Slice 2 acceptance are integrated.
 
 ## Layout
 
