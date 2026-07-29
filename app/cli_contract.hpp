@@ -17,6 +17,7 @@ enum class OptionKind {
 enum class CommandHandler {
     help,
     model,
+    analyze,
 };
 
 struct OperandDescriptor {

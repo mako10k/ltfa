@@ -149,6 +149,7 @@ add_test(
         -DLTFA_EXPECTED_VERSION=${PROJECT_VERSION}
         -DLTFA_VALID_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice1
         -DLTFA_INVALID_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice1-invalid
+        -DLTFA_SLICE2_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice2
         -P ${CMAKE_CURRENT_SOURCE_DIR}/cli_acceptance_test.cmake
 )
 
@@ -193,6 +194,7 @@ if(NOT LTFA_SANITIZERS AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
                 -DLTFA_STRACE=${LTFA_STRACE_EXECUTABLE}
                 -DLTFA_CLI=$<TARGET_FILE:ltfa>
                 -DLTFA_MODEL_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice1
+                -DLTFA_SLICE2_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice2
                 -DLTFA_TRACE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-cli-offline-runtime.trace
                 -P ${PROJECT_SOURCE_DIR}/cmake/verify_offline_cli_runtime.cmake
         )

@@ -1,0 +1,5 @@
+ltfa 1
+scope site:restricted kind=site completeness=partial evidence-quality=inferred
+entity restricted:a kind=device plane=communication layer=physical scope=site:restricted sensitivity=restricted
+entity restricted:b kind=device plane=communication layer=physical scope=site:restricted
+relate restricted:a -> restricted:b kind=depends_on

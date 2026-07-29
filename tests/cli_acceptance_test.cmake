@@ -1,4 +1,9 @@
-foreach(required LTFA_CLI LTFA_EXPECTED_VERSION LTFA_VALID_ROOT LTFA_INVALID_ROOT)
+foreach(required
+        LTFA_CLI
+        LTFA_EXPECTED_VERSION
+        LTFA_VALID_ROOT
+        LTFA_INVALID_ROOT
+        LTFA_SLICE2_ROOT)
     if(NOT DEFINED ${required} OR "${${required}}" STREQUAL "")
         message(FATAL_ERROR "missing required setting ${required}")
     endif()
@@ -43,19 +48,31 @@ endif()
 run_cli(model_help model --help)
 run_cli(model_help_short model -h)
 run_cli(model_help_command help model)
+run_cli(analyze_help analyze --help)
+run_cli(analyze_help_short analyze -h)
+run_cli(analyze_help_command help analyze)
 if(NOT model_help_result EQUAL 0 OR NOT model_help_short_result EQUAL 0 OR
-   NOT model_help_command_result EQUAL 0)
-    message(FATAL_ERROR "model help routes must succeed")
+   NOT model_help_command_result EQUAL 0 OR NOT analyze_help_result EQUAL 0 OR
+   NOT analyze_help_short_result EQUAL 0 OR NOT analyze_help_command_result EQUAL 0)
+    message(FATAL_ERROR "command help routes must succeed")
 endif()
 if(NOT model_help_error STREQUAL "" OR NOT model_help_short_error STREQUAL "" OR
-   NOT model_help_command_error STREQUAL "")
-    message(FATAL_ERROR "successful model help must not write stderr")
+   NOT model_help_command_error STREQUAL "" OR NOT analyze_help_error STREQUAL "" OR
+   NOT analyze_help_short_error STREQUAL "" OR NOT analyze_help_command_error STREQUAL "")
+    message(FATAL_ERROR "successful command help must not write stderr")
 endif()
 if(NOT model_help_output STREQUAL model_help_short_output OR
    NOT model_help_output STREQUAL model_help_command_output OR
    NOT model_help_output MATCHES "^Command: ltfa model" OR
    NOT model_help_output MATCHES "Exit statuses:")
     message(FATAL_ERROR "model help routes must expose one detailed contract")
+endif()
+if(NOT analyze_help_output STREQUAL analyze_help_short_output OR
+   NOT analyze_help_output STREQUAL analyze_help_command_output OR
+   NOT analyze_help_output MATCHES "^Command: ltfa analyze" OR
+   NOT analyze_help_output MATCHES "Effect: read" OR
+   NOT analyze_help_output MATCHES "ltfa.assurance/v1")
+    message(FATAL_ERROR "analyze help routes must expose one detailed offline contract")
 endif()
 
 run_cli(help_json_first help --format json)
@@ -72,10 +89,135 @@ string(JSON help_contract GET "${help_json_first_output}" cli_contract_version)
 string(JSON help_tool_version GET "${help_json_first_output}" tool_version)
 string(JSON help_operation GET "${help_json_first_output}" operation)
 string(JSON help_command_count LENGTH "${help_json_first_output}" commands)
-if(NOT help_schema STREQUAL "ltfa.command-help/v1" OR NOT help_contract EQUAL 1 OR
+if(NOT help_schema STREQUAL "ltfa.command-help/v1" OR NOT help_contract EQUAL 2 OR
    NOT help_tool_version STREQUAL "${LTFA_EXPECTED_VERSION}" OR
-   NOT help_operation STREQUAL "help" OR NOT help_command_count EQUAL 2)
+   NOT help_operation STREQUAL "help" OR NOT help_command_count EQUAL 3)
     message(FATAL_ERROR "structured root help contract is incorrect")
+endif()
+
+set(analyze_command
+    analyze
+    --model-root "${LTFA_SLICE2_ROOT}"
+    --input main.ltfa
+    --scope site:verified
+    --source device:path-source
+    --target device:path-tail
+    --failure failure:breaker
+)
+
+run_cli(analyze_json_first ${analyze_command} --format json)
+run_cli(analyze_json_second ${analyze_command} --format=json)
+if(NOT analyze_json_first_result EQUAL 0 OR NOT analyze_json_second_result EQUAL 0 OR
+   NOT analyze_json_first_error STREQUAL "" OR NOT analyze_json_second_error STREQUAL "" OR
+   NOT analyze_json_first_output STREQUAL analyze_json_second_output)
+    message(FATAL_ERROR "analyze JSON must succeed and remain byte-stable")
+endif()
+string(JSON analyze_schema GET "${analyze_json_first_output}" schema)
+string(JSON analyze_operation GET "${analyze_json_first_output}" operation)
+string(JSON analyze_result GET "${analyze_json_first_output}" result)
+string(JSON analyze_reachable GET "${analyze_json_first_output}" path reachable)
+string(JSON analyze_spof_count LENGTH "${analyze_json_first_output}" spof findings)
+string(JSON analyze_event_count LENGTH "${analyze_json_first_output}" propagation events)
+if(NOT analyze_schema STREQUAL "ltfa.assurance/v1" OR
+   NOT analyze_operation STREQUAL "analyze" OR NOT analyze_result STREQUAL "complete" OR
+   NOT analyze_reachable OR NOT analyze_spof_count EQUAL 3 OR
+   NOT analyze_event_count EQUAL 4)
+    message(FATAL_ERROR "analyze JSON result does not satisfy the Slice 2 contract")
+endif()
+
+run_cli(analyze_human ${analyze_command} --format human)
+if(NOT analyze_human_result EQUAL 0 OR NOT analyze_human_error STREQUAL "" OR
+   NOT analyze_human_output MATCHES
+       "^result: complete\nschema: ltfa.assurance/v1\noperation: analyze" OR
+   NOT analyze_human_output MATCHES "classification: confirmed-spof" OR
+   NOT analyze_human_output MATCHES "at-ms=30000 object=service:held")
+    message(FATAL_ERROR "human analyze output must lead with and retain the result")
+endif()
+
+run_cli(analyze_partial
+    analyze --model-root "${LTFA_SLICE2_ROOT}" --input main.ltfa
+    --scope site:partial --source device:partial-source --target device:partial-tail
+    --format json
+)
+string(JSON partial_count LENGTH "${analyze_partial_output}" spof findings)
+if(NOT analyze_partial_result EQUAL 0 OR NOT analyze_partial_error STREQUAL "" OR
+   NOT partial_count EQUAL 3)
+    message(FATAL_ERROR "partial analyze fixture must return its modeled findings")
+endif()
+math(EXPR partial_last "${partial_count} - 1")
+foreach(index RANGE 0 ${partial_last})
+    string(JSON partial_classification
+        GET "${analyze_partial_output}" spof findings ${index} classification
+    )
+    if(NOT partial_classification STREQUAL "model-spof")
+        message(FATAL_ERROR "partial analysis emitted an unqualified SPOF")
+    endif()
+endforeach()
+
+run_cli(analyze_unreachable
+    analyze --model-root "${LTFA_SLICE2_ROOT}" --input main.ltfa
+    --scope site:verified --source device:path-source --target facility:breaker
+    --format json
+)
+string(JSON unreachable_result GET "${analyze_unreachable_output}" result)
+string(JSON unreachable_path GET "${analyze_unreachable_output}" path reachable)
+string(JSON unreachable_spof_status GET "${analyze_unreachable_output}" spof status)
+if(NOT analyze_unreachable_result EQUAL 0 OR NOT unreachable_result STREQUAL "complete" OR
+   unreachable_path OR NOT unreachable_spof_status STREQUAL "not-applicable")
+    message(FATAL_ERROR "unreachable must be a successful non-SPOF finding")
+endif()
+
+run_cli(analyze_limited
+    analyze --model-root "${LTFA_SLICE2_ROOT}" --input main.ltfa
+    --scope site:verified --source device:path-source --target device:path-tail
+    --max-candidates 1 --format json
+)
+string(JSON limited_result GET "${analyze_limited_output}" result)
+string(JSON limited_count LENGTH "${analyze_limited_output}" spof findings)
+if(NOT analyze_limited_result EQUAL 0 OR NOT limited_result STREQUAL "incomplete" OR
+   NOT limited_count EQUAL 1)
+    message(FATAL_ERROR "bounded incompleteness must remain a successful result")
+endif()
+
+run_cli(analyze_bad_budget
+    analyze --model-root "${LTFA_SLICE2_ROOT}" --input main.ltfa
+    --scope site:verified --source device:path-source --target device:path-tail
+    --max-candidates 0
+)
+if(NOT analyze_bad_budget_result EQUAL 2 OR NOT analyze_bad_budget_output STREQUAL "" OR
+   NOT analyze_bad_budget_error MATCHES
+       "^LTCLI-001 error: option --max-candidates must be a positive base-10 integer")
+    message(FATAL_ERROR "invalid analyze budgets must be stable usage errors")
+endif()
+
+run_cli(analyze_unknown_scope
+    analyze --model-root "${LTFA_SLICE2_ROOT}" --input main.ltfa
+    --scope site:missing --source device:path-source --target device:path-tail
+    --format json
+)
+if(NOT analyze_unknown_scope_result EQUAL 4 OR NOT analyze_unknown_scope_error STREQUAL "")
+    message(FATAL_ERROR "unknown analysis selection must use exit 4 on JSON stdout")
+endif()
+string(JSON selection_schema GET "${analyze_unknown_scope_output}" schema)
+string(JSON selection_code GET "${analyze_unknown_scope_output}" diagnostics 0 code)
+if(NOT selection_schema STREQUAL "ltfa.cli-error/v1" OR
+   NOT selection_code STREQUAL "LTANL-001")
+    message(FATAL_ERROR "analysis selection diagnostic contract is incorrect")
+endif()
+
+set(restricted_analyze
+    analyze --model-root "${LTFA_SLICE2_ROOT}" --input restricted.ltfa
+    --scope site:restricted --source restricted:a --target restricted:b
+)
+run_cli(analyze_restricted_default ${restricted_analyze} --format json)
+run_cli(analyze_restricted_explicit
+    ${restricted_analyze} --include-restricted --format json
+)
+if(NOT analyze_restricted_default_result EQUAL 4 OR
+   NOT analyze_restricted_default_error STREQUAL "" OR
+   NOT analyze_restricted_explicit_result EQUAL 0 OR
+   NOT analyze_restricted_explicit_error STREQUAL "")
+    message(FATAL_ERROR "restricted analysis must require explicit inclusion")
 endif()
 
 run_cli(model_help_json_first help model --format json)

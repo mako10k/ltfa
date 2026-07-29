@@ -87,6 +87,7 @@ set_target_properties(ltfa_core PROPERTIES CXX_EXTENSIONS OFF)
 ltfa_enable_warnings(ltfa_core)
 
 add_executable(ltfa
+    app/assurance_output.cpp
     app/cli.cpp
     app/cli_contract.cpp
     app/main.cpp

@@ -1,13 +1,19 @@
 #include "cli.hpp"
 
+#include "assurance_output.hpp"
 #include "cli_contract.hpp"
 
 #include "ltfa/dsl/include_resolver.hpp"
 #include "ltfa/error.hpp"
+#include "ltfa/failure_propagation.hpp"
 #include "ltfa/model_compiler.hpp"
 #include "ltfa/model_output.hpp"
+#include "ltfa/path_analysis.hpp"
+#include "ltfa/spof_analysis.hpp"
 #include "ltfa/version.hpp"
 
+#include <array>
+#include <charconv>
 #include <filesystem>
 #include <optional>
 #include <ostream>
@@ -66,6 +72,18 @@ struct ModelOptions {
     fs::path input;
     OutputFormat format{OutputFormat::human};
     bool include_restricted{false};
+};
+
+struct AnalyzeOptions {
+    fs::path model_root;
+    fs::path input;
+    std::string scope;
+    std::string source;
+    std::string target;
+    std::optional<std::string> failure;
+    OutputFormat format{OutputFormat::human};
+    bool include_restricted{false};
+    AssuranceBudgets budgets;
 };
 
 UsageError make_usage_error(std::string kind, std::string message, std::string token,
@@ -294,19 +312,37 @@ CliDiagnostic make_cli_diagnostic(const Diagnostic &diagnostic,
 int emit_model_diagnostic(std::ostream &output, std::ostream &error, int exit_status,
                           const Diagnostic &diagnostic,
                           const std::vector<dsl::LoadedSource> &sources,
-                          const fs::path &canonical_root, bool json) {
+                          const fs::path &canonical_root, const CommandDescriptor &command,
+                          bool json) {
     if (!json) {
         print_diagnostic(error, diagnostic, sources, canonical_root);
         return error ? exit_status : kExitOutput;
     }
-    const auto *model_command = find_command("model");
     const auto cli_diagnostic = make_cli_diagnostic(diagnostic, sources, canonical_root);
-    print_cli_error_json(output, exit_status, "model", model_command, nullptr, cli_diagnostic);
+    print_cli_error_json(output, exit_status, command.operation, &command, nullptr, cli_diagnostic);
     if (!output) {
         error << "ltfa: failed to write error output\n";
         return kExitOutput;
     }
     return exit_status;
+}
+
+int emit_analysis_diagnostic(std::ostream &output, std::ostream &error,
+                             const CommandDescriptor &command, std::string message, bool json) {
+    if (!json) {
+        error << "LTANL-001 error: " << message << '\n' << "  help: ltfa help analyze\n";
+        return error ? kExitValidation : kExitOutput;
+    }
+    CliDiagnostic diagnostic;
+    diagnostic.code = "LTANL-001";
+    diagnostic.severity = "error";
+    diagnostic.message = std::move(message);
+    print_cli_error_json(output, kExitValidation, command.operation, &command, nullptr, diagnostic);
+    if (!output) {
+        error << "ltfa: failed to write error output\n";
+        return kExitOutput;
+    }
+    return kExitValidation;
 }
 
 std::optional<OutputFormat> model_output_format(const ParsedArguments &parsed) {
@@ -350,6 +386,158 @@ std::optional<ModelOptions> model_options(const CommandDescriptor &command,
     options.format = *model_output_format(parsed);
     options.include_restricted = parsed.has_option("include-restricted");
     return options;
+}
+
+bool parse_positive_count(const CommandDescriptor &command, const ParsedArguments &parsed,
+                          std::string_view name, std::size_t default_value, std::size_t &result,
+                          UsageError &usage) {
+    const auto value = parsed.option_value(name);
+    if (!value.has_value()) {
+        result = default_value;
+        return true;
+    }
+    std::size_t parsed_value = 0;
+    const auto converted =
+        std::from_chars(value->data(), value->data() + value->size(), parsed_value);
+    if (value->empty() || converted.ec != std::errc{} ||
+        converted.ptr != value->data() + value->size() || parsed_value == 0) {
+        usage = make_usage_error("invalid_option_value",
+                                 "option --" + std::string{name} +
+                                     " must be a positive base-10 integer",
+                                 std::string{*value}, &command);
+        return false;
+    }
+    result = parsed_value;
+    return true;
+}
+
+std::optional<AnalyzeOptions> analyze_options(const CommandDescriptor &command,
+                                              const ParsedArguments &parsed, UsageError &usage) {
+    AnalyzeOptions options;
+    const auto model_root = parsed.option_value("model-root").value_or("");
+    const auto input = parsed.option_value("input").value_or("");
+    const auto scope = parsed.option_value("scope").value_or("");
+    const auto source = parsed.option_value("source").value_or("");
+    const auto target = parsed.option_value("target").value_or("");
+    const std::array<std::pair<std::string_view, std::string_view>, 5> required{{
+        {"model-root", model_root},
+        {"input", input},
+        {"scope", scope},
+        {"source", source},
+        {"target", target},
+    }};
+    for (const auto &[name, value] : required) {
+        if (value.empty()) {
+            usage = make_usage_error("invalid_option_value",
+                                     "option --" + std::string{name} + " must not be empty",
+                                     std::string{value}, &command);
+            return std::nullopt;
+        }
+    }
+    options.model_root = fs::u8path(model_root);
+    options.input = fs::u8path(input);
+    if (options.input.is_absolute() || options.input.has_root_name() ||
+        options.input.has_root_directory()) {
+        usage = make_usage_error("invalid_option_value",
+                                 "option --input must be relative to --model-root",
+                                 std::string{input}, &command);
+        return std::nullopt;
+    }
+    options.scope = scope;
+    options.source = source;
+    options.target = target;
+    if (const auto failure = parsed.option_value("failure"); failure.has_value()) {
+        if (failure->empty()) {
+            usage = make_usage_error("invalid_option_value", "option --failure must not be empty",
+                                     "", &command);
+            return std::nullopt;
+        }
+        options.failure = std::string{*failure};
+    }
+    const auto format = parsed.option_value("format").value_or("human");
+    options.format = format == "json" ? OutputFormat::json : OutputFormat::human;
+    options.include_restricted = parsed.has_option("include-restricted");
+    if (!parse_positive_count(command, parsed, "max-candidates", 1'024,
+                              options.budgets.spof.max_candidates, usage) ||
+        !parse_positive_count(command, parsed, "max-visited-objects", 2'000'000,
+                              options.budgets.spof.max_total_visited_objects, usage) ||
+        !parse_positive_count(command, parsed, "max-examined-relations", 10'000'000,
+                              options.budgets.spof.max_total_examined_relations, usage) ||
+        !parse_positive_count(command, parsed, "max-events", 1'000'000,
+                              options.budgets.propagation.max_events, usage) ||
+        !parse_positive_count(command, parsed, "max-state-transitions", 300'000,
+                              options.budgets.propagation.max_state_transitions, usage)) {
+        return std::nullopt;
+    }
+    options.budgets.path.max_visited_objects = options.budgets.spof.max_total_visited_objects;
+    options.budgets.path.max_examined_relations = options.budgets.spof.max_total_examined_relations;
+    return options;
+}
+
+std::optional<ScopeId> find_scope(const NormalizedModel &model, std::string_view external_id) {
+    for (const auto &scope : model.scopes) {
+        if (model.string(scope.external_id) == external_id) {
+            return scope.id;
+        }
+    }
+    return std::nullopt;
+}
+
+std::optional<ObjectRef> find_object(const NormalizedModel &model, std::string_view external_id) {
+    for (const auto &entity : model.entities) {
+        if (model.string(entity.external_id) == external_id) {
+            return ObjectRef::from(entity.id);
+        }
+    }
+    for (const auto &endpoint : model.endpoints) {
+        if (model.string(endpoint.external_id) == external_id) {
+            return ObjectRef::from(endpoint.id);
+        }
+    }
+    return std::nullopt;
+}
+
+std::optional<FailureModeId> find_failure(const NormalizedModel &model,
+                                          std::string_view external_id) {
+    for (const auto &failure : model.failure_modes) {
+        if (model.string(failure.external_id) == external_id) {
+            return failure.id;
+        }
+    }
+    return std::nullopt;
+}
+
+ScopeId object_scope(const NormalizedModel &model, ObjectRef object) {
+    return object.kind == ObjectKind::entity ? model.entities[object.index].scope
+                                             : model.endpoints[object.index].scope;
+}
+
+bool scope_contains_restricted(const NormalizedModel &model, ScopeId scope) {
+    for (const auto &entity : model.entities) {
+        if (entity.scope == scope && entity.sensitivity == Sensitivity::restricted) {
+            return true;
+        }
+    }
+    for (const auto &endpoint : model.endpoints) {
+        if (endpoint.scope == scope && endpoint.sensitivity == Sensitivity::restricted) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool model_contains_restricted(const NormalizedModel &model) {
+    for (const auto &entity : model.entities) {
+        if (entity.sensitivity == Sensitivity::restricted) {
+            return true;
+        }
+    }
+    for (const auto &endpoint : model.endpoints) {
+        if (endpoint.sensitivity == Sensitivity::restricted) {
+            return true;
+        }
+    }
+    return false;
 }
 
 int run_help(const ParsedArguments &parsed, std::ostream &output, std::ostream &error, bool json) {
@@ -397,7 +585,8 @@ int run_model(const CommandDescriptor &command, const ParsedArguments &parsed, s
     if (!loaded.ok()) {
         if (loaded.error.has_value()) {
             return emit_model_diagnostic(output, error, kExitInput, *loaded.error, loaded.sources,
-                                         filesystem_error ? fs::path{} : canonical_root, json);
+                                         filesystem_error ? fs::path{} : canonical_root, command,
+                                         json);
         }
         return kExitInput;
     }
@@ -407,7 +596,7 @@ int run_model(const CommandDescriptor &command, const ParsedArguments &parsed, s
         if (compiled.error.has_value()) {
             return emit_model_diagnostic(output, error, kExitValidation, *compiled.error,
                                          loaded.sources, loaded.document->canonical_model_root,
-                                         json);
+                                         command, json);
         }
         return kExitValidation;
     }
@@ -435,6 +624,138 @@ int run_model(const CommandDescriptor &command, const ParsedArguments &parsed, s
     }
     if (!output) {
         error << "ltfa: failed to write model output\n";
+        return kExitOutput;
+    }
+    return kExitSuccess;
+}
+
+int run_analyze(const CommandDescriptor &command, const ParsedArguments &parsed,
+                std::ostream &output, std::ostream &error, bool json) {
+    UsageError usage;
+    const auto options = analyze_options(command, parsed, usage);
+    if (!options.has_value()) {
+        return emit_usage_error(output, error, usage, json);
+    }
+
+    std::error_code filesystem_error;
+    const auto canonical_root = fs::canonical(options->model_root, filesystem_error);
+    const auto loaded =
+        dsl::load_document_tree(options->model_root, options->input, kDefaultModelLimits);
+    if (!loaded.ok()) {
+        if (loaded.error.has_value()) {
+            return emit_model_diagnostic(output, error, kExitInput, *loaded.error, loaded.sources,
+                                         filesystem_error ? fs::path{} : canonical_root, command,
+                                         json);
+        }
+        return kExitInput;
+    }
+    const auto compiled = compile_model(*loaded.document, kDefaultModelLimits);
+    if (!compiled.ok()) {
+        if (compiled.error.has_value()) {
+            return emit_model_diagnostic(output, error, kExitValidation, *compiled.error,
+                                         loaded.sources, loaded.document->canonical_model_root,
+                                         command, json);
+        }
+        return kExitValidation;
+    }
+    const auto &model = *compiled.model;
+    const auto scope = find_scope(model, options->scope);
+    if (!scope.has_value()) {
+        return emit_analysis_diagnostic(output, error, command,
+                                        "scope not found: " + options->scope, json);
+    }
+    const auto source = find_object(model, options->source);
+    if (!source.has_value()) {
+        return emit_analysis_diagnostic(output, error, command,
+                                        "source object not found: " + options->source, json);
+    }
+    const auto target = find_object(model, options->target);
+    if (!target.has_value()) {
+        return emit_analysis_diagnostic(output, error, command,
+                                        "target object not found: " + options->target, json);
+    }
+    if (*source == *target) {
+        return emit_analysis_diagnostic(output, error, command,
+                                        "source and target must be distinct", json);
+    }
+    if (object_scope(model, *source) != *scope || object_scope(model, *target) != *scope) {
+        return emit_analysis_diagnostic(
+            output, error, command, "source and target must both belong to scope " + options->scope,
+            json);
+    }
+    if (!options->include_restricted &&
+        (scope_contains_restricted(model, *scope) ||
+         (options->failure.has_value() && model_contains_restricted(model)))) {
+        return emit_analysis_diagnostic(
+            output, error, command,
+            "restricted model IDs require --include-restricted for this analysis", json);
+    }
+
+    std::optional<FailureModeId> failure;
+    if (options->failure.has_value()) {
+        failure = find_failure(model, *options->failure);
+        if (!failure.has_value()) {
+            return emit_analysis_diagnostic(
+                output, error, command, "declared failure not found: " + *options->failure, json);
+        }
+    }
+
+    const auto snapshot = make_availability_snapshot(model);
+    GraphFilter view;
+    view.scope = *scope;
+    view.direction = TraversalDirection::undirected;
+    AssuranceReport report;
+    report.scope = *scope;
+    report.source = *source;
+    report.target = *target;
+    report.include_restricted = options->include_restricted;
+    report.budgets = options->budgets;
+    for (const auto &loaded_source : loaded.sources) {
+        report.model_inputs.push_back(display_source(loaded_source.id, loaded.sources,
+                                                     loaded.document->canonical_model_root));
+    }
+
+    report.path = find_path(model, snapshot, *source, *target, view, options->budgets.path);
+    if (report.path.status == AnalysisStatus::invalid) {
+        return emit_analysis_diagnostic(
+            output, error, command, "path analysis rejected the selected normalized view", json);
+    }
+    report.incomplete = report.path.status == AnalysisStatus::incomplete;
+    if (report.path.status == AnalysisStatus::complete && report.path.reachable) {
+        SpofRequest spof_request;
+        spof_request.source = *source;
+        spof_request.targets = {*target};
+        spof_request.view = view;
+        report.spof = analyze_spof(model, snapshot, spof_request, options->budgets.spof);
+        if (report.spof->status == AnalysisStatus::invalid) {
+            return emit_analysis_diagnostic(output, error, command,
+                                            "SPOF analysis rejected the selected normalized view",
+                                            json);
+        }
+        report.incomplete = report.incomplete || report.spof->status == AnalysisStatus::incomplete;
+    }
+
+    if (failure.has_value()) {
+        report.failure_external_id = *options->failure;
+        report.propagation =
+            propagate_failure(model, snapshot, FailureInjection::for_declared_mode(*failure),
+                              options->budgets.propagation);
+        if (report.propagation->status == PropagationStatus::invalid) {
+            return emit_analysis_diagnostic(
+                output, error, command,
+                "failure propagation rejected the selected normalized model", json);
+        }
+        report.incomplete =
+            report.incomplete || report.propagation->status == PropagationStatus::incomplete;
+    }
+
+    if (options->format == OutputFormat::json) {
+        output << render_assurance_json(model, report);
+    } else {
+        output << render_assurance_human(model, report);
+    }
+    if (!output) {
+        error << "ltfa: failed to write assurance output\n";
         return kExitOutput;
     }
     return kExitSuccess;
@@ -483,6 +804,8 @@ int run_cli(int argc, char *argv[], std::ostream &output, std::ostream &error) {
         return run_help(parsed, output, error, json);
     case CommandHandler::model:
         return run_model(*command, parsed, output, error, json);
+    case CommandHandler::analyze:
+        return run_analyze(*command, parsed, output, error, json);
     }
     return kExitUsage;
 }

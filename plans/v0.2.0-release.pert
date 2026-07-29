@@ -8,9 +8,6 @@ project LTFA_RELEASE_020:
   dag_owner user
   dag_delegates [codex]
 
-milestone SLICE2_ACCEPTED:
-  title "Offline assurance slice accepted"
-  state reached
 
 resource CODEX:
   title "Codex implementation capacity"
@@ -22,6 +19,7 @@ resource REVIEW:
 
 milestone R020_CLI_CONTRACT_ACCEPTED:
   title "v0.2 assurance CLI contract accepted"
+  state reached
 
 milestone R020_CLI_READY:
   title "v0.2 assurance CLI ready"
@@ -32,21 +30,6 @@ milestone R020_METADATA_READY:
 milestone R020_CANDIDATE_ACCEPTED:
   title "v0.2.0 release candidate accepted"
 
-task R020_CLI_CONTRACT SLICE2_ACCEPTED -> R020_CLI_CONTRACT_ACCEPTED:
-  title "Accept the v0.2 assurance CLI contract"
-  description "Fix one descriptor-backed offline analyze command with stable human and JSON output, help, errors, explicit scope, source, target, optional declared failure, restricted-data policy, and work budgets."
-  estimate:
-    optimistic 0.5d
-    most_likely 1d
-    pessimistic 2d
-  status done
-  priority 100
-  requires:
-    CODEX 1
-    REVIEW 1
-  owner "codex"
-  tags ["v0.2.0", cli, contract]
-  source "ADR 0002; secexec and perttool current help and error conventions; Slice 2 acceptance"
 
 task R020_CLI_IMPLEMENTATION R020_CLI_CONTRACT_ACCEPTED -> R020_CLI_READY:
   title "Implement the offline assurance CLI"
@@ -55,6 +38,7 @@ task R020_CLI_IMPLEMENTATION R020_CLI_CONTRACT_ACCEPTED -> R020_CLI_READY:
     optimistic 2d
     most_likely 3d
     pessimistic 5d
+  status done
   priority 100
   requires:
     CODEX 1

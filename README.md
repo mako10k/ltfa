@@ -11,8 +11,8 @@ failure-domain expansion, filtered reachability and path analysis,
 connectivity-removal impact analysis, and dependency-free CTest coverage. The
 core also runs deterministic immediate and fixed-delay failure propagation,
 linear articulation and bridge analysis, and completeness-qualified SPOF
-analysis. The CLI does not yet expose assurance analysis. LTFA performs no
-network access.
+analysis. The CLI exposes those assurance results through one explicit,
+bounded, offline analysis operation. LTFA performs no network access.
 
 ## Design source
 
@@ -30,7 +30,7 @@ Repository-local decisions:
 - [Bootstrap boundary](docs/decisions/0001-bootstrap-boundary.md)
 - [CLI contract and first release boundary](docs/decisions/0002-cli-contract-and-first-release-boundary.md)
 - [v0.2 offline assurance CLI contract](docs/decisions/0003-v0.2-assurance-cli.md)
-- [v0.1.0 release notes](RELEASE_NOTES.md)
+- [Current release notes](RELEASE_NOTES.md)
 
 ## Boundary
 
@@ -160,18 +160,33 @@ in `plans/v0.2.0-release.pert`. It excludes tag creation and publication.
 ./build/ltfa help model --format json
 ./build/ltfa --version
 ./build/ltfa model --model-root tests/fixtures/slice1 --input main.ltfa --format json
+./build/ltfa analyze \
+    --model-root tests/fixtures/slice2 \
+    --input main.ltfa \
+    --scope site:verified \
+    --source device:path-source \
+    --target device:path-tail \
+    --failure failure:breaker \
+    --format json
 ```
 
 The `model` command loads, validates, normalizes, and renders one explicitly
-rooted local topology as human text, JSON, or DOT. It performs no topology
-analysis or network activity. Analysis operations will be added in reviewed
-slices. Invoking `ltfa` without a command is a usage error with status 2.
-Machine-readable help uses `ltfa.command-help/v1`; JSON-mode usage, input, and
-validation failures use `ltfa.cli-error/v1`.
+rooted local topology as human text, JSON, or DOT. The `analyze` command loads
+the same local model and analyzes an explicit scope, source, and target. It
+returns deterministic human or `ltfa.assurance/v1` JSON path and qualified SPOF
+results, with optional propagation of one declared failure mode. Positive work
+budgets bound path traversal, candidate checks, events, and state transitions.
+Restricted model IDs require `--include-restricted`; neither command performs
+observations, probes, command execution, or network activity.
 
-Development after the accepted `v0.1.0` candidate is building the offline
-assurance core for `v0.2.0`. Requirement groups and failure domains can now be
-evaluated through the core API. The core also supports bounded filtered
+Invoking `ltfa` without a command is a usage error with status 2.
+Machine-readable help uses `ltfa.command-help/v1`; JSON-mode usage, input, and
+validation failures use `ltfa.cli-error/v1`. An incomplete budget-bounded
+analysis and an unreachable target remain structured successful results; an
+invalid analysis selection uses status 4.
+
+The offline assurance core for `v0.2.0` evaluates requirement groups and
+failure domains. It also supports bounded filtered
 reachability, deterministic representative paths, and modeled connectivity
 impact for object, relation, and failure-domain removal. One object, relation,
 failure-domain, or declared-mode injection can be propagated to a fixed point
@@ -179,8 +194,8 @@ with stable immediate and delayed findings. Undirected graph views expose
 articulation points and bridges, while source-to-target removal checks
 distinguish `confirmed-spof`, `model-spof`, and `not-a-spof-in-view`, including
 shared failure-domain candidates. These capabilities have passed one
-cross-feature offline acceptance fixture. CLI exposure remains deferred to a
-separately reviewed interface slice.
+cross-feature offline acceptance fixture and are exposed through the reviewed
+CLI contract without widening the offline boundary.
 
 ## Layout
 

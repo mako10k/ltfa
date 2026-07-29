@@ -12,7 +12,7 @@
 namespace ltfa::app {
 namespace {
 
-constexpr int kCliContractVersion = 1;
+constexpr int kCliContractVersion = 2;
 
 constexpr std::array<ExitStatusDescriptor, 3> kHelpExitStatuses{{
     {0, "Successful help request."},
@@ -25,6 +25,14 @@ constexpr std::array<ExitStatusDescriptor, 5> kModelExitStatuses{{
     {2, "CLI usage error."},
     {3, "Input, include, or parse failure."},
     {4, "Model validation failure."},
+    {5, "Output failure."},
+}};
+
+constexpr std::array<ExitStatusDescriptor, 5> kAnalyzeExitStatuses{{
+    {0, "Complete or bounded-incomplete assurance result."},
+    {2, "CLI usage error."},
+    {3, "Input, include, or parse failure."},
+    {4, "Model or analysis-selection validation failure."},
     {5, "Output failure."},
 }};
 
@@ -52,9 +60,41 @@ constexpr std::array<OptionDescriptor, 5> kModelOptions{{
      "Explicitly include restricted model objects."},
 }};
 
-constexpr std::array<ExampleDescriptor, 3> kHelpExamples{{
+constexpr std::array<OptionDescriptor, 14> kAnalyzeOptions{{
+    {"help", "h", OptionKind::flag, "", "", false, false, "false", "", "all other arguments", "",
+     "Print detailed help for the analyze command."},
+    {"model-root", "", OptionKind::value, "directory", "local-directory", true, false, "", "", "",
+     "", "Select the explicit local root for the entry file and includes."},
+    {"input", "", OptionKind::value, "file", "relative-file", true, false, "", "", "", "",
+     "Select the entry file relative to the model root."},
+    {"scope", "", OptionKind::value, "scope-id", "external-id", true, false, "", "", "", "",
+     "Select one declared scope as the assurance view boundary."},
+    {"source", "", OptionKind::value, "object-id", "external-id", true, false, "", "", "", "",
+     "Select the source entity or endpoint inside the scope."},
+    {"target", "", OptionKind::value, "object-id", "external-id", true, false, "", "", "", "",
+     "Select a distinct target entity or endpoint inside the scope."},
+    {"failure", "", OptionKind::value, "failure-id", "external-id", false, false, "", "", "", "",
+     "Optionally propagate one declared failure mode."},
+    {"format", "", OptionKind::value, "format", "output-format", false, false, "human",
+     "human|json", "", "", "Select human or ltfa.assurance/v1 JSON output."},
+    {"include-restricted", "", OptionKind::flag, "", "", false, false, "false", "", "", "",
+     "Explicitly permit restricted stable IDs in assurance output."},
+    {"max-candidates", "", OptionKind::value, "count", "positive-integer", false, false, "1024", "",
+     "", "", "Bound the number of SPOF candidates."},
+    {"max-visited-objects", "", OptionKind::value, "count", "positive-integer", false, false,
+     "2000000", "", "", "", "Bound cumulative path and SPOF object work."},
+    {"max-examined-relations", "", OptionKind::value, "count", "positive-integer", false, false,
+     "10000000", "", "", "", "Bound cumulative path and SPOF relation work."},
+    {"max-events", "", OptionKind::value, "count", "positive-integer", false, false, "1000000", "",
+     "", "", "Bound scheduled propagation events."},
+    {"max-state-transitions", "", OptionKind::value, "count", "positive-integer", false, false,
+     "300000", "", "", "", "Bound propagation state transitions."},
+}};
+
+constexpr std::array<ExampleDescriptor, 4> kHelpExamples{{
     {"root", "ltfa help", "List the implemented command contract."},
     {"model", "ltfa help model", "Show detailed model command help."},
+    {"analyze", "ltfa help analyze", "Show the offline assurance contract."},
     {"json", "ltfa help model --format json", "Discover the model command as JSON."},
 }};
 
@@ -67,7 +107,22 @@ constexpr std::array<ExampleDescriptor, 3> kModelExamples{{
      "Emit deterministic DOT without invoking Graphviz."},
 }};
 
-constexpr std::array<CommandDescriptor, 2> kCommands{{
+constexpr std::array<ExampleDescriptor, 3> kAnalyzeExamples{{
+    {"path",
+     "ltfa analyze --model-root topology --input main.ltfa --scope site:a "
+     "--source service:source --target service:target",
+     "Analyze one scoped registered path and its qualified SPOF candidates."},
+    {"failure",
+     "ltfa analyze --model-root topology --input main.ltfa --scope site:a "
+     "--source service:source --target service:target --failure failure:breaker",
+     "Add one declared failure-propagation scenario."},
+    {"json",
+     "ltfa analyze --model-root topology --input main.ltfa --scope site:a "
+     "--source service:source --target service:target --format json",
+     "Emit deterministic ltfa.assurance/v1 JSON."},
+}};
+
+constexpr std::array<CommandDescriptor, 3> kCommands{{
     {"model", "model", "Load, validate, normalize, and render one local topology model.",
      "ltfa model --model-root <directory> --input <file> "
      "[--format human|json|dot] [--include-restricted]",
@@ -75,6 +130,15 @@ constexpr std::array<CommandDescriptor, 2> kCommands{{
      "local-model-tree", "human|json|dot", "model", "read", "ltfa.model/v1|ltfa.cli-error/v1",
      kModelExitStatuses.data(), kModelExitStatuses.size(), kModelExamples.data(),
      kModelExamples.size()},
+    {"analyze", "analyze",
+     "Run bounded path, qualified SPOF, and optional declared-failure analysis.",
+     "ltfa analyze --model-root <directory> --input <file> --scope <scope-id> "
+     "--source <object-id> --target <object-id> [--failure <failure-id>] "
+     "[--format human|json] [--include-restricted] [budget options]",
+     CommandHandler::analyze, nullptr, 0, kAnalyzeOptions.data(), kAnalyzeOptions.size(),
+     "local-model-tree", "human|json", "assurance", "read", "ltfa.assurance/v1|ltfa.cli-error/v1",
+     kAnalyzeExitStatuses.data(), kAnalyzeExitStatuses.size(), kAnalyzeExamples.data(),
+     kAnalyzeExamples.size()},
     {"help", "help", "Discover the implemented command contract.",
      "ltfa help [command] [--format text|json]", CommandHandler::help, kHelpOperands.data(),
      kHelpOperands.size(), kHelpOptions.data(), kHelpOptions.size(), "none", "text|json",
@@ -406,7 +470,8 @@ void print_root_help(std::ostream &output) {
                << '\n';
     }
     output << "\n"
-           << "The current core is offline and does not execute probes or topology input.\n";
+           << "The current core is offline and does not execute probes, commands, or network "
+              "operations.\n";
 }
 
 void print_command_help(std::ostream &output, const CommandDescriptor &command) {
