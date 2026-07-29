@@ -27,15 +27,14 @@ resource REVIEW:
 
 
 
-milestone SLICE1_ACCEPTED:
-  title "Model compiler slice accepted"
-  state reached
 
 milestone ASSURANCE_SEMANTICS_READY:
   title "Requirement and failure-domain semantics ready"
+  state reached
 
 milestone PATH_IMPACT_READY:
   title "Path and impact analysis ready"
+  state reached
 
 milestone PROPAGATION_READY:
   title "Failure propagation ready"
@@ -96,33 +95,7 @@ milestone MVP_ACCEPTED:
 
 
 
-task M2_REQUIREMENT_SEMANTICS SLICE1_ACCEPTED -> ASSURANCE_SEMANTICS_READY:
-  title "Implement requirement groups and failure domains"
-  description "Implement all/any truth tables, multi-group combination, fixed hold-up metadata, many-to-many failure domains, completeness, evidence quality, and conservative unknown handling."
-  estimate:
-    optimistic 3d
-    most_likely 5d
-    pessimistic 8d
-  priority 90
-  requires:
-    CODEX 1
-  owner "codex"
-  tags [slice2, assurance]
-  source "requirements REQ-MOD-011..018; basic design sections 5.6..5.9"
 
-task M2_PATH_IMPACT SLICE1_ACCEPTED -> PATH_IMPACT_READY:
-  title "Implement filtered path and impact analysis"
-  description "Add deterministic reachability, paths, and removal impact for entities, endpoints, relations, and domains across selected planes, layers, scopes, and availability views."
-  estimate:
-    optimistic 3d
-    most_likely 5d
-    pessimistic 8d
-  priority 80
-  requires:
-    CODEX 1
-  owner "codex"
-  tags [slice2, analysis]
-  source "requirements REQ-ANL-001..002; basic design sections 10.1 and 10.5"
 
 task M2_FAILURE_PROPAGATION ASSURANCE_SEMANTICS_READY -> PROPAGATION_READY:
   title "Implement deterministic failure propagation"

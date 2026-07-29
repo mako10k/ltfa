@@ -18,6 +18,26 @@ ltfa_enable_warnings(ltfa_model_contract_test)
 
 add_test(NAME ltfa.model.contract COMMAND ltfa_model_contract_test)
 
+add_executable(ltfa_availability_test
+    availability_test.cpp
+)
+target_link_libraries(ltfa_availability_test PRIVATE ltfa::core)
+target_compile_features(ltfa_availability_test PRIVATE cxx_std_17)
+set_target_properties(ltfa_availability_test PROPERTIES CXX_EXTENSIONS OFF)
+ltfa_enable_warnings(ltfa_availability_test)
+
+add_test(NAME ltfa.assurance.requirements COMMAND ltfa_availability_test)
+
+add_executable(ltfa_path_analysis_test
+    path_analysis_test.cpp
+)
+target_link_libraries(ltfa_path_analysis_test PRIVATE ltfa::core)
+target_compile_features(ltfa_path_analysis_test PRIVATE cxx_std_17)
+set_target_properties(ltfa_path_analysis_test PROPERTIES CXX_EXTENSIONS OFF)
+ltfa_enable_warnings(ltfa_path_analysis_test)
+
+add_test(NAME ltfa.analysis.path-impact COMMAND ltfa_path_analysis_test)
+
 add_executable(ltfa_lexer_test
     lexer_test.cpp
 )

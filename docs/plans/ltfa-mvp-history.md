@@ -311,3 +311,81 @@ entities, 14 endpoints, and 15 relations; repeated JSON and DOT were
 byte-stable. Graphviz 2.43.0 accepted DOT emitted through the CLI. The
 pre-advance plan digest was
 `sha256:58e6c9e44ca88b3188ffc06f09027353c6fbd6f9b765921a99e25ad0b2adfd67`.
+
+## 2026-07-29 — M2_REQUIREMENT_SEMANTICS
+
+Status: accepted
+
+The first Slice 2 critical-path task adds pure availability semantics over the
+normalized requirement groups and failure domains already produced by Slice 1.
+It does not schedule propagation, interpret failure modes, expose assurance
+through the CLI, or run path, impact, articulation, bridge, or SPOF analysis.
+
+Delivered:
+
+- model-sized entity and endpoint availability snapshots
+- exact four-state `all` and `any` truth tables with conservative unknown
+  handling
+- stable multiple-group consumer evaluation with fixed hold-up metadata
+- consumer completeness and evidence-quality qualification
+- stable failure-domain expansion with conservative member qualification
+- transactional failure application across entity and endpoint domain members
+- invalid-ID, malformed-range, undersized-state, and no-partial-mutation
+  handling
+
+Verification:
+
+```text
+cmake --preset release && cmake --build --preset release && ctest --preset release
+cmake --preset asan-ubsan && cmake --build --preset asan-ubsan && ctest --preset asan-ubsan
+cmake --preset lsan && cmake --build --preset lsan && ctest --preset lsan
+cmake --preset fuzz-seeds && cmake --build --preset fuzz-seeds && ctest --preset fuzz-seeds
+```
+
+The GNU 13.3.0 Release suite passed all 17 tests, including static and runtime
+offline checks, install-tree smoke, and Graphviz validation. ASan/UBSan and
+independent LSan passed all 15 applicable tests, and the fuzz-seed configuration
+passed all 16. The focused test exhaustively checked all 16 ordered state pairs
+for both requirement modes and verified multiple groups, hold-up retention,
+scope qualification, overlapping domains, endpoint membership, stable order,
+and mutation-free invalid input. The pre-advance plan digest was
+`sha256:a1d480e80c247736c425127c4003eddbe481bd1629d87e986cf444495037633d`.
+
+## 2026-07-29 — M2_PATH_IMPACT
+
+Status: accepted
+
+The second Slice 2 core task adds filtered reachability, deterministic
+representative paths, and modeled connectivity-removal impact over the
+normalized adjacency indexes. It does not implement weighted paths, failure
+propagation, articulation, bridge, cut-set, or SPOF classification and does not
+change the accepted `v0.1.0` CLI contract.
+
+Delivered:
+
+- bounded breadth-first traversal without copying the normalized graph
+- forward, reverse, and undirected reachability
+- deterministic representative unweighted paths
+- plane, layer, scope, failure-domain, relation-kind, and availability filters
+- entity, endpoint, relation, and many-to-many failure-domain removal impact
+- stable external-ID ordering and explicit traversal usage
+- complete, incomplete, and invalid outcomes
+- completeness, evidence-quality, and unknown-availability qualification
+
+Verification:
+
+```text
+cmake --preset release && cmake --build --preset release && ctest --preset release
+cmake --preset asan-ubsan && cmake --build --preset asan-ubsan && ctest --preset asan-ubsan
+cmake --preset lsan && cmake --build --preset lsan && ctest --preset lsan
+cmake --preset fuzz-seeds && cmake --build --preset fuzz-seeds && ctest --preset fuzz-seeds
+```
+
+The GNU 13.3.0 Release suite passed all 18 tests, including static and runtime
+offline checks, install-tree smoke, and Graphviz validation. ASan/UBSan and
+independent LSan passed all 16 applicable tests, and the fuzz-seed configuration
+passed all 17. The focused test covered stable repeat results, same-layer and
+cross-layer paths, every declared view filter, all traversal directions,
+entity, endpoint, relation, and domain removal, redundant paths, common-cause
+loss, qualification, budgets, and invalid input. The pre-advance plan digest
+was `sha256:e903ebbe44e22ae59cb26c74c6ca095dc539eaa9ac6d88ba093ee3d8cf519dbc`.

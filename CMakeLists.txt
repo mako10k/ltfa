@@ -58,6 +58,7 @@ if(LTFA_SANITIZERS)
 endif()
 
 set(LTFA_CORE_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/availability.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/dsl/include_resolver.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/dsl/lexer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/dsl/parser.cpp
@@ -65,6 +66,7 @@ set(LTFA_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/model.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/model_compiler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/model_output.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/path_analysis.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/version.cpp
 )
 
