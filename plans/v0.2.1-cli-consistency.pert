@@ -10,9 +10,6 @@ project LTFA_CLI_REPAIR:
   dag_owner user
   dag_delegates [codex]
 
-milestone V020_REVIEWED:
-  title "v0.2.0 review findings accepted"
-  state reached
 
 resource CODEX:
   title "LTFA implementation capacity"
@@ -30,6 +27,7 @@ milestone BUDGET_REPAIR_READY:
 
 milestone OUTPUT_CONTRACT_READY:
   title "Assurance public field inventory accepted"
+  state reached
 
 milestone OUTPUT_PARITY_READY:
   title "Human and JSON assurance output aligned"
@@ -45,21 +43,6 @@ milestone CLI_REPAIR_ACCEPTED:
   title "Assurance CLI consistency repair accepted"
 
 
-task CLI_ASSURANCE_FIELD_INVENTORY V020_REVIEWED -> OUTPUT_CONTRACT_READY:
-  title "Define the assurance public field inventory"
-  description "Enumerate every public ltfa.assurance/v1 fact, map it to deterministic human and JSON representations, and explicitly classify core-only propagation fields so omissions are intentional. Retain schema v1 unless a separate compatibility decision approves a version change."
-  estimate:
-    optimistic 0.5d
-    most_likely 1d
-    pessimistic 1.5d
-  status done
-  priority 95
-  requires:
-    CODEX 1
-    REVIEW 1
-  owner "codex"
-  tags [cli, contract, output]
-  source "GitHub Issue #1; ADR 0003 result contract; post-v0.2.0 CLI review"
 
 task CLI_OUTPUT_PARITY OUTPUT_CONTRACT_READY -> OUTPUT_PARITY_READY:
   title "Restore human and JSON output parity"
@@ -99,18 +82,3 @@ task CLI_REPAIR_ACCEPTANCE CLI_REPAIR_INTEGRATED -> CLI_REPAIR_ACCEPTED:
   owner "codex"
   tags [cli, acceptance, offline, patch]
   source "GitHub Issue #1 acceptance criteria; AGENTS.md build and offline boundaries"
-
-
-
-work_event CLI_ASSURANCE_FIELD_INVENTORY_START:
-  model 1
-  task CLI_ASSURANCE_FIELD_INVENTORY
-  kind start
-  occurred_at 2026-07-29T18:26:57+09:00
-  planned_value 1d
-
-work_event CLI_ASSURANCE_FIELD_INVENTORY_FINISH:
-  model 1
-  task CLI_ASSURANCE_FIELD_INVENTORY
-  kind finish
-  occurred_at 2026-07-29T18:34:56+09:00
