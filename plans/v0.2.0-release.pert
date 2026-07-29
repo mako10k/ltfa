@@ -18,32 +18,16 @@ resource REVIEW:
   capacity 1
 
 
-milestone R020_CLI_READY:
-  title "v0.2 assurance CLI ready"
-  state reached
 
 milestone R020_METADATA_READY:
   title "v0.2 release metadata and install contract ready"
+  state reached
 
 milestone R020_CANDIDATE_ACCEPTED:
   title "v0.2.0 release candidate accepted"
 
 
 
-task R020_RELEASE_METADATA R020_CLI_READY -> R020_METADATA_READY:
-  title "Prepare v0.2 version, notes, and install contract"
-  description "Set version 0.2.0, add source-faithful release notes, install-smoke the analyze command and documentation, and retain v0.1 historical scope without creating a tag."
-  estimate:
-    optimistic 0.5d
-    most_likely 1d
-    pessimistic 2d
-  status done
-  priority 100
-  requires:
-    CODEX 1
-  owner "codex"
-  tags ["v0.2.0", release, install]
-  source "ADR 0002; v0.1 release preparation controls"
 
 task R020_CANDIDATE_ACCEPTANCE R020_METADATA_READY -> R020_CANDIDATE_ACCEPTED:
   title "Accept the immutable v0.2.0 candidate"
@@ -52,6 +36,7 @@ task R020_CANDIDATE_ACCEPTANCE R020_METADATA_READY -> R020_CANDIDATE_ACCEPTED:
     optimistic 0.5d
     most_likely 1d
     pessimistic 2d
+  status done
   priority 100
   requires:
     CODEX 1

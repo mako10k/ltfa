@@ -122,10 +122,10 @@ Completed-task evidence is retained in `docs/plans/ltfa-mvp-history.md` before
 ## Release direction
 
 The accepted but unpublished `v0.1.0` candidate is preserved as the first
-offline model compiler preview. The local project version is now `0.2.0` for
-the separately authorized assurance candidate-preparation path. Its functional
-scope is the accepted `SLICE2_ACCEPTED` core plus the reviewed `analyze` CLI.
-This version change does not authorize a tag or publication.
+offline model compiler preview. The accepted `v0.2.0` candidate adds the
+`SLICE2_ACCEPTED` core and reviewed `analyze` CLI. The commit containing its
+candidate evidence is immutable for release purposes. It has not been tagged
+or published.
 
 The detailed CLI and release contract is recorded in
 [`docs/decisions/0002-cli-contract-and-first-release-boundary.md`](docs/decisions/0002-cli-contract-and-first-release-boundary.md).
@@ -144,6 +144,10 @@ The integrated offline-assurance acceptance is recorded in
 The v0.1 release plan and candidate evidence are recorded in
 [`docs/plans/v0.1.0-release.md`](docs/plans/v0.1.0-release.md) and
 [`docs/acceptance/v0.1.0-release-candidate.md`](docs/acceptance/v0.1.0-release-candidate.md).
+The v0.2 preparation history and candidate evidence are recorded in
+[`docs/plans/v0.2.0-release-history.md`](docs/plans/v0.2.0-release-history.md)
+and
+[`docs/acceptance/v0.2.0-release-candidate.md`](docs/acceptance/v0.2.0-release-candidate.md).
 Release publication remains outside the residual MVP PERT and requires a
 separate authorization after candidate acceptance.
 

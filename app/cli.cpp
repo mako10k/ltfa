@@ -724,7 +724,7 @@ int run_analyze(const CommandDescriptor &command, const ParsedArguments &parsed,
     if (report.path.status == AnalysisStatus::complete && report.path.reachable) {
         SpofRequest spof_request;
         spof_request.source = *source;
-        spof_request.targets = {*target};
+        spof_request.targets.push_back(*target);
         spof_request.view = view;
         report.spof = analyze_spof(model, snapshot, spof_request, options->budgets.spof);
         if (report.spof->status == AnalysisStatus::invalid) {
