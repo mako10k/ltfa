@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 project(
     ltfa
-    VERSION 0.0.0
+    VERSION 0.1.0
     DESCRIPTION "Lightweight multilayer topology and fault analyzer"
     LANGUAGES CXX
 )
@@ -84,6 +84,7 @@ ltfa_enable_warnings(ltfa_core)
 
 add_executable(ltfa
     app/cli.cpp
+    app/cli_contract.cpp
     app/main.cpp
 )
 target_link_libraries(ltfa PRIVATE ltfa::core)
@@ -93,6 +94,12 @@ ltfa_enable_warnings(ltfa)
 
 install(TARGETS ltfa
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+install(FILES
+    LICENSE
+    README.md
+    RELEASE_NOTES.md
+    DESTINATION ${CMAKE_INSTALL_DOCDIR}
 )
 
 if(BUILD_TESTING)

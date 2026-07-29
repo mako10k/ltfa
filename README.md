@@ -24,6 +24,7 @@ Repository-local decisions:
 
 - [Bootstrap boundary](docs/decisions/0001-bootstrap-boundary.md)
 - [CLI contract and first release boundary](docs/decisions/0002-cli-contract-and-first-release-boundary.md)
+- [v0.1.0 release notes](RELEASE_NOTES.md)
 
 ## Boundary
 
@@ -58,6 +59,19 @@ cmake --build build
 
 Equivalent committed presets are available with `cmake --preset release` and
 `cmake --build --preset release`.
+
+## Install
+
+Install the one-shot CLI and its license and release documents into an explicit
+prefix:
+
+```bash
+cmake --install build/release --prefix /path/to/ltfa
+/path/to/ltfa/bin/ltfa --version
+```
+
+The executable is installed under `bin`; `LICENSE`, `README.md`, and
+`RELEASE_NOTES.md` are installed under `share/doc/ltfa`.
 
 ## Test
 
@@ -100,21 +114,29 @@ Completed-task evidence is retained in `docs/plans/ltfa-mvp-history.md` before
 
 ## Release direction
 
-The accepted first release boundary is `v0.1.0`, an offline model compiler
-preview containing Slice 1 plus descriptor-backed help, stable CLI usage
-diagnostics, and release preparation. The current binary remains `0.0.0` until
-that contract is implemented and accepted. Path, impact, SPOF, and failure
+The current binary is the verified `v0.1.0` release candidate: an offline model
+compiler preview containing Slice 1 plus descriptor-backed help, stable CLI
+usage diagnostics, MIT licensing, release notes, and install-tree validation.
+The commit containing the candidate evidence is its immutable accepted
+candidate; it has not been tagged or published. Path, impact, SPOF, and failure
 propagation analysis remain the later `v0.2.0` boundary at `SLICE2_ACCEPTED`.
 
 The detailed CLI and release contract is recorded in
 [`docs/decisions/0002-cli-contract-and-first-release-boundary.md`](docs/decisions/0002-cli-contract-and-first-release-boundary.md).
+Implementation evidence is recorded in
+[`docs/acceptance/r1-cli-contract.md`](docs/acceptance/r1-cli-contract.md).
+The release plan and current candidate evidence are recorded in
+[`docs/plans/v0.1.0-release.md`](docs/plans/v0.1.0-release.md) and
+[`docs/acceptance/v0.1.0-release-candidate.md`](docs/acceptance/v0.1.0-release-candidate.md).
 Release publication remains outside the residual MVP PERT and requires a
-separate owner-approved plan.
+separate authorization after candidate acceptance.
 
 ## Current CLI
 
 ```bash
 ./build/ltfa --help
+./build/ltfa help model
+./build/ltfa help model --format json
 ./build/ltfa --version
 ./build/ltfa model --model-root tests/fixtures/slice1 --input main.ltfa --format json
 ```
@@ -122,7 +144,9 @@ separate owner-approved plan.
 The `model` command loads, validates, normalizes, and renders one explicitly
 rooted local topology as human text, JSON, or DOT. It performs no topology
 analysis or network activity. Analysis operations will be added in reviewed
-slices.
+slices. Invoking `ltfa` without a command is a usage error with status 2.
+Machine-readable help uses `ltfa.command-help/v1`; JSON-mode usage, input, and
+validation failures use `ltfa.cli-error/v1`.
 
 ## Layout
 
@@ -148,4 +172,4 @@ third_party/         Pinned source dependencies when approved
 - Tests: CTest
 - Runtime dependencies: none beyond the C++ runtime
 - Network behavior: none
-- License: not yet selected
+- License: [MIT](LICENSE)

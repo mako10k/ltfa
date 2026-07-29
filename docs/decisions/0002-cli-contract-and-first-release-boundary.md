@@ -163,3 +163,17 @@ CLI acceptance tests cover:
   version, create a release tag, or authorize publication.
 - Slice 2 implementation can proceed independently after the first-release
   decision is either completed or explicitly deferred.
+
+## Implementation
+
+The `R1_CLI_CONTRACT` implementation was completed and verified on 2026-07-29.
+Its evidence is recorded in
+[`docs/acceptance/r1-cli-contract.md`](../acceptance/r1-cli-contract.md).
+
+The owner subsequently selected the MIT License and authorized the remaining
+local release preparation on 2026-07-29. The project version is now `0.1.0`,
+release notes and an install-tree smoke test are present, and the candidate
+matrix is verified. The accepted preparation plan and evidence are recorded in
+[`docs/plans/v0.1.0-release.md`](../plans/v0.1.0-release.md) and
+[`docs/acceptance/v0.1.0-release-candidate.md`](../acceptance/v0.1.0-release-candidate.md).
+This does not itself authorize a tag or publication.

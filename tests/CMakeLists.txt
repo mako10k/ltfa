@@ -84,17 +84,33 @@ set_tests_properties(ltfa.cli.help PROPERTIES
 )
 
 add_test(NAME ltfa.cli.version COMMAND $<TARGET_FILE:ltfa> --version)
+string(REPLACE "." "[.]" LTFA_PROJECT_VERSION_REGEX "${PROJECT_VERSION}")
 set_tests_properties(ltfa.cli.version PROPERTIES
-    PASS_REGULAR_EXPRESSION "^ltfa 0\\.0\\.0"
+    PASS_REGULAR_EXPRESSION "^ltfa ${LTFA_PROJECT_VERSION_REGEX}"
 )
 
 add_test(
     NAME ltfa.cli.model.acceptance
     COMMAND ${CMAKE_COMMAND}
         -DLTFA_CLI=$<TARGET_FILE:ltfa>
+        -DLTFA_EXPECTED_VERSION=${PROJECT_VERSION}
         -DLTFA_VALID_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice1
         -DLTFA_INVALID_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice1-invalid
         -P ${CMAKE_CURRENT_SOURCE_DIR}/cli_acceptance_test.cmake
+)
+
+add_test(
+    NAME ltfa.install.smoke
+    COMMAND ${CMAKE_COMMAND}
+        -DLTFA_BUILD_DIR=${PROJECT_BINARY_DIR}
+        -DLTFA_INSTALL_PREFIX=${PROJECT_BINARY_DIR}/install-smoke
+        -DLTFA_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}
+        -DLTFA_INSTALL_DOCDIR=${CMAKE_INSTALL_DOCDIR}
+        -DLTFA_EXECUTABLE_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}
+        -DLTFA_INSTALL_CONFIG=$<CONFIG>
+        -DLTFA_EXPECTED_VERSION=${PROJECT_VERSION}
+        -DLTFA_MODEL_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice1
+        -P ${PROJECT_SOURCE_DIR}/cmake/verify_install_smoke.cmake
 )
 
 add_test(

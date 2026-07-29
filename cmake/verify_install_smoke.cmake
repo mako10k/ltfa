@@ -1,0 +1,109 @@
+foreach(required
+        LTFA_BUILD_DIR
+        LTFA_INSTALL_PREFIX
+        LTFA_INSTALL_BINDIR
+        LTFA_INSTALL_DOCDIR
+        LTFA_EXPECTED_VERSION
+        LTFA_MODEL_ROOT)
+    if(NOT DEFINED ${required} OR "${${required}}" STREQUAL "")
+        message(FATAL_ERROR "missing required setting ${required}")
+    endif()
+endforeach()
+
+if(IS_ABSOLUTE "${LTFA_INSTALL_BINDIR}" OR IS_ABSOLUTE "${LTFA_INSTALL_DOCDIR}")
+    message(FATAL_ERROR "install smoke test requires relative install directories")
+endif()
+
+file(REMOVE_RECURSE "${LTFA_INSTALL_PREFIX}")
+
+set(install_command
+    "${CMAKE_COMMAND}"
+    --install "${LTFA_BUILD_DIR}"
+    --prefix "${LTFA_INSTALL_PREFIX}"
+)
+if(DEFINED LTFA_INSTALL_CONFIG AND NOT LTFA_INSTALL_CONFIG STREQUAL "")
+    list(APPEND install_command --config "${LTFA_INSTALL_CONFIG}")
+endif()
+
+execute_process(
+    COMMAND ${install_command}
+    RESULT_VARIABLE install_result
+    OUTPUT_VARIABLE install_output
+    ERROR_VARIABLE install_error
+)
+if(NOT install_result EQUAL 0)
+    message(FATAL_ERROR
+        "install failed with status ${install_result}\n${install_output}${install_error}"
+    )
+endif()
+
+set(installed_cli
+    "${LTFA_INSTALL_PREFIX}/${LTFA_INSTALL_BINDIR}/ltfa${LTFA_EXECUTABLE_SUFFIX}"
+)
+if(NOT EXISTS "${installed_cli}")
+    message(FATAL_ERROR "installed CLI not found: ${installed_cli}")
+endif()
+
+foreach(document LICENSE README.md RELEASE_NOTES.md)
+    set(installed_document
+        "${LTFA_INSTALL_PREFIX}/${LTFA_INSTALL_DOCDIR}/${document}"
+    )
+    if(NOT EXISTS "${installed_document}")
+        message(FATAL_ERROR "installed document not found: ${installed_document}")
+    endif()
+endforeach()
+
+execute_process(
+    COMMAND "${installed_cli}" --version
+    RESULT_VARIABLE version_result
+    OUTPUT_VARIABLE version_output
+    ERROR_VARIABLE version_error
+)
+if(NOT version_result EQUAL 0 OR
+   NOT version_output STREQUAL "ltfa ${LTFA_EXPECTED_VERSION}\n" OR
+   NOT version_error STREQUAL "")
+    message(FATAL_ERROR
+        "installed version check failed: status=${version_result}\n"
+        "stdout=${version_output}\nstderr=${version_error}"
+    )
+endif()
+
+execute_process(
+    COMMAND "${installed_cli}" --help
+    RESULT_VARIABLE help_result
+    OUTPUT_VARIABLE help_output
+    ERROR_VARIABLE help_error
+)
+if(NOT help_result EQUAL 0 OR
+   NOT help_output MATCHES "ltfa model --model-root" OR
+   NOT help_error STREQUAL "")
+    message(FATAL_ERROR
+        "installed help check failed: status=${help_result}\n"
+        "stdout=${help_output}\nstderr=${help_error}"
+    )
+endif()
+
+execute_process(
+    COMMAND
+        "${installed_cli}"
+        model
+        --model-root "${LTFA_MODEL_ROOT}"
+        --input main.ltfa
+        --format json
+    RESULT_VARIABLE model_result
+    OUTPUT_VARIABLE model_output
+    ERROR_VARIABLE model_error
+)
+if(NOT model_result EQUAL 0 OR NOT model_error STREQUAL "")
+    message(FATAL_ERROR
+        "installed model check failed: status=${model_result}\n"
+        "stdout=${model_output}\nstderr=${model_error}"
+    )
+endif()
+
+string(JSON model_schema ERROR_VARIABLE model_json_error GET "${model_output}" schema)
+if(model_json_error OR NOT model_schema STREQUAL "ltfa.model/v1")
+    message(FATAL_ERROR
+        "installed model output is not ltfa.model/v1: ${model_json_error}"
+    )
+endif()

@@ -1,4 +1,4 @@
-foreach(required LTFA_CLI LTFA_VALID_ROOT LTFA_INVALID_ROOT)
+foreach(required LTFA_CLI LTFA_EXPECTED_VERSION LTFA_VALID_ROOT LTFA_INVALID_ROOT)
     if(NOT DEFINED ${required} OR "${${required}}" STREQUAL "")
         message(FATAL_ERROR "missing required setting ${required}")
     endif()
@@ -16,6 +16,95 @@ function(run_cli prefix)
     set("${prefix}_error" "${error}" PARENT_SCOPE)
 endfunction()
 
+run_cli(no_arguments)
+if(NOT no_arguments_result EQUAL 2 OR NOT no_arguments_output STREQUAL "" OR
+   NOT no_arguments_error MATCHES
+       "^LTCLI-001 error: expected a command\n  help: ltfa help\n$")
+    message(FATAL_ERROR "no-argument invocation must be a stable usage failure")
+endif()
+
+run_cli(root_help --help)
+run_cli(root_help_short -h)
+run_cli(root_help_command help)
+if(NOT root_help_result EQUAL 0 OR NOT root_help_short_result EQUAL 0 OR
+   NOT root_help_command_result EQUAL 0)
+    message(FATAL_ERROR "root help routes must succeed")
+endif()
+if(NOT root_help_error STREQUAL "" OR NOT root_help_short_error STREQUAL "" OR
+   NOT root_help_command_error STREQUAL "")
+    message(FATAL_ERROR "successful root help must not write stderr")
+endif()
+if(NOT root_help_output STREQUAL root_help_short_output OR
+   NOT root_help_output STREQUAL root_help_command_output OR
+   NOT root_help_output MATCHES "The current core is offline")
+    message(FATAL_ERROR "root help routes must be equivalent and state the offline boundary")
+endif()
+
+run_cli(model_help model --help)
+run_cli(model_help_short model -h)
+run_cli(model_help_command help model)
+if(NOT model_help_result EQUAL 0 OR NOT model_help_short_result EQUAL 0 OR
+   NOT model_help_command_result EQUAL 0)
+    message(FATAL_ERROR "model help routes must succeed")
+endif()
+if(NOT model_help_error STREQUAL "" OR NOT model_help_short_error STREQUAL "" OR
+   NOT model_help_command_error STREQUAL "")
+    message(FATAL_ERROR "successful model help must not write stderr")
+endif()
+if(NOT model_help_output STREQUAL model_help_short_output OR
+   NOT model_help_output STREQUAL model_help_command_output OR
+   NOT model_help_output MATCHES "^Command: ltfa model" OR
+   NOT model_help_output MATCHES "Exit statuses:")
+    message(FATAL_ERROR "model help routes must expose one detailed contract")
+endif()
+
+run_cli(help_json_first help --format json)
+run_cli(help_json_second help --format=json)
+if(NOT help_json_first_result EQUAL 0 OR NOT help_json_second_result EQUAL 0 OR
+   NOT help_json_first_error STREQUAL "" OR NOT help_json_second_error STREQUAL "")
+    message(FATAL_ERROR "structured root help must succeed without stderr")
+endif()
+if(NOT help_json_first_output STREQUAL help_json_second_output)
+    message(FATAL_ERROR "structured root help must be byte-stable across option spellings")
+endif()
+string(JSON help_schema GET "${help_json_first_output}" schema)
+string(JSON help_contract GET "${help_json_first_output}" cli_contract_version)
+string(JSON help_tool_version GET "${help_json_first_output}" tool_version)
+string(JSON help_operation GET "${help_json_first_output}" operation)
+string(JSON help_command_count LENGTH "${help_json_first_output}" commands)
+if(NOT help_schema STREQUAL "ltfa.command-help/v1" OR NOT help_contract EQUAL 1 OR
+   NOT help_tool_version STREQUAL "${LTFA_EXPECTED_VERSION}" OR
+   NOT help_operation STREQUAL "help" OR NOT help_command_count EQUAL 2)
+    message(FATAL_ERROR "structured root help contract is incorrect")
+endif()
+
+run_cli(model_help_json_first help model --format json)
+run_cli(model_help_json_second help model --format=json)
+if(NOT model_help_json_first_result EQUAL 0 OR NOT model_help_json_second_result EQUAL 0 OR
+   NOT model_help_json_first_error STREQUAL "" OR
+   NOT model_help_json_second_error STREQUAL "" OR
+   NOT model_help_json_first_output STREQUAL model_help_json_second_output)
+    message(FATAL_ERROR "structured model help must be byte-stable")
+endif()
+string(JSON model_help_query GET "${model_help_json_first_output}" query command)
+string(JSON model_help_count LENGTH "${model_help_json_first_output}" commands)
+string(JSON model_help_effect GET "${model_help_json_first_output}" commands 0 effect)
+string(JSON model_help_exit_count LENGTH
+    "${model_help_json_first_output}" commands 0 exit_statuses
+)
+string(JSON model_help_flag_default_type TYPE
+    "${model_help_json_first_output}" commands 0 options 0 default
+)
+string(JSON model_help_required_default_type TYPE
+    "${model_help_json_first_output}" commands 0 options 1 default
+)
+if(NOT model_help_query STREQUAL "model" OR NOT model_help_count EQUAL 1 OR
+   NOT model_help_effect STREQUAL "read" OR NOT model_help_exit_count EQUAL 5 OR
+   NOT model_help_flag_default_type STREQUAL "BOOLEAN" OR
+   NOT model_help_required_default_type STREQUAL "NULL")
+    message(FATAL_ERROR "structured model help is incomplete")
+endif()
+
 set(model_command
     model
     --model-root "${LTFA_VALID_ROOT}"
@@ -24,14 +113,26 @@ set(model_command
 
 run_cli(json_first ${model_command} --format json)
 run_cli(json_second ${model_command} --format json)
-if(NOT json_first_result EQUAL 0 OR NOT json_second_result EQUAL 0)
-    message(FATAL_ERROR "JSON model command failed: ${json_first_error}${json_second_error}")
+run_cli(json_equals
+    model
+    "--model-root=${LTFA_VALID_ROOT}"
+    --input=main.ltfa
+    --format=json
+)
+if(NOT json_first_result EQUAL 0 OR NOT json_second_result EQUAL 0 OR
+   NOT json_equals_result EQUAL 0)
+    message(FATAL_ERROR
+        "JSON model command failed: "
+        "${json_first_error}${json_second_error}${json_equals_error}"
+    )
 endif()
-if(NOT json_first_error STREQUAL "" OR NOT json_second_error STREQUAL "")
+if(NOT json_first_error STREQUAL "" OR NOT json_second_error STREQUAL "" OR
+   NOT json_equals_error STREQUAL "")
     message(FATAL_ERROR "successful JSON model command wrote stderr")
 endif()
-if(NOT json_first_output STREQUAL json_second_output)
-    message(FATAL_ERROR "JSON model output changed between identical runs")
+if(NOT json_first_output STREQUAL json_second_output OR
+   NOT json_first_output STREQUAL json_equals_output)
+    message(FATAL_ERROR "JSON model output changed between equivalent invocations")
 endif()
 
 string(JSON schema GET "${json_first_output}" schema)
@@ -100,45 +201,157 @@ if(NOT restricted_default_result EQUAL 0 OR NOT restricted_explicit_result EQUAL
     message(FATAL_ERROR "restricted CLI output must require the explicit inclusion flag")
 endif()
 
-run_cli(malformed
+run_cli(malformed_json
     model --model-root "${LTFA_INVALID_ROOT}" --input malformed.ltfa --format json
 )
-if(NOT malformed_result EQUAL 3 OR NOT malformed_output STREQUAL "" OR
-   NOT malformed_error MATCHES
+if(NOT malformed_json_result EQUAL 3 OR NOT malformed_json_error STREQUAL "")
+    message(FATAL_ERROR "malformed JSON-mode input must return exit 3 on stdout")
+endif()
+string(JSON malformed_schema GET "${malformed_json_output}" schema)
+string(JSON malformed_status GET "${malformed_json_output}" exit_status)
+string(JSON malformed_code GET "${malformed_json_output}" diagnostics 0 code)
+string(JSON malformed_file GET "${malformed_json_output}" diagnostics 0 source file)
+string(JSON malformed_line GET "${malformed_json_output}" diagnostics 0 source line)
+if(NOT malformed_schema STREQUAL "ltfa.cli-error/v1" OR NOT malformed_status EQUAL 3 OR
+   NOT malformed_code STREQUAL "E_DSL_UNKNOWN_STATEMENT" OR
+   NOT malformed_file STREQUAL "malformed.ltfa" OR NOT malformed_line EQUAL 2)
+    message(FATAL_ERROR "malformed JSON-mode diagnostic contract is incorrect")
+endif()
+
+run_cli(malformed_human
+    model --model-root "${LTFA_INVALID_ROOT}" --input malformed.ltfa --format human
+)
+if(NOT malformed_human_result EQUAL 3 OR NOT malformed_human_output STREQUAL "" OR
+   NOT malformed_human_error MATCHES
        "^malformed.ltfa:2:1: error E_DSL_UNKNOWN_STATEMENT: unknown DSL statement")
-    message(FATAL_ERROR "malformed input must return exit 3 with a stable source diagnostic")
+    message(FATAL_ERROR "human malformed input must retain its stable source diagnostic")
 endif()
 
 run_cli(duplicate
     model --model-root "${LTFA_INVALID_ROOT}" --input duplicate.ltfa --format json
 )
-if(NOT duplicate_result EQUAL 4 OR NOT duplicate_output STREQUAL "" OR
-   NOT duplicate_error MATCHES
-       "^duplicate.ltfa:4:8: error E_ID_DUPLICATE: entity ID 'duplicate' is duplicated")
-    message(FATAL_ERROR "validation failure must return exit 4 with a stable source diagnostic")
+if(NOT duplicate_result EQUAL 4 OR NOT duplicate_error STREQUAL "")
+    message(FATAL_ERROR "JSON-mode validation failure must return exit 4 on stdout")
+endif()
+string(JSON duplicate_schema GET "${duplicate_output}" schema)
+string(JSON duplicate_status GET "${duplicate_output}" exit_status)
+string(JSON duplicate_code GET "${duplicate_output}" diagnostics 0 code)
+string(JSON duplicate_file GET "${duplicate_output}" diagnostics 0 source file)
+string(JSON duplicate_related_count LENGTH "${duplicate_output}" diagnostics 0 related)
+if(NOT duplicate_schema STREQUAL "ltfa.cli-error/v1" OR NOT duplicate_status EQUAL 4 OR
+   NOT duplicate_code STREQUAL "E_ID_DUPLICATE" OR
+   NOT duplicate_file STREQUAL "duplicate.ltfa" OR NOT duplicate_related_count EQUAL 1)
+    message(FATAL_ERROR "JSON-mode validation diagnostic contract is incorrect")
 endif()
 
 run_cli(escape
     model --model-root "${LTFA_INVALID_ROOT}/escape-root" --input main.ltfa --format json
 )
-if(NOT escape_result EQUAL 3 OR NOT escape_output STREQUAL "" OR
-   NOT escape_error MATCHES
-       "^main.ltfa:2:9: error E_INCLUDE_ESCAPE: include path escapes the selected model root")
-    message(FATAL_ERROR "escaping include must fail as an input error")
+if(NOT escape_result EQUAL 3 OR NOT escape_error STREQUAL "")
+    message(FATAL_ERROR "escaping include must fail as JSON-mode input")
+endif()
+string(JSON escape_status GET "${escape_output}" exit_status)
+string(JSON escape_code GET "${escape_output}" diagnostics 0 code)
+if(NOT escape_status EQUAL 3 OR NOT escape_code STREQUAL "E_INCLUDE_ESCAPE")
+    message(FATAL_ERROR "escaping include JSON diagnostic is incorrect")
 endif()
 
-run_cli(usage
+run_cli(unknown_command modle)
+if(NOT unknown_command_result EQUAL 2 OR NOT unknown_command_output STREQUAL "" OR
+   NOT unknown_command_error MATCHES
+       "^LTCLI-001 error: unknown command modle\n  token: modle\n  suggestion: model\n"
+       OR NOT unknown_command_error MATCHES "  help: ltfa help\n$")
+    message(FATAL_ERROR "unknown command must provide a stable suggestion and help route")
+endif()
+
+run_cli(unknown_option
+    model --model-root "${LTFA_VALID_ROOT}" --input main.ltfa --formt human
+)
+if(NOT unknown_option_result EQUAL 2 OR NOT unknown_option_output STREQUAL "" OR
+   NOT unknown_option_error MATCHES
+       "^LTCLI-001 error: unknown option --formt\n  token: --formt\n"
+       OR NOT unknown_option_error MATCHES "  suggestion: --format\n"
+       OR NOT unknown_option_error MATCHES "  help: ltfa help model\n$")
+    message(FATAL_ERROR "unknown option must provide a stable suggestion and help route")
+endif()
+
+run_cli(unknown_option_json
+    model --model-root "${LTFA_VALID_ROOT}" --input main.ltfa
+    --formt human --format json
+)
+if(NOT unknown_option_json_result EQUAL 2 OR NOT unknown_option_json_error STREQUAL "")
+    message(FATAL_ERROR "JSON-mode usage failure must return exit 2 on stdout")
+endif()
+string(JSON usage_schema GET "${unknown_option_json_output}" schema)
+string(JSON usage_status GET "${unknown_option_json_output}" exit_status)
+string(JSON usage_kind GET "${unknown_option_json_output}" usage kind)
+string(JSON usage_token GET "${unknown_option_json_output}" usage token)
+string(JSON usage_suggestion GET "${unknown_option_json_output}" usage suggestion)
+string(JSON usage_code GET "${unknown_option_json_output}" diagnostics 0 code)
+if(NOT usage_schema STREQUAL "ltfa.cli-error/v1" OR NOT usage_status EQUAL 2 OR
+   NOT usage_kind STREQUAL "unknown_option" OR NOT usage_token STREQUAL "--formt" OR
+   NOT usage_suggestion STREQUAL "--format" OR NOT usage_code STREQUAL "LTCLI-001")
+    message(FATAL_ERROR "JSON-mode usage diagnostic contract is incorrect")
+endif()
+
+run_cli(help_unknown_json help modle --format json)
+if(NOT help_unknown_json_result EQUAL 2 OR NOT help_unknown_json_error STREQUAL "")
+    message(FATAL_ERROR "structured help lookup failure must return exit 2 on stdout")
+endif()
+string(JSON help_unknown_schema GET "${help_unknown_json_output}" schema)
+string(JSON help_unknown_operation GET "${help_unknown_json_output}" operation)
+string(JSON help_unknown_suggestion GET "${help_unknown_json_output}" usage suggestion)
+if(NOT help_unknown_schema STREQUAL "ltfa.cli-error/v1" OR
+   NOT help_unknown_operation STREQUAL "help" OR
+   NOT help_unknown_suggestion STREQUAL "model")
+    message(FATAL_ERROR "structured help lookup recovery is incorrect")
+endif()
+
+run_cli(invalid_format
     model --model-root "${LTFA_VALID_ROOT}" --input main.ltfa --format yaml
 )
-if(NOT usage_result EQUAL 2 OR NOT usage_output STREQUAL "" OR
-   NOT usage_error MATCHES "^ltfa: --format must be human, json, or dot")
-    message(FATAL_ERROR "invalid CLI syntax must return exit 2")
+if(NOT invalid_format_result EQUAL 2 OR NOT invalid_format_output STREQUAL "" OR
+   NOT invalid_format_error MATCHES
+       "^LTCLI-001 error: option --format must be one of human, json, or dot")
+    message(FATAL_ERROR "invalid CLI enum must return a stable usage error")
+endif()
+
+run_cli(missing_required model --input main.ltfa)
+if(NOT missing_required_result EQUAL 2 OR NOT missing_required_output STREQUAL "" OR
+   NOT missing_required_error MATCHES
+       "^LTCLI-001 error: option --model-root is required")
+    message(FATAL_ERROR "missing required option must return a stable usage error")
+endif()
+
+run_cli(duplicate_option
+    model --model-root "${LTFA_VALID_ROOT}" --model-root "${LTFA_VALID_ROOT}"
+    --input main.ltfa
+)
+if(NOT duplicate_option_result EQUAL 2 OR NOT duplicate_option_output STREQUAL "" OR
+   NOT duplicate_option_error MATCHES
+       "^LTCLI-001 error: option --model-root is not repeatable")
+    message(FATAL_ERROR "duplicate option must return a stable usage error")
+endif()
+
+run_cli(extra_operand ${model_command} unexpected)
+if(NOT extra_operand_result EQUAL 2 OR NOT extra_operand_output STREQUAL "" OR
+   NOT extra_operand_error MATCHES
+       "^LTCLI-001 error: unexpected operand unexpected")
+    message(FATAL_ERROR "extra operand must return a stable usage error")
+endif()
+
+run_cli(help_conflict model --help --format human)
+if(NOT help_conflict_result EQUAL 2 OR NOT help_conflict_output STREQUAL "" OR
+   NOT help_conflict_error MATCHES
+       "^LTCLI-001 error: option --help conflicts with other arguments")
+    message(FATAL_ERROR "help conflict must return a stable usage error")
 endif()
 
 run_cli(absolute_input
     model --model-root "${LTFA_VALID_ROOT}" --input "${LTFA_VALID_ROOT}/main.ltfa"
 )
 if(NOT absolute_input_result EQUAL 2 OR NOT absolute_input_output STREQUAL "" OR
-   NOT absolute_input_error MATCHES "^ltfa: --input must be relative to --model-root")
+   NOT absolute_input_error MATCHES
+       "^LTCLI-001 error: option --input must be relative to --model-root")
     message(FATAL_ERROR "CLI entry input must remain relative to the explicit model root")
 endif()

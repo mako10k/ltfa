@@ -34,6 +34,19 @@ topology, execute input, open a network connection, or invoke Graphviz.
 diagnosis, redacted-fixture, and benchmark slices. This acceptance does not
 claim those criteria.
 
+## 2026-07-29 CLI Contract Amendment
+
+R1 changed CLI discovery and error routing without changing the accepted model
+compiler or output semantics. Human and DOT failures retain the accepted
+`file:line:column: severity CODE: explanation` diagnostic form on standard
+error. When JSON output is explicitly requested, usage, input, and validation
+failures now emit `ltfa.cli-error/v1` on standard output while retaining the
+same process status and underlying stable diagnostic code.
+
+Descriptor-backed `ltfa.command-help/v1`, `LTCLI-001`, deterministic
+suggestions, help aliases, and exact stream routing are verified in
+[`r1-cli-contract.md`](r1-cli-contract.md).
+
 ## Verification
 
 Run all committed configurations:

@@ -8,12 +8,12 @@ int main() {
         return 1;
     }
 
-    if (ltfa::version_string() != "0.0.0") {
+    if (ltfa::version_string() != "0.1.0") {
         std::cerr << "unexpected version string\n";
         return 1;
     }
 
-    if (ltfa::kVersion.major != 0 || ltfa::kVersion.minor != 0 || ltfa::kVersion.patch != 0) {
+    if (ltfa::kVersion.major != 0 || ltfa::kVersion.minor != 1 || ltfa::kVersion.patch != 0) {
         std::cerr << "unexpected structured version\n";
         return 1;
     }
