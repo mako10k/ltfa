@@ -46,7 +46,7 @@ task CLI_REPAIR_ACCEPTANCE CLI_REPAIR_INTEGRATED -> CLI_REPAIR_ACCEPTED:
     optimistic 1d
     most_likely 1d
     pessimistic 2d
-  status active
+  status done
   priority 100
   requires:
     CODEX 1
@@ -61,3 +61,10 @@ work_event WE-a2d57fab7624d73a370a3d13bf821f5ebfd57d5ff83007aada5b5ec28917e357:
   kind start
   occurred_at 2026-07-30T14:14:33+09:00
   planned_value 7/6d
+
+work_event WE-09f63fcef4a693485b5586b8dd3c185d115e2cadf42b560a519299a1e00bc43c:
+  model 1
+  task CLI_REPAIR_ACCEPTANCE
+  kind finish
+  occurred_at 2026-07-30T14:16:48+09:00
+  effort 0.1ph
