@@ -20,12 +20,10 @@ resource REVIEW:
   description "Serialize public-contract and final acceptance review"
   capacity 1
 
-milestone V021_RELEASED:
-  title "LTFA v0.2.1 released"
-  state reached
 
 milestone DSV_CONTRACT_READY:
   title "Semantic DOT contract accepted"
+  state reached
 
 milestone DSV_STRUCTURE_READY:
   title "Containment cluster rendering ready"
@@ -45,21 +43,6 @@ milestone DSV_CLI_READY:
 milestone DSV_ACCEPTED:
   title "Semantic DOT views accepted"
 
-task DSV_CONTRACT V021_RELEASED -> DSV_CONTRACT_READY:
-  title "Define the semantic DOT compatibility contract"
-  description "Record raw-view compatibility, a separately versioned presentation schema, nested containment semantics, endpoint port semantics, relation-lens membership, deterministic ordering, restricted-output behavior, and explicit exclusion of coordinates and renderer dependencies."
-  estimate:
-    optimistic 1d
-    most_likely 1d
-    pessimistic 2d
-  status done
-  priority 100
-  requires:
-    CODEX 1
-    REVIEW 1
-  owner "codex"
-  tags [dot, contract, compatibility]
-  source "requirements REQ-OUT-004..005, REQ-NFR-005, REQ-QLT-003..005; basic design section 12.3; ADR 0001"
 
 task DSV_STRUCTURE DSV_CONTRACT_READY -> DSV_STRUCTURE_READY:
   title "Render containment as deterministic nested clusters"
@@ -138,16 +121,3 @@ task DSV_EBINO_ACCEPTANCE DSV_CLI_READY -> DSV_ACCEPTED:
   owner "codex"
   tags [dot, acceptance, ebino]
   source "requirements AC-007..009, REQ-QLT-003..006; docs/ebino-configuration.md"
-
-work_event WE-5e0493282137d34b1943956153c83d7195ed3328908e907f831b2238c38732db:
-  model 1
-  task DSV_CONTRACT
-  kind start
-  occurred_at 2026-07-30T17:18:16+09:00
-  planned_value 7/6d
-
-work_event WE-63da1038fd32a8d16c6a3194dc4e99cf3e7e77f14adddb4d00e547e25081f18c:
-  model 1
-  task DSV_CONTRACT
-  kind finish
-  occurred_at 2026-07-30T17:18:17+09:00
