@@ -688,6 +688,60 @@ void append_failure_domains(std::ostringstream &output, const NormalizedModel &m
     }
 }
 
+[[nodiscard]] std::string_view semantic_relation_color(RelationKind kind) noexcept {
+    switch (kind) {
+    case RelationKind::network:
+        return "#2563eb";
+    case RelationKind::power:
+        return "#b45309";
+    case RelationKind::serial:
+        return "#7c3aed";
+    case RelationKind::contact:
+        return "#059669";
+    case RelationKind::analog_current:
+        return "#db2777";
+    case RelationKind::member_of:
+        return "#64748b";
+    case RelationKind::contained_in:
+        return "#6b7280";
+    case RelationKind::carried_by:
+        return "#0891b2";
+    case RelationKind::uses_underlay:
+        return "#4f46e5";
+    case RelationKind::terminates_on:
+        return "#0f766e";
+    case RelationKind::routes_via:
+        return "#1d4ed8";
+    case RelationKind::depends_on:
+        return "#dc2626";
+    case RelationKind::powered_by:
+        return "#d97706";
+    }
+    return "#4b5563";
+}
+
+[[nodiscard]] std::string_view semantic_relation_style(RelationKind kind) noexcept {
+    switch (kind) {
+    case RelationKind::network:
+    case RelationKind::power:
+    case RelationKind::serial:
+    case RelationKind::contact:
+    case RelationKind::analog_current:
+        return "solid";
+    case RelationKind::contained_in:
+        return "dotted";
+    case RelationKind::member_of:
+    case RelationKind::carried_by:
+    case RelationKind::uses_underlay:
+    case RelationKind::terminates_on:
+    case RelationKind::routes_via:
+    case RelationKind::depends_on:
+    case RelationKind::powered_by:
+        return "dashed";
+    }
+    return "dashed";
+}
+
 [[nodiscard]] std::optional<FailureDomainId> first_domain(const NormalizedModel &model,
                                                           ObjectRef object) {
     if (!valid_object(model, object)) {
@@ -957,13 +1011,8 @@ void append_semantic_tree(std::ostringstream &output, const NormalizedModel &mod
                << escape_dot(to_string(relation.kind)) << ")\",ltfa_relation=\""
                << escape_dot(model.string(relation.external_id)) << "\",ltfa_kind=\""
                << escape_dot(to_string(relation.kind)) << "\",color=\""
-               << relation_color(relation.kind) << "\",style=\""
-               << (structural_fallback ? "dotted"
-                   : static_cast<std::size_t>(relation.kind) <=
-                           static_cast<std::size_t>(RelationKind::analog_current)
-                       ? "solid"
-                       : "dashed")
-               << '"';
+               << semantic_relation_color(relation.kind) << "\",style=\""
+               << semantic_relation_style(relation.kind) << '"';
         if (relation.direction == Direction::bidirectional) {
             output << ",dir=\"both\"";
         }
@@ -992,6 +1041,25 @@ std::string_view to_string(DotView value) noexcept {
         return "overlay";
     }
     return "raw";
+}
+
+std::optional<DotView> parse_dot_view(std::string_view value) noexcept {
+    if (value == "raw") {
+        return DotView::raw;
+    }
+    if (value == "topology") {
+        return DotView::topology;
+    }
+    if (value == "power") {
+        return DotView::power;
+    }
+    if (value == "dependency") {
+        return DotView::dependency;
+    }
+    if (value == "overlay") {
+        return DotView::overlay;
+    }
+    return std::nullopt;
 }
 
 std::string render_model_human(const NormalizedModel &model, const ModelOutputContext &context) {

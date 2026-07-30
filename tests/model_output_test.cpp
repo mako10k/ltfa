@@ -387,6 +387,122 @@ void test_semantic_containment_fallbacks() {
            "cross-scope containment must remain explicit instead of moving an object");
 }
 
+std::string relation_lens_source() {
+    return "ltfa 1\n"
+           "scope s label=\"Lens Site\"\n"
+           "entity device-a kind=device plane=communication layer=physical scope=s\n"
+           "entity device-b kind=device plane=communication layer=physical scope=s\n"
+           "entity control-a kind=device plane=control-signal layer=physical scope=s\n"
+           "entity control-b kind=device plane=control-signal layer=physical scope=s\n"
+           "entity panel kind=facility plane=facility layer=physical scope=s\n"
+           "entity container kind=facility plane=facility layer=physical scope=s\n"
+           "entity contained-child kind=device plane=communication layer=physical scope=s\n"
+           "entity overlay kind=tunnel plane=communication layer=overlay scope=s\n"
+           "entity underlay kind=network-space plane=communication layer=l3 scope=s\n"
+           "entity service kind=service plane=service layer=application scope=s\n"
+           "entity group kind=service plane=service layer=application scope=s\n"
+           "endpoint device-a:net owner=device-a kind=network\n"
+           "endpoint device-b:net owner=device-b kind=network\n"
+           "endpoint panel:power owner=panel kind=power-output\n"
+           "endpoint device-a:power owner=device-a kind=power-input\n"
+           "endpoint control-a:serial owner=control-a kind=serial\n"
+           "endpoint control-b:serial owner=control-b kind=serial\n"
+           "endpoint control-a:contact owner=control-a kind=contact-output\n"
+           "endpoint control-b:contact owner=control-b kind=contact-input\n"
+           "endpoint control-a:analog owner=control-a kind=analog-current-output\n"
+           "endpoint control-b:analog owner=control-b kind=analog-current-input\n"
+           "connect device-a:net -- device-b:net kind=network\n"
+           "connect panel:power -> device-a:power kind=power\n"
+           "connect control-a:serial -- control-b:serial kind=serial\n"
+           "connect control-a:contact -> control-b:contact kind=contact\n"
+           "connect control-a:analog -> control-b:analog kind=analog-current\n"
+           "relate service -> group kind=member_of\n"
+           "relate contained-child -> container kind=contained_in\n"
+           "relate overlay -> underlay kind=carried_by\n"
+           "relate overlay -> underlay kind=uses_underlay\n"
+           "relate overlay -> device-a kind=terminates_on\n"
+           "relate service -> device-a kind=routes_via\n"
+           "relate service -> device-b kind=depends_on\n"
+           "relate device-a -> panel kind=powered_by\n";
+}
+
+bool has_semantic_relation_kind(std::string_view dot, std::string_view kind) {
+    return dot.find("ltfa_kind=\"" + std::string{kind} + "\"") != std::string_view::npos;
+}
+
+void test_semantic_relation_lenses() {
+    const auto model = compile(relation_lens_source());
+    if (!model.has_value()) {
+        return;
+    }
+
+    for (const auto view : {ltfa::DotView::raw, ltfa::DotView::topology, ltfa::DotView::power,
+                            ltfa::DotView::dependency, ltfa::DotView::overlay}) {
+        const auto parsed = ltfa::parse_dot_view(ltfa::to_string(view));
+        expect(parsed.has_value() && *parsed == view,
+               "every public DOT view name must round-trip exactly");
+    }
+    expect(!ltfa::parse_dot_view("Topology").has_value() &&
+               !ltfa::parse_dot_view("unknown").has_value(),
+           "unknown or differently-cased DOT views must be rejected");
+
+    ltfa::DotOutputOptions options;
+    options.view = ltfa::DotView::topology;
+    const auto topology = ltfa::render_model_dot(*model, {}, options);
+    expect(has_semantic_relation_kind(topology, "network") &&
+               has_semantic_relation_kind(topology, "power") &&
+               has_semantic_relation_kind(topology, "serial") &&
+               has_semantic_relation_kind(topology, "contact") &&
+               has_semantic_relation_kind(topology, "analog-current") &&
+               has_semantic_relation_kind(topology, "member_of"),
+           "topology view must include every physical and membership relation kind");
+    expect(!has_semantic_relation_kind(topology, "powered_by") &&
+               !has_semantic_relation_kind(topology, "depends_on") &&
+               !has_semantic_relation_kind(topology, "uses_underlay"),
+           "topology view must exclude power dependency and overlay relations");
+
+    options.view = ltfa::DotView::power;
+    const auto power = ltfa::render_model_dot(*model, {}, options);
+    expect(has_semantic_relation_kind(power, "power") &&
+               has_semantic_relation_kind(power, "powered_by"),
+           "power view must include physical power and powered_by");
+    expect(!has_semantic_relation_kind(power, "network") &&
+               !has_semantic_relation_kind(power, "depends_on"),
+           "power view must exclude unrelated physical and dependency relations");
+
+    options.view = ltfa::DotView::dependency;
+    const auto dependency = ltfa::render_model_dot(*model, {}, options);
+    expect(has_semantic_relation_kind(dependency, "depends_on") &&
+               !has_semantic_relation_kind(dependency, "powered_by") &&
+               !has_semantic_relation_kind(dependency, "routes_via"),
+           "dependency view must contain only dependency edges plus spatial structure");
+
+    options.view = ltfa::DotView::overlay;
+    const auto overlay = ltfa::render_model_dot(*model, {}, options);
+    expect(has_semantic_relation_kind(overlay, "carried_by") &&
+               has_semantic_relation_kind(overlay, "uses_underlay") &&
+               has_semantic_relation_kind(overlay, "terminates_on") &&
+               has_semantic_relation_kind(overlay, "routes_via"),
+           "overlay view must include all four overlay relation kinds");
+    expect(!has_semantic_relation_kind(overlay, "network") &&
+               !has_semantic_relation_kind(overlay, "depends_on"),
+           "overlay view must exclude topology and dependency edges");
+
+    const auto highlighted =
+        std::find_if(model->relations.begin(), model->relations.end(), [](const auto &relation) {
+            return relation.kind == ltfa::RelationKind::depends_on;
+        });
+    expect(highlighted != model->relations.end(),
+           "relation lens fixture must include a dependency relation");
+    if (highlighted != model->relations.end()) {
+        options.view = ltfa::DotView::dependency;
+        options.highlighted_relations = {highlighted->id};
+        const auto highlighted_dot = ltfa::render_model_dot(*model, {}, options);
+        expect(highlighted_dot.find("penwidth=\"3\"") != std::string::npos,
+               "semantic relation lenses must preserve stable relation emphasis");
+    }
+}
+
 void test_dot_views() {
     const auto model = compile(restricted_source());
     if (!model.has_value()) {
@@ -432,22 +548,45 @@ void test_dot_views() {
 } // namespace
 
 int main(int argc, char **argv) {
-    if (argc == 2 && (std::string_view{argv[1]} == "--emit-dot" ||
-                      std::string_view{argv[1]} == "--emit-semantic-dot")) {
-        const bool semantic = std::string_view{argv[1]} == "--emit-semantic-dot";
-        const auto model = compile(semantic ? semantic_structure_source() : minimal_source());
+    if (argc == 2) {
+        const auto argument = std::string_view{argv[1]};
+        std::optional<ltfa::DotView> emitted_view;
+        if (argument == "--emit-dot") {
+            emitted_view = ltfa::DotView::raw;
+        } else if (argument == "--emit-semantic-dot") {
+            emitted_view = ltfa::DotView::topology;
+        } else if (argument == "--emit-semantic-power-dot") {
+            emitted_view = ltfa::DotView::power;
+        } else if (argument == "--emit-semantic-dependency-dot") {
+            emitted_view = ltfa::DotView::dependency;
+        } else if (argument == "--emit-semantic-overlay-dot") {
+            emitted_view = ltfa::DotView::overlay;
+        }
+        if (!emitted_view.has_value()) {
+            std::cerr << "usage: ltfa_model_output_test "
+                         "[--emit-dot|--emit-semantic-dot|--emit-semantic-power-dot|"
+                         "--emit-semantic-dependency-dot|--emit-semantic-overlay-dot]\n";
+            return 2;
+        }
+        const bool relation_lens = *emitted_view == ltfa::DotView::power ||
+                                   *emitted_view == ltfa::DotView::dependency ||
+                                   *emitted_view == ltfa::DotView::overlay;
+        const auto model =
+            compile(relation_lens                              ? relation_lens_source()
+                    : *emitted_view == ltfa::DotView::topology ? semantic_structure_source()
+                                                               : minimal_source());
         if (!model.has_value()) {
             return 1;
         }
         ltfa::ModelOutputContext context;
         context.model_inputs = {"z.ltfa", "a.ltfa", "a.ltfa"};
         ltfa::DotOutputOptions options;
-        options.view = semantic ? ltfa::DotView::topology : ltfa::DotView::raw;
+        options.view = *emitted_view;
         std::cout << ltfa::render_model_dot(*model, context, options);
         return failures == 0 ? 0 : 1;
     }
     if (argc != 1) {
-        std::cerr << "usage: ltfa_model_output_test [--emit-dot|--emit-semantic-dot]\n";
+        std::cerr << "usage: ltfa_model_output_test [DOT fixture option]\n";
         return 2;
     }
 
@@ -456,6 +595,7 @@ int main(int argc, char **argv) {
     test_determinism_and_escaping();
     test_semantic_containment_clusters();
     test_semantic_containment_fallbacks();
+    test_semantic_relation_lenses();
     test_dot_views();
     return failures == 0 ? 0 : 1;
 }

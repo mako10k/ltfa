@@ -247,6 +247,18 @@ if(LTFA_DOT_EXECUTABLE)
             -DLTFA_SVG_FILE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-semantic-output.svg
             -P ${PROJECT_SOURCE_DIR}/cmake/verify_dot_render.cmake
     )
+    foreach(view power dependency overlay)
+        add_test(
+            NAME ltfa.model.output.semantic-${view}-graphviz
+            COMMAND ${CMAKE_COMMAND}
+                -DLTFA_DOT=${LTFA_DOT_EXECUTABLE}
+                -DLTFA_DOT_PRODUCER=$<TARGET_FILE:ltfa_model_output_test>
+                -DLTFA_DOT_PRODUCER_ARG=--emit-semantic-${view}-dot
+                -DLTFA_DOT_FILE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-semantic-${view}-output.dot
+                -DLTFA_SVG_FILE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-semantic-${view}-output.svg
+                -P ${PROJECT_SOURCE_DIR}/cmake/verify_dot_render.cmake
+        )
+    endforeach()
 endif()
 
 if(LTFA_BUILD_FUZZERS)

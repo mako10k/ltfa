@@ -31,6 +31,7 @@ enum class DotView {
 };
 
 [[nodiscard]] std::string_view to_string(DotView value) noexcept;
+[[nodiscard]] std::optional<DotView> parse_dot_view(std::string_view value) noexcept;
 
 struct ModelOutputContext {
     std::vector<std::string> model_inputs;
