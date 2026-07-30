@@ -40,6 +40,7 @@ struct DotSelection {
 
 struct SemanticContainment {
     std::vector<std::optional<EntityId>> parents;
+    std::vector<std::optional<RelationId>> parent_relations;
     std::vector<bool> spatial_relations;
     std::vector<bool> containers;
     std::vector<bool> anchors;
@@ -555,7 +556,7 @@ void append_failure_domains(std::ostringstream &output, const NormalizedModel &m
 
 [[nodiscard]] bool semantic_relation_visible(DotView view, RelationKind kind) noexcept {
     if (kind == RelationKind::contained_in) {
-        return true;
+        return view != DotView::logical && view != DotView::protection;
     }
     switch (view) {
     case DotView::raw:
@@ -564,6 +565,9 @@ void append_failure_domains(std::ostringstream &output, const NormalizedModel &m
         return kind == RelationKind::network || kind == RelationKind::power ||
                kind == RelationKind::serial || kind == RelationKind::contact ||
                kind == RelationKind::analog_current || kind == RelationKind::member_of;
+    case DotView::logical:
+    case DotView::protection:
+        return kind == RelationKind::network || kind == RelationKind::member_of;
     case DotView::power:
         return kind == RelationKind::power || kind == RelationKind::powered_by;
     case DotView::dependency:
@@ -575,12 +579,103 @@ void append_failure_domains(std::ostringstream &output, const NormalizedModel &m
     return false;
 }
 
+[[nodiscard]] bool semantic_cluster_relation(const NormalizedModel &model, DotView view,
+                                             const Relation &relation) noexcept {
+    if (view == DotView::logical || view == DotView::protection) {
+        if (relation.kind != RelationKind::member_of || relation.to.kind != ObjectKind::entity ||
+            relation.to.index >= model.entities.size()) {
+            return false;
+        }
+        const auto target_kind = model.entities[relation.to.index].kind;
+        return (view == DotView::logical && target_kind == EntityKind::aggregate) ||
+               (view == DotView::protection && target_kind == EntityKind::control_domain);
+    }
+    return relation.kind == RelationKind::contained_in;
+}
+
+void prune_group_view(const NormalizedModel &model, DotView view, DotSelection &selection) {
+    if (view != DotView::logical && view != DotView::protection) {
+        return;
+    }
+    std::vector<bool> active_entities(model.entities.size());
+    std::vector<bool> active_endpoints(model.endpoints.size());
+    const auto activate = [&](ObjectRef object) {
+        if (object.kind == ObjectKind::entity) {
+            active_entities[object.index] = true;
+        } else {
+            active_endpoints[object.index] = true;
+        }
+    };
+    for (const auto &relation : model.relations) {
+        if (selection.relations[relation.id.value()] &&
+            semantic_cluster_relation(model, view, relation)) {
+            activate(relation.from);
+            activate(relation.to);
+        }
+    }
+
+    bool changed = true;
+    while (changed) {
+        changed = false;
+        for (const auto &endpoint : model.endpoints) {
+            if (!selection.endpoints[endpoint.id.value()] || !endpoint.owner.is_valid() ||
+                endpoint.owner.value() >= active_entities.size()) {
+                continue;
+            }
+            if (active_endpoints[endpoint.id.value()] && !active_entities[endpoint.owner.value()]) {
+                active_entities[endpoint.owner.value()] = true;
+                changed = true;
+            } else if (active_entities[endpoint.owner.value()] &&
+                       !active_endpoints[endpoint.id.value()]) {
+                active_endpoints[endpoint.id.value()] = true;
+                changed = true;
+            }
+        }
+        for (const auto &relation : model.relations) {
+            if (!selection.relations[relation.id.value()] ||
+                relation.kind != RelationKind::network) {
+                continue;
+            }
+            const auto from_active = relation.from.kind == ObjectKind::entity
+                                         ? active_entities[relation.from.index]
+                                         : active_endpoints[relation.from.index];
+            const auto to_active = relation.to.kind == ObjectKind::entity
+                                       ? active_entities[relation.to.index]
+                                       : active_endpoints[relation.to.index];
+            if (from_active == to_active) {
+                continue;
+            }
+            activate(from_active ? relation.to : relation.from);
+            changed = true;
+        }
+    }
+
+    for (std::size_t index = 0; index < selection.entities.size(); ++index) {
+        selection.entities[index] = selection.entities[index] && active_entities[index];
+    }
+    for (std::size_t index = 0; index < selection.endpoints.size(); ++index) {
+        selection.endpoints[index] = selection.endpoints[index] && active_endpoints[index];
+    }
+    for (const auto &relation : model.relations) {
+        const auto from_active = relation.from.kind == ObjectKind::entity
+                                     ? selection.entities[relation.from.index]
+                                     : selection.endpoints[relation.from.index];
+        const auto to_active = relation.to.kind == ObjectKind::entity
+                                   ? selection.entities[relation.to.index]
+                                   : selection.endpoints[relation.to.index];
+        selection.relations[relation.id.value()] = selection.relations[relation.id.value()] &&
+                                                   from_active && to_active &&
+                                                   semantic_relation_visible(view, relation.kind);
+    }
+}
+
 [[nodiscard]] SemanticContainment build_semantic_containment(const NormalizedModel &model,
                                                              const DotSelection &selection,
                                                              DotView view) {
     const auto object_count = model.entities.size() + model.endpoints.size();
     SemanticContainment containment;
     containment.parents.resize(object_count);
+    containment.parent_relations.resize(object_count);
     containment.spatial_relations.resize(model.relations.size());
     containment.containers.resize(model.entities.size());
     containment.anchors.resize(model.entities.size());
@@ -590,7 +685,7 @@ void append_failure_domains(std::ostringstream &output, const NormalizedModel &m
     std::vector<std::optional<RelationId>> candidate_relations(object_count);
     for (const auto &relation : model.relations) {
         if (!selection.relations[relation.id.value()] ||
-            relation.kind != RelationKind::contained_in) {
+            !semantic_cluster_relation(model, view, relation)) {
             continue;
         }
         const auto slot = object_slot(model, relation.from);
@@ -599,9 +694,11 @@ void append_failure_domains(std::ostringstream &output, const NormalizedModel &m
             relation.to.kind == ObjectKind::entity &&
             object_scope(model, relation.from) == object_scope(model, relation.to)) {
             containment.parents[slot] = EntityId{relation.to.index};
+            containment.parent_relations[slot] = relation.id;
             candidate_relations[slot] = relation.id;
         } else {
             containment.parents[slot].reset();
+            containment.parent_relations[slot].reset();
             candidate_relations[slot].reset();
         }
     }
@@ -644,6 +741,7 @@ void append_failure_domains(std::ostringstream &output, const NormalizedModel &m
         if (parent_counts[slot] != 1 || !candidate_relations[slot].has_value() ||
             !containment.parents[slot].has_value()) {
             containment.parents[slot].reset();
+            containment.parent_relations[slot].reset();
             continue;
         }
         const bool valid_chain = slot < model.entities.size()
@@ -651,6 +749,7 @@ void append_failure_domains(std::ostringstream &output, const NormalizedModel &m
                                      : states[containment.parents[slot]->value()] == kValid;
         if (!valid_chain) {
             containment.parents[slot].reset();
+            containment.parent_relations[slot].reset();
             continue;
         }
         containment.spatial_relations[candidate_relations[slot]->value()] = true;
@@ -682,8 +781,7 @@ void append_failure_domains(std::ostringstream &output, const NormalizedModel &m
     }
     for (const auto &relation : model.relations) {
         if (!selection.relations[relation.id.value()] ||
-            (relation.kind == RelationKind::contained_in &&
-             containment.spatial_relations[relation.id.value()]) ||
+            containment.spatial_relations[relation.id.value()] ||
             !semantic_relation_visible(view, relation.kind)) {
             continue;
         }
@@ -908,6 +1006,116 @@ dot_group(const NormalizedModel &model, ObjectRef object, const DotOutputOptions
                : external_id.substr(separator + 1);
 }
 
+[[nodiscard]] std::string_view entity_attribute(const NormalizedModel &model, const Entity &entity,
+                                                std::string_view key) {
+    const auto *attribute = find_attribute(model, entity.attributes, key);
+    return attribute == nullptr ? std::string_view{} : model.string(attribute->value);
+}
+
+[[nodiscard]] std::string_view relation_attribute(const NormalizedModel &model,
+                                                  const Relation &relation, std::string_view key) {
+    const auto *attribute = find_attribute(model, relation.attributes, key);
+    return attribute == nullptr ? std::string_view{} : model.string(attribute->value);
+}
+
+[[nodiscard]] std::string entity_annotation(const NormalizedModel &model, const Entity &entity) {
+    std::vector<std::string> parts;
+    const auto protocol = entity_attribute(model, entity, "protocol");
+    const auto mode = entity_attribute(model, entity, "mode");
+    if (!protocol.empty()) {
+        parts.emplace_back(protocol);
+    }
+    if (!mode.empty()) {
+        parts.emplace_back(mode);
+    }
+    if (entity.kind == EntityKind::aggregate) {
+        for (const auto &requirement : model.requirement_groups) {
+            if (requirement.consumer == entity.id &&
+                requirement.mode == RequirementMode::at_least) {
+                parts.push_back("min " + std::to_string(requirement.minimum_providers) + "/" +
+                                std::to_string(requirement.providers.count));
+                break;
+            }
+        }
+    }
+    std::ostringstream output;
+    for (std::size_t index = 0; index < parts.size(); ++index) {
+        if (index != 0) {
+            output << " / ";
+        }
+        output << parts[index];
+    }
+    return output.str();
+}
+
+[[nodiscard]] const Relation *parent_relation(const NormalizedModel &model,
+                                              const SemanticContainment &containment,
+                                              ObjectRef object) noexcept {
+    const auto slot = object_slot(model, object);
+    if (slot >= containment.parent_relations.size() ||
+        !containment.parent_relations[slot].has_value()) {
+        return nullptr;
+    }
+    const auto relation = *containment.parent_relations[slot];
+    return relation.is_valid() && relation.value() < model.relations.size()
+               ? &model.relations[relation.value()]
+               : nullptr;
+}
+
+[[nodiscard]] std::string membership_annotation(const NormalizedModel &model,
+                                                const SemanticContainment &containment,
+                                                ObjectRef object) {
+    const auto *relation = parent_relation(model, containment, object);
+    if (relation == nullptr || relation->kind != RelationKind::member_of) {
+        return {};
+    }
+    const auto role = relation_attribute(model, *relation, "role");
+    const auto normal_state = relation_attribute(model, *relation, "normal-state");
+    if (role.empty()) {
+        return std::string{normal_state};
+    }
+    if (normal_state.empty()) {
+        return std::string{role};
+    }
+    return std::string{role} + " / " + std::string{normal_state};
+}
+
+[[nodiscard]] std::string_view membership_normal_state(const NormalizedModel &model,
+                                                       const SemanticContainment &containment,
+                                                       ObjectRef object) noexcept {
+    const auto *relation = parent_relation(model, containment, object);
+    return relation == nullptr ? std::string_view{}
+                               : relation_attribute(model, *relation, "normal-state");
+}
+
+[[nodiscard]] std::string_view entity_shape(const NormalizedModel &model,
+                                            ObjectRef object) noexcept {
+    if (object.kind != ObjectKind::entity) {
+        return "ellipse";
+    }
+    switch (model.entities[object.index].kind) {
+    case EntityKind::link:
+        return "diamond";
+    case EntityKind::aggregate:
+        return "box3d";
+    case EntityKind::control_domain:
+        return "component";
+    default:
+        return "box";
+    }
+}
+
+[[nodiscard]] std::string cluster_id_prefix(EntityKind kind) {
+    switch (kind) {
+    case EntityKind::aggregate:
+        return "aggregate";
+    case EntityKind::control_domain:
+        return "control-domain";
+    default:
+        return "container";
+    }
+}
+
 [[nodiscard]] std::string semantic_target(const NormalizedModel &model,
                                           const SemanticContainment &containment,
                                           ObjectRef object) {
@@ -919,7 +1127,8 @@ dot_group(const NormalizedModel &model, ObjectRef object, const DotOutputOptions
 
 void append_semantic_port_table(std::ostringstream &output, const NormalizedModel &model,
                                 const DotOutputOptions &options, const SemanticPorts &ports,
-                                EntityId owner, bool include_owner_label) {
+                                EntityId owner, bool include_owner_label,
+                                std::string_view annotation = {}) {
     const auto owner_object = ObjectRef::from(owner);
     output << "<<TABLE BORDER=\"" << (include_owner_label ? "1" : "0")
            << "\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\" COLOR=\""
@@ -929,7 +1138,11 @@ void append_semantic_port_table(std::ostringstream &output, const NormalizedMode
         if (has_object(options.highlighted_objects, owner_object)) {
             output << " BGCOLOR=\"#fef3c7\"";
         }
-        output << ">" << escape_html(object_label(model, owner_object)) << "</TD></TR>";
+        output << ">" << escape_html(object_label(model, owner_object));
+        if (!annotation.empty()) {
+            output << "<BR/><FONT POINT-SIZE=\"10\">" << escape_html(annotation) << "</FONT>";
+        }
+        output << "</TD></TR>";
     }
     for (const auto endpoint_id : ports.by_owner[owner.value()]) {
         const auto endpoint_object = ObjectRef::from(endpoint_id);
@@ -962,23 +1175,40 @@ void append_semantic_port_table(std::ostringstream &output, const NormalizedMode
 }
 
 void append_semantic_node(std::ostringstream &output, const NormalizedModel &model,
-                          const DotOutputOptions &options, const SemanticPorts &ports,
-                          ObjectRef object, std::size_t indent) {
+                          const DotOutputOptions &options, const SemanticContainment &containment,
+                          const SemanticPorts &ports, ObjectRef object, std::size_t indent) {
     const auto highlighted = has_object(options.highlighted_objects, object);
+    const auto annotation = membership_annotation(model, containment, object);
+    const auto normal_state = membership_normal_state(model, containment, object);
+    const bool non_forwarding =
+        normal_state == "discarding" || normal_state == "blocking" || normal_state == "standby";
     if (object.kind == ObjectKind::entity && !ports.by_owner[object.index].empty()) {
         output << std::string(indent, ' ') << '"' << escape_dot(model.external_id(object))
                << "\" [label=";
-        append_semantic_port_table(output, model, options, ports, EntityId{object.index}, true);
+        append_semantic_port_table(output, model, options, ports, EntityId{object.index}, true,
+                                   annotation);
         output << ",tooltip=\"" << escape_dot(model.external_id(object))
-               << "\",ltfa_kind=\"entity\",shape=plain];\n";
+               << "\",ltfa_kind=\"entity\",ltfa_entity_kind=\""
+               << to_string(model.entities[object.index].kind) << "\",shape=plain];\n";
         return;
     }
+    auto display_label = std::string{object_label(model, object)};
+    if (!annotation.empty()) {
+        display_label += "\n";
+        display_label += annotation;
+    }
     output << std::string(indent, ' ') << '"' << escape_dot(model.external_id(object))
-           << "\" [label=\"" << escape_dot(object_label(model, object)) << "\",tooltip=\""
+           << "\" [label=\"" << escape_dot(display_label) << "\",tooltip=\""
            << escape_dot(model.external_id(object)) << "\",ltfa_kind=\"" << to_string(object.kind)
-           << "\",shape=" << (object.kind == ObjectKind::entity ? "box" : "ellipse") << ",color=\""
-           << plane_color(object_plane(model, object)) << "\",style=\""
+           << '"';
+    if (object.kind == ObjectKind::entity) {
+        output << ",ltfa_entity_kind=\"" << to_string(model.entities[object.index].kind) << '"';
+    }
+    output << ",shape=" << entity_shape(model, object) << ",color=\""
+           << (non_forwarding ? std::string{"#9ca3af"} : plane_color(object_plane(model, object)))
+           << "\",style=\""
            << (highlighted                         ? "filled,bold"
+               : non_forwarding                    ? "dashed"
                : object.kind == ObjectKind::entity ? "rounded"
                                                    : "solid")
            << '"';
@@ -1018,22 +1248,29 @@ void append_semantic_tree(std::ostringstream &output, const NormalizedModel &mod
             continue;
         }
         if (object.kind != ObjectKind::entity || !containment.containers[object.index]) {
-            append_semantic_node(output, model, options, ports, object, event.indent);
+            append_semantic_node(output, model, options, containment, ports, object, event.indent);
             continue;
         }
 
         const auto entity_id = EntityId{object.index};
         const auto &entity = model.entities[object.index];
+        const auto annotation = entity_annotation(model, entity);
         output << std::string(event.indent, ' ')
-               << "subgraph \"cluster:container:" << escape_dot(model.string(entity.external_id))
-               << "\" {\n"
+               << "subgraph \"cluster:" << cluster_id_prefix(entity.kind) << ':'
+               << escape_dot(model.string(entity.external_id)) << "\" {\n"
                << std::string(event.indent + 2, ' ') << "label=\""
-               << escape_dot(object_label(model, object)) << "\";\n"
+               << escape_dot(object_label(model, object));
+        if (!annotation.empty()) {
+            output << "\\n" << escape_dot(annotation);
+        }
+        output << "\";\n"
                << std::string(event.indent + 2, ' ') << "tooltip=\""
                << escape_dot(model.string(entity.external_id)) << "\";\n"
                << std::string(event.indent + 2, ' ') << "color=\"" << plane_color(entity.plane)
                << "\";\n"
-               << std::string(event.indent + 2, ' ') << "style=\"rounded\";\n";
+               << std::string(event.indent + 2, ' ') << "style=\""
+               << (entity.kind == EntityKind::control_domain ? "rounded,dashed" : "rounded")
+               << "\";\n";
         if (!ports.by_owner[object.index].empty()) {
             output << std::string(event.indent + 2, ' ') << '"'
                    << escape_dot(semantic_anchor_id(model, entity_id)) << "\" [label=";
@@ -1139,23 +1376,60 @@ void append_semantic_tree(std::ostringstream &output, const NormalizedModel &mod
     for (const auto index : sorted_indices(model, model.relations)) {
         const auto &relation = model.relations[index];
         if (!selection.relations[relation.id.value()] ||
-            (relation.kind == RelationKind::contained_in &&
-             containment.spatial_relations[relation.id.value()]) ||
+            containment.spatial_relations[relation.id.value()] ||
             !semantic_relation_visible(options.view, relation.kind)) {
             continue;
         }
         const bool structural_fallback = relation.kind == RelationKind::contained_in;
+        std::string_view normal_state;
+        if ((options.view == DotView::logical || options.view == DotView::protection) &&
+            relation.kind == RelationKind::network) {
+            for (const auto object : {relation.from, relation.to}) {
+                if (object.kind == ObjectKind::entity &&
+                    model.entities[object.index].kind == EntityKind::link) {
+                    normal_state = membership_normal_state(model, containment, object);
+                    if (!normal_state.empty()) {
+                        break;
+                    }
+                }
+            }
+        }
+        const bool non_forwarding =
+            normal_state == "discarding" || normal_state == "blocking" || normal_state == "standby";
+        const bool uncertain_forwarding = normal_state == "learning" || normal_state == "unknown";
+        const auto role = relation_attribute(model, relation, "role");
+        const auto membership_state = relation_attribute(model, relation, "normal-state");
+        std::string relation_label;
+        if (!role.empty()) {
+            relation_label = std::string{role};
+        }
+        if (!membership_state.empty()) {
+            if (!relation_label.empty()) {
+                relation_label += " / ";
+            }
+            relation_label += membership_state;
+        }
         output << "  " << semantic_edge_endpoint(model, containment, ports, relation.from) << " -> "
                << semantic_edge_endpoint(model, containment, ports, relation.to) << " [";
         if (structural_fallback) {
             output << "label=\"contained_in\",";
+        } else if (!relation_label.empty()) {
+            output << "label=\"" << escape_dot(relation_label) << "\",";
         }
         output << "tooltip=\"" << escape_dot(model.string(relation.external_id)) << " ("
                << escape_dot(to_string(relation.kind)) << ")\",ltfa_relation=\""
                << escape_dot(model.string(relation.external_id)) << "\",ltfa_kind=\""
                << escape_dot(to_string(relation.kind)) << "\",color=\""
-               << semantic_relation_color(relation.kind) << "\",style=\""
-               << semantic_relation_style(relation.kind) << '"';
+               << (non_forwarding || uncertain_forwarding ? std::string_view{"#9ca3af"}
+                                                          : semantic_relation_color(relation.kind))
+               << "\",style=\""
+               << (non_forwarding         ? std::string_view{"dashed"}
+                   : uncertain_forwarding ? std::string_view{"dotted"}
+                                          : semantic_relation_style(relation.kind))
+               << '"';
+        if (!normal_state.empty()) {
+            output << ",ltfa_normal_state=\"" << escape_dot(normal_state) << '"';
+        }
         if (relation.direction == Direction::bidirectional) {
             output << ",dir=\"both\"";
         }
@@ -1176,6 +1450,10 @@ std::string_view to_string(DotView value) noexcept {
         return "raw";
     case DotView::topology:
         return "topology";
+    case DotView::logical:
+        return "logical";
+    case DotView::protection:
+        return "protection";
     case DotView::power:
         return "power";
     case DotView::dependency:
@@ -1192,6 +1470,12 @@ std::optional<DotView> parse_dot_view(std::string_view value) noexcept {
     }
     if (value == "topology") {
         return DotView::topology;
+    }
+    if (value == "logical") {
+        return DotView::logical;
+    }
+    if (value == "protection") {
+        return DotView::protection;
     }
     if (value == "power") {
         return DotView::power;
@@ -1492,7 +1776,8 @@ std::string render_model_json(const NormalizedModel &model, const ModelOutputCon
                << ",\"consumer\":"
                << escape_json(
                       model.string(model.entities[requirement.consumer.value()].external_id))
-               << ",\"mode\":" << escape_json(to_string(requirement.mode)) << ",\"providers\":[";
+               << ",\"mode\":" << escape_json(to_string(requirement.mode))
+               << ",\"minimum_providers\":" << requirement.minimum_providers << ",\"providers\":[";
         std::vector<std::string_view> providers;
         const auto begin =
             std::min<std::size_t>(requirement.providers.begin, model.requirement_providers.size());
@@ -1597,7 +1882,8 @@ std::string render_model_json(const NormalizedModel &model, const ModelOutputCon
 std::string render_model_dot(const NormalizedModel &model, const ModelOutputContext &context,
                              const DotOutputOptions &options) {
     const auto visibility = build_visibility(model, context);
-    const auto selection = select_dot_graph(model, visibility, options);
+    auto selection = select_dot_graph(model, visibility, options);
+    prune_group_view(model, options.view, selection);
     if (options.view != DotView::raw) {
         return render_semantic_dot(model, context, options, visibility, selection);
     }

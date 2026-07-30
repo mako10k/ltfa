@@ -25,6 +25,8 @@ enum class DotGrouping {
 enum class DotView {
     raw,
     topology,
+    logical,
+    protection,
     power,
     dependency,
     overlay,

@@ -15,6 +15,8 @@ dependencies beyond the C++ runtime. It does not access the network.
 - filtered reachability and deterministic representative paths
 - modeled object, relation, and failure-domain removal impact
 - requirement-group and failure-domain availability semantics
+- first-class point-to-point links, LAG/bond aggregates, and STP/ring control domains
+- K-of-N aggregate availability with `mode=at-least minimum=N`
 - immediate and fixed-delay declared-failure propagation
 - articulation, bridge, and completeness-qualified SPOF analysis
 - deterministic human and `ltfa.assurance/v1` assurance output
@@ -86,14 +88,27 @@ ltfa model --model-root topology --input main.ltfa \
     --format dot --dot-view topology
 ltfa model --model-root topology --input main.ltfa \
     --format dot --dot-view power
+ltfa model --model-root topology --input main.ltfa \
+    --format dot --dot-view logical
+ltfa model --model-root topology --input main.ltfa \
+    --format dot --dot-view protection
 ```
 
 The default `raw` DOT view keeps every selected relation as an edge and uses
 schema `ltfa.model.dot/v1`. Semantic `topology`, `power`, `dependency`, and
 `overlay` views use `ltfa.diagram.dot/v1`: eligible `contained_in` relations
 become nested clusters, owned endpoints become ports, and only the selected
-relation lens remains as normal edges. `--dot-view` is valid only with
-`--format dot`. LTFA emits DOT text and does not invoke Graphviz.
+relation lens remains as normal edges. The `logical` view instead folds
+aggregate membership, while `protection` folds STP or ring-domain membership
+and keeps registered non-forwarding segments as dashed context. `--dot-view`
+is valid only with `--format dot`. LTFA emits DOT text and does not invoke
+Graphviz.
+
+The synthetic [resilience fixture](tests/fixtures/resilience/main.ltfa)
+demonstrates first-class physical links, a two-member LACP aggregate with a
+one-member threshold, and an RSTP baseline. `normal-state` is registered design
+state, not a live observation. The complete modeling decision and fail-closed
+rules are in [ADR 0005](docs/decisions/0005-link-aggregation-and-protection-domains.md).
 
 Analyze an explicit scope, source, and target:
 

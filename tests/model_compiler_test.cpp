@@ -315,6 +315,116 @@ void test_physical_cycles_and_determinism() {
                  ltfa::DiagnosticCode::id_duplicate);
 }
 
+void test_link_aggregation_and_control_domains() {
+    const auto result =
+        compile("ltfa 1\n"
+                "scope s completeness=verified evidence-quality=confirmed\n"
+                "entity sw1 kind=device plane=communication layer=physical scope=s\n"
+                "entity sw2 kind=device plane=communication layer=physical scope=s\n"
+                "endpoint sw1:p1 owner=sw1 kind=network\n"
+                "endpoint sw1:p2 owner=sw1 kind=network\n"
+                "endpoint sw2:p1 owner=sw2 kind=network\n"
+                "endpoint sw2:p2 owner=sw2 kind=network\n"
+                "entity link:a kind=link plane=communication layer=physical scope=s "
+                "failure-domain=cable-route:east\n"
+                "entity link:b kind=link plane=communication layer=physical scope=s "
+                "failure-domain=cable-route:west\n"
+                "connect sw1:p1 -- link:a kind=network\n"
+                "connect link:a -- sw2:p1 kind=network\n"
+                "connect sw1:p2 -- link:b kind=network\n"
+                "connect link:b -- sw2:p2 kind=network\n"
+                "entity lag:uplink kind=aggregate plane=communication layer=l2 scope=s "
+                "protocol=lacp mode=active-active\n"
+                "relate link:a -> lag:uplink kind=member_of role=active "
+                "normal-state=forwarding\n"
+                "relate link:b -> lag:uplink kind=member_of role=active "
+                "normal-state=forwarding\n"
+                "require lag:uplink by link:a group=members mode=at-least minimum=1\n"
+                "require lag:uplink by link:b group=members mode=at-least minimum=1\n"
+                "entity stp:default kind=control-domain plane=communication layer=l2 scope=s "
+                "protocol=rstp\n"
+                "relate link:a -> stp:default kind=member_of role=designated "
+                "normal-state=forwarding\n"
+                "relate link:b -> stp:default kind=member_of role=alternate "
+                "normal-state=discarding\n"
+                "failure failure:link-a target=link:a mode=link-down\n");
+    expect(result.ok(), "first-class links, aggregate policy, and a control domain must compile");
+    if (!result.ok()) {
+        if (result.error.has_value()) {
+            std::cerr << ltfa::to_string(result.error->code) << ": " << result.error->message
+                      << '\n';
+        }
+        return;
+    }
+
+    const auto &model = *result.model;
+    const auto link_a = find_by_external_id(model, model.entities, "link:a");
+    const auto aggregate = find_by_external_id(model, model.entities, "lag:uplink");
+    const auto control = find_by_external_id(model, model.entities, "stp:default");
+    expect(link_a < model.entities.size() && model.entities[link_a].kind == ltfa::EntityKind::link,
+           "physical link must remain a typed first-class entity");
+    expect(aggregate < model.entities.size() &&
+               model.entities[aggregate].kind == ltfa::EntityKind::aggregate,
+           "aggregate must remain a typed first-class entity");
+    expect(control < model.entities.size() &&
+               model.entities[control].kind == ltfa::EntityKind::control_domain,
+           "control domain must remain a typed first-class entity");
+    expect(model.requirement_groups.size() == 1 &&
+               model.requirement_groups.front().mode == ltfa::RequirementMode::at_least &&
+               model.requirement_groups.front().minimum_providers == 1 &&
+               model.requirement_groups.front().providers.count == 2,
+           "aggregate min-active policy must normalize as one at-least group");
+    expect(model.failure_modes.size() == 1 &&
+               model.failure_modes.front().target ==
+                   ltfa::ObjectRef::from(ltfa::EntityId{static_cast<std::uint32_t>(link_a)}),
+           "a declared link failure must target the link entity");
+
+    const auto alternate =
+        std::find_if(model.relations.begin(), model.relations.end(), [&](const auto &relation) {
+            return model.external_id(relation.from) == "link:b" &&
+                   model.external_id(relation.to) == "stp:default";
+        });
+    expect(alternate != model.relations.end() && alternate->attributes.count == 2,
+           "domain-specific role and normal state must survive on membership");
+}
+
+void test_link_aggregation_diagnostics() {
+    const std::string prefix = "ltfa 1\n"
+                               "scope s\n"
+                               "entity sw kind=device plane=communication layer=physical scope=s\n"
+                               "endpoint sw:p owner=sw kind=network\n";
+    expect_error(prefix + "entity link:a kind=link plane=communication layer=physical scope=s\n"
+                          "connect sw:p -- link:a kind=network\n",
+                 ltfa::DiagnosticCode::endpoint_incompatible);
+    expect_error("ltfa 1\n"
+                 "scope s\n"
+                 "entity link:a kind=link plane=communication layer=l2 scope=s\n",
+                 ltfa::DiagnosticCode::layer_incompatible);
+    expect_error("ltfa 1\n"
+                 "scope s\n"
+                 "entity lag:a kind=aggregate plane=communication layer=l2 scope=s "
+                 "protocol=lacp\n",
+                 ltfa::DiagnosticCode::dsl_missing_required_field);
+    expect_error("ltfa 1\n"
+                 "scope s\n"
+                 "entity consumer scope=s\n"
+                 "entity provider scope=s\n"
+                 "require consumer by provider group=g mode=at-least\n",
+                 ltfa::DiagnosticCode::dsl_missing_required_field);
+    expect_error("ltfa 1\n"
+                 "scope s\n"
+                 "entity consumer scope=s\n"
+                 "entity provider scope=s\n"
+                 "require consumer by provider group=g mode=at-least minimum=2\n",
+                 ltfa::DiagnosticCode::dsl_invalid_value);
+    expect_error("ltfa 1\n"
+                 "scope s\n"
+                 "entity consumer scope=s\n"
+                 "entity provider scope=s\n"
+                 "require consumer by provider group=g mode=any minimum=1\n",
+                 ltfa::DiagnosticCode::dsl_invalid_attribute);
+}
+
 } // namespace
 
 int main() {
@@ -322,5 +432,7 @@ int main() {
     test_diagnostics();
     test_multidrop_bus();
     test_physical_cycles_and_determinism();
+    test_link_aggregation_and_control_domains();
+    test_link_aggregation_diagnostics();
     return failures == 0 ? 0 : 1;
 }

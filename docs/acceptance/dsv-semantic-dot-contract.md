@@ -12,7 +12,8 @@ ADR 0004 defines a compatibility-preserving semantic DOT boundary:
 
 - `ltfa.model.dot/v1` remains the byte-stable raw view
 - semantic output uses `ltfa.diagram.dot/v1`
-- public views are `raw`, `topology`, `power`, `dependency`, and `overlay`
+- the baseline public views accepted here are `raw`, `topology`, `power`,
+  `dependency`, and `overlay`
 - eligible `contained_in` becomes nested cluster membership
 - eligible endpoint ownership becomes a device port
 - ambiguous structure remains explicit rather than inferred
@@ -39,13 +40,13 @@ belongs to `topology`, while `carried_by` and `uses_underlay` belong to
 `overlay`. All built-in relation kinds are now assigned to a semantic lens or
 to the structural containment rule.
 
-The redacted Ebino model was compiled with LTFA 0.2.1 and counted without
-network or secret access:
+The pre-ADR-0005 redacted Ebino model was compiled with LTFA 0.2.1 and counted
+without network or secret access:
 
 ```text
 entities=99
-endpoints=50
-relations=190
+endpoints=52
+relations=191
 contained_in=70
 powered_by=44
 depends_on=35
@@ -56,6 +57,11 @@ multi-parent-containment-children=0
 All 13 Ebino containment-parent objects have zero non-containment relations.
 This makes them eligible acceptance candidates without turning that
 site-specific fact into a general renderer assumption.
+
+ADR 0005 subsequently adds the orthogonal `logical` and `protection` views.
+Their contract and current Ebino migration evidence are recorded in
+`link-aggregation-protection.md` and `dsv-ebino-semantic-dot.md`; the counts
+above remain the historical input used to accept ADR 0004.
 
 ## Validation
 

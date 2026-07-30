@@ -57,7 +57,7 @@ constexpr std::array<OptionDescriptor, 6> kModelOptions{{
     {"format", "", OptionKind::value, "format", "output-format", false, false, "human",
      "human|json|dot", "", "", "Select human, JSON, or DOT model output."},
     {"dot-view", "", OptionKind::value, "view", "dot-view", false, false, "raw",
-     "raw|topology|power|dependency|overlay", "", "format=dot",
+     "raw|topology|logical|protection|power|dependency|overlay", "", "format=dot",
      "Select the lossless raw or a semantic DOT relation view; valid only with --format dot."},
     {"include-restricted", "", OptionKind::flag, "", "", false, false, "false", "", "", "",
      "Explicitly include restricted model objects."},
@@ -131,7 +131,8 @@ constexpr std::array<ExampleDescriptor, 3> kAnalyzeExamples{{
 constexpr std::array<CommandDescriptor, 3> kCommands{{
     {"model", "model", "Load, validate, normalize, and render one local topology model.",
      "ltfa model --model-root <directory> --input <file> "
-     "[--format human|json|dot] [--dot-view raw|topology|power|dependency|overlay] "
+     "[--format human|json|dot] "
+     "[--dot-view raw|topology|logical|protection|power|dependency|overlay] "
      "[--include-restricted]",
      CommandHandler::model, nullptr, 0, kModelOptions.data(), kModelOptions.size(),
      "local-model-tree", "human|json|dot", "model", "read",

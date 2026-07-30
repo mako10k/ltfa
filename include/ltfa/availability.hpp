@@ -45,7 +45,8 @@ make_availability_snapshot(const NormalizedModel &model,
 
 [[nodiscard]] AvailabilityState
 evaluate_requirement_states(RequirementMode mode,
-                            const std::vector<AvailabilityState> &provider_states) noexcept;
+                            const std::vector<AvailabilityState> &provider_states,
+                            std::uint32_t minimum_providers = 0) noexcept;
 
 [[nodiscard]] std::optional<RequirementGroupEvaluation>
 evaluate_requirement_group(const NormalizedModel &model, RequirementGroupId group,

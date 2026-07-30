@@ -40,6 +40,7 @@ struct PendingRequirement {
     std::string external_id;
     EntityId consumer;
     RequirementMode mode{RequirementMode::all};
+    std::uint32_t minimum_providers{0};
     std::uint64_t hold_up_ms{0};
     SourceSpan source;
     std::map<std::string, std::pair<EntityId, SourceSpan>> providers;
@@ -121,8 +122,8 @@ class Compiler {
         }
         if (!collect_declarations() || !compile_scopes() || !compile_entities() ||
             !compile_endpoints() || !validate_network_spaces() || !compile_failure_domains() ||
-            !compile_relations() || !compile_requirements() || !compile_failures() ||
-            !compile_probes() || !build_relation_adjacency() ||
+            !compile_relations() || !validate_special_topology() || !compile_requirements() ||
+            !compile_failures() || !compile_probes() || !build_relation_adjacency() ||
             !build_availability_dependencies()) {
             return {std::nullopt, std::move(error_)};
         }
@@ -459,11 +460,69 @@ class Compiler {
         return true;
     }
 
+    [[nodiscard]] bool validate_identifier_value(const Attribute &attribute,
+                                                 std::initializer_list<std::string_view> values) {
+        if (!expect_identifier(attribute)) {
+            return false;
+        }
+        if (std::find(values.begin(), values.end(), attribute.value.text) == values.end()) {
+            return fail(DiagnosticCode::dsl_invalid_value, attribute.value.source,
+                        "attribute '" + attribute.key + "' has unsupported value '" +
+                            attribute.value.text + "'");
+        }
+        return true;
+    }
+
+    [[nodiscard]] bool validate_special_entity(const Entity &entity,
+                                               const std::vector<Attribute> &attributes,
+                                               SourceSpan source) {
+        const auto *protocol = find_attribute(attributes, "protocol");
+        const auto *mode = find_attribute(attributes, "mode");
+        if (entity.kind == EntityKind::link) {
+            if (entity.plane != Plane::communication || entity.layer != Layer::physical) {
+                return fail(DiagnosticCode::layer_incompatible, source,
+                            "link entity must use plane=communication and layer=physical");
+            }
+            return true;
+        }
+        if (entity.kind == EntityKind::aggregate) {
+            if (entity.plane != Plane::communication || entity.layer != Layer::l2) {
+                return fail(DiagnosticCode::layer_incompatible, source,
+                            "aggregate entity must use plane=communication and layer=l2");
+            }
+            if (protocol == nullptr || mode == nullptr) {
+                return fail(DiagnosticCode::dsl_missing_required_field, source,
+                            "aggregate entity requires protocol= and mode=");
+            }
+            return validate_identifier_value(*protocol, {"lacp", "static", "bonding"}) &&
+                   validate_identifier_value(
+                       *mode, {"active-active", "active-backup", "balance-xor", "broadcast"});
+        }
+        if (entity.kind == EntityKind::control_domain) {
+            if (entity.plane != Plane::communication ||
+                (entity.layer != Layer::physical && entity.layer != Layer::l2)) {
+                return fail(DiagnosticCode::layer_incompatible, source,
+                            "control-domain entity must use plane=communication and "
+                            "layer=physical or layer=l2");
+            }
+            if (protocol == nullptr) {
+                return fail(DiagnosticCode::dsl_missing_required_field, source,
+                            "control-domain entity requires protocol=");
+            }
+            return validate_identifier_value(
+                *protocol, {"stp", "rstp", "mstp", "erps", "mrp", "turbo-ring", "other"});
+        }
+        return true;
+    }
+
     [[nodiscard]] bool compile_entities() {
         static constexpr std::array entity_kinds{
             std::pair{std::string_view{"device"}, EntityKind::device},
             std::pair{std::string_view{"facility"}, EntityKind::facility},
             std::pair{std::string_view{"bus"}, EntityKind::bus},
+            std::pair{std::string_view{"link"}, EntityKind::link},
+            std::pair{std::string_view{"aggregate"}, EntityKind::aggregate},
+            std::pair{std::string_view{"control-domain"}, EntityKind::control_domain},
             std::pair{std::string_view{"network-space"}, EntityKind::network_space},
             std::pair{std::string_view{"tunnel"}, EntityKind::tunnel},
             std::pair{std::string_view{"service"}, EntityKind::service},
@@ -556,6 +615,9 @@ class Compiler {
                             "entity with address= must name network-space=");
             }
             if (!validate_plane_layer(value, statement->source)) {
+                return false;
+            }
+            if (!validate_special_entity(value, statement->attributes, statement->source)) {
                 return false;
             }
             for (const auto &attribute : statement->attributes) {
@@ -899,7 +961,8 @@ class Compiler {
             const auto kind = entity_kind(object);
             switch (relation) {
             case RelationKind::network:
-                return kind == EntityKind::network_space || kind == EntityKind::tunnel;
+                return kind == EntityKind::link || kind == EntityKind::aggregate ||
+                       kind == EntityKind::network_space || kind == EntityKind::tunnel;
             case RelationKind::power:
                 return source ? kind == EntityKind::facility
                               : kind == EntityKind::device || kind == EntityKind::facility ||
@@ -990,6 +1053,36 @@ class Compiler {
             object_layer(relation.from) != object_layer(relation.to)) {
             return fail(DiagnosticCode::layer_incompatible, source,
                         "network connection endpoints must be in the same layer");
+        }
+        const auto *role = find_attribute(*relation.attributes, "role");
+        const auto *normal_state = find_attribute(*relation.attributes, "normal-state");
+        if (role != nullptr || normal_state != nullptr) {
+            if (relation.kind != RelationKind::member_of ||
+                relation.to.kind != ObjectKind::entity ||
+                (entity_kind(relation.to) != EntityKind::aggregate &&
+                 entity_kind(relation.to) != EntityKind::control_domain)) {
+                return fail(DiagnosticCode::dsl_invalid_attribute, source,
+                            "role= and normal-state= require member_of targeting an aggregate "
+                            "or control-domain");
+            }
+            if (role != nullptr &&
+                !validate_identifier_value(*role,
+                                           {"root", "designated", "alternate", "backup", "manager",
+                                            "member", "active", "standby", "unknown"})) {
+                return false;
+            }
+            if (normal_state != nullptr &&
+                !validate_identifier_value(*normal_state, {"forwarding", "learning", "discarding",
+                                                           "blocking", "standby", "unknown"})) {
+                return false;
+            }
+        }
+        if (relation.kind == RelationKind::member_of && relation.to.kind == ObjectKind::entity &&
+            entity_kind(relation.to) == EntityKind::aggregate &&
+            (relation.from.kind != ObjectKind::entity ||
+             entity_kind(relation.from) != EntityKind::link)) {
+            return fail(DiagnosticCode::endpoint_incompatible, source,
+                        "aggregate members must be link entities");
         }
         return true;
     }
@@ -1103,6 +1196,34 @@ class Compiler {
         return true;
     }
 
+    [[nodiscard]] bool validate_special_topology() {
+        for (const auto &entity : model_.entities) {
+            if (entity.kind != EntityKind::link) {
+                continue;
+            }
+            std::vector<ObjectRef> peers;
+            for (const auto &relation : model_.relations) {
+                if (relation.kind != RelationKind::network) {
+                    continue;
+                }
+                const auto link = ObjectRef::from(entity.id);
+                if (relation.from != link && relation.to != link) {
+                    continue;
+                }
+                if (relation.direction != Direction::bidirectional) {
+                    return fail(DiagnosticCode::endpoint_incompatible, relation.source,
+                                "link entity network connections must be bidirectional");
+                }
+                peers.push_back(relation.from == link ? relation.to : relation.from);
+            }
+            if (peers.size() != 2 || peers[0] == peers[1]) {
+                return fail(DiagnosticCode::endpoint_incompatible, entity.source,
+                            "link entity must connect exactly two distinct network peers");
+            }
+        }
+        return true;
+    }
+
     [[nodiscard]] std::optional<std::uint64_t> parse_duration(const Attribute &attribute) {
         if (attribute.value.kind != dsl::ValueKind::duration) {
             fail(DiagnosticCode::dsl_invalid_value, attribute.value.source,
@@ -1141,10 +1262,30 @@ class Compiler {
         return value * multiplier;
     }
 
+    [[nodiscard]] std::optional<std::uint32_t> parse_positive_integer(const Attribute &attribute) {
+        if (attribute.value.kind != dsl::ValueKind::integer ||
+            (!attribute.value.text.empty() && attribute.value.text.front() == '-')) {
+            fail(DiagnosticCode::dsl_invalid_value, attribute.value.source,
+                 "attribute '" + attribute.key + "' must be a positive integer");
+            return std::nullopt;
+        }
+        std::uint32_t value = 0;
+        const auto text = std::string_view{attribute.value.text};
+        const auto parsed = std::from_chars(text.data(), text.data() + text.size(), value);
+        if (text.empty() || parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size() ||
+            value == 0) {
+            fail(DiagnosticCode::dsl_invalid_value, attribute.value.source,
+                 "attribute '" + attribute.key + "' must be a positive integer");
+            return std::nullopt;
+        }
+        return value;
+    }
+
     [[nodiscard]] bool compile_requirements() {
         static constexpr std::array modes{
             std::pair{std::string_view{"all"}, RequirementMode::all},
             std::pair{std::string_view{"any"}, RequirementMode::any},
+            std::pair{std::string_view{"at-least"}, RequirementMode::at_least},
         };
         std::map<std::string, PendingRequirement> pending;
         for (const auto &statement : document_.statements) {
@@ -1172,6 +1313,22 @@ class Compiler {
             if (!mode.has_value()) {
                 return false;
             }
+            std::uint32_t minimum_providers = 0;
+            const auto *minimum_attribute = find_attribute(requirement->attributes, "minimum");
+            if (*mode == RequirementMode::at_least) {
+                if (minimum_attribute == nullptr) {
+                    return fail(DiagnosticCode::dsl_missing_required_field, requirement->source,
+                                "requirement mode=at-least requires minimum=");
+                }
+                const auto minimum = parse_positive_integer(*minimum_attribute);
+                if (!minimum.has_value()) {
+                    return false;
+                }
+                minimum_providers = *minimum;
+            } else if (minimum_attribute != nullptr) {
+                return fail(DiagnosticCode::dsl_invalid_attribute, minimum_attribute->source,
+                            "minimum= is valid only with mode=at-least");
+            }
             std::uint64_t hold_up_ms = 0;
             if (const auto *hold_up = find_attribute(requirement->attributes, "hold-up")) {
                 const auto duration = parse_duration(*hold_up);
@@ -1183,15 +1340,21 @@ class Compiler {
             const auto consumer_id = object_external_id(ObjectRef::from(*consumer));
             const auto external_id = "requirement:" + encoded_id_component(consumer_id) + ":" +
                                      encoded_id_component(group_attribute->value.text);
-            auto [entry, inserted] = pending.emplace(
-                external_id,
-                PendingRequirement{
-                    external_id, *consumer, *mode, hold_up_ms, requirement->source, {}, {}});
+            auto [entry, inserted] =
+                pending.emplace(external_id, PendingRequirement{external_id,
+                                                                *consumer,
+                                                                *mode,
+                                                                minimum_providers,
+                                                                hold_up_ms,
+                                                                requirement->source,
+                                                                {},
+                                                                {}});
             if (!inserted && (entry->second.consumer != *consumer || entry->second.mode != *mode ||
+                              entry->second.minimum_providers != minimum_providers ||
                               entry->second.hold_up_ms != hold_up_ms)) {
                 return fail(DiagnosticCode::dsl_invalid_value, requirement->source,
                             "requirement group '" + group_attribute->value.text +
-                                "' has inconsistent mode or hold-up",
+                                "' has inconsistent mode, minimum, or hold-up",
                             entry->second.source);
             }
             const auto provider_id = std::string{object_external_id(ObjectRef::from(*provider))};
@@ -1210,6 +1373,11 @@ class Compiler {
         }
 
         for (auto &[external_id, requirement] : pending) {
+            if (requirement.mode == RequirementMode::at_least &&
+                requirement.minimum_providers > requirement.providers.size()) {
+                return fail(DiagnosticCode::dsl_invalid_value, requirement.source,
+                            "requirement minimum exceeds its provider count");
+            }
             if (!reserve_stable_id(external_id, requirement.source, "requirement-group ID")) {
                 return false;
             }
@@ -1229,6 +1397,7 @@ class Compiler {
                  intern(external_id),
                  requirement.consumer,
                  requirement.mode,
+                 requirement.minimum_providers,
                  {begin, static_cast<std::uint32_t>(requirement.providers.size())},
                  requirement.hold_up_ms,
                  append_attributes(extensions, {}),

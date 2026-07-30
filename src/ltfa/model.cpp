@@ -58,6 +58,12 @@ std::string_view to_string(EntityKind value) noexcept {
         return "facility";
     case EntityKind::bus:
         return "bus";
+    case EntityKind::link:
+        return "link";
+    case EntityKind::aggregate:
+        return "aggregate";
+    case EntityKind::control_domain:
+        return "control-domain";
     case EntityKind::network_space:
         return "network-space";
     case EntityKind::tunnel:
@@ -190,6 +196,8 @@ std::string_view to_string(RequirementMode value) noexcept {
         return "all";
     case RequirementMode::any:
         return "any";
+    case RequirementMode::at_least:
+        return "at-least";
     }
     return "unknown";
 }

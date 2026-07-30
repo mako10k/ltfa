@@ -723,6 +723,12 @@ int run_analyze(const CommandDescriptor &command, const ParsedArguments &parsed,
     const auto snapshot = make_availability_snapshot(model);
     GraphFilter view;
     view.scope = *scope;
+    view.relation_kinds = {
+        RelationKind::network,       RelationKind::power,          RelationKind::serial,
+        RelationKind::contact,       RelationKind::analog_current, RelationKind::carried_by,
+        RelationKind::uses_underlay, RelationKind::terminates_on,  RelationKind::routes_via,
+        RelationKind::depends_on,    RelationKind::powered_by,
+    };
     view.direction = TraversalDirection::undirected;
     AssuranceReport report;
     report.scope = *scope;

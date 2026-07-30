@@ -486,7 +486,7 @@ if(NOT dot_raw_explicit_result EQUAL 0 OR NOT dot_raw_explicit_error STREQUAL ""
     message(FATAL_ERROR "explicit raw DOT view must match the compatible default byte-for-byte")
 endif()
 
-foreach(view topology power dependency overlay)
+foreach(view topology logical protection power dependency overlay)
     run_cli(dot_semantic_${view}
         ${model_command} --format dot --dot-view "${view}"
     )
@@ -498,6 +498,24 @@ foreach(view topology power dependency overlay)
         message(FATAL_ERROR "semantic ${view} DOT view did not emit its stable contract")
     endif()
 endforeach()
+
+run_cli(resilience_analysis
+    analyze --model-root "${LTFA_RESILIENCE_ROOT}" --input main.ltfa
+    --scope site:resilience --source switch:1:p1 --target switch:2:p1
+    --failure failure:link-1
+)
+string(FIND "${resilience_analysis_output}"
+    "immediate-degraded:\n    - lag:uplink" resilience_degraded)
+if(NOT resilience_analysis_result EQUAL 0 OR
+   NOT resilience_analysis_error STREQUAL "" OR
+   NOT resilience_analysis_output MATCHES "reachable: true" OR
+   resilience_analysis_output MATCHES "relation:member_of" OR
+   resilience_analysis_output MATCHES "id: stp:default" OR
+   resilience_analysis_output MATCHES "alternatives-excluded-by-filter: true" OR
+   resilience_degraded EQUAL -1)
+    message(FATAL_ERROR
+        "CLI assurance must not treat structural membership as forwarding connectivity")
+endif()
 
 run_cli(restricted_default
     model --model-root "${LTFA_VALID_ROOT}" --input restricted.ltfa --format json
@@ -634,7 +652,7 @@ run_cli(invalid_dot_view
 )
 if(NOT invalid_dot_view_result EQUAL 2 OR NOT invalid_dot_view_output STREQUAL "" OR
    NOT invalid_dot_view_error MATCHES
-       "^LTCLI-001 error: option --dot-view must be one of raw, topology, power, dependency, or overlay")
+       "^LTCLI-001 error: option --dot-view must be one of raw, topology, logical, protection, power, dependency, or overlay")
     message(FATAL_ERROR "unknown DOT view must return a stable usage error")
 endif()
 

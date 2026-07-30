@@ -15,8 +15,8 @@ That representation is useful as a lossless graph-oriented artifact, but it is
 not a readable operational diagram for a model with substantial structural
 information. The redacted Ebino model demonstrates the distinction:
 
-- 99 entities and 50 endpoints become 149 DOT nodes
-- 190 model relations plus 50 endpoint ownership edges become 240 DOT edges
+- 99 entities and 52 endpoints become 151 DOT nodes
+- 191 model relations plus 52 endpoint ownership edges become 243 DOT edges
 - 70 `contained_in` relations describe spatial hierarchy
 - 44 `powered_by` and 35 `depends_on` relations describe separate analytical
   concerns from physical connectivity
@@ -51,6 +51,10 @@ The public view names are:
 - `power`
 - `dependency`
 - `overlay`
+
+ADR 0005 later extends this list with the orthogonal `logical` and
+`protection` membership views. The five views above remain the baseline
+accepted by this decision.
 
 An unknown view is a CLI usage error. A semantic view option is valid only with
 DOT output.

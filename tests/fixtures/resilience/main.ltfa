@@ -1,0 +1,31 @@
+ltfa 1
+scope site:resilience kind=site label="Resilient L2 Site" completeness=verified evidence-quality=confirmed
+
+entity switch:1 kind=device plane=communication layer=physical scope=site:resilience label="Switch 1"
+entity switch:2 kind=device plane=communication layer=physical scope=site:resilience label="Switch 2"
+endpoint switch:1:p1 owner=switch:1 kind=network
+endpoint switch:1:p2 owner=switch:1 kind=network
+endpoint switch:2:p1 owner=switch:2 kind=network
+endpoint switch:2:p2 owner=switch:2 kind=network
+
+entity link:1 kind=link plane=communication layer=physical scope=site:resilience label="Fiber member 1" failure-domain=cable-route:east
+entity link:2 kind=link plane=communication layer=physical scope=site:resilience label="Fiber member 2" failure-domain=cable-route:west
+connect switch:1:p1 -- link:1 kind=network
+connect link:1 -- switch:2:p1 kind=network
+connect switch:1:p2 -- link:2 kind=network
+connect link:2 -- switch:2:p2 kind=network
+
+entity lag:uplink kind=aggregate plane=communication layer=l2 scope=site:resilience label="LAG uplink" protocol=lacp mode=active-active
+relate link:1 -> lag:uplink kind=member_of
+relate link:2 -> lag:uplink kind=member_of
+require lag:uplink by link:1 group=members mode=at-least minimum=1
+require lag:uplink by link:2 group=members mode=at-least minimum=1
+
+entity stp:default kind=control-domain plane=communication layer=l2 scope=site:resilience label="RSTP default" protocol=rstp
+relate switch:1 -> stp:default kind=member_of role=root
+relate switch:2 -> stp:default kind=member_of role=designated
+relate link:1 -> stp:default kind=member_of role=designated normal-state=forwarding
+relate link:2 -> stp:default kind=member_of role=alternate normal-state=discarding
+
+failure failure:link-1 target=link:1 mode=link-down
+failure failure:link-2 target=link:2 mode=link-down

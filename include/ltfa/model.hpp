@@ -40,6 +40,9 @@ enum class EntityKind {
     device,
     facility,
     bus,
+    link,
+    aggregate,
+    control_domain,
     network_space,
     tunnel,
     service,
@@ -106,6 +109,7 @@ enum class Direction {
 enum class RequirementMode {
     all,
     any,
+    at_least,
 };
 
 enum class AvailabilityState {
@@ -291,6 +295,7 @@ struct RequirementGroup {
     StringId external_id;
     EntityId consumer;
     RequirementMode mode{RequirementMode::all};
+    std::uint32_t minimum_providers{0};
     IndexRange providers;
     std::uint64_t hold_up_ms{0};
     IndexRange attributes;

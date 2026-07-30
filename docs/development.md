@@ -53,6 +53,11 @@ Exercise the built CLI directly:
     --input main.ltfa \
     --format dot \
     --dot-view topology
+./build/release/ltfa model \
+    --model-root tests/fixtures/resilience \
+    --input main.ltfa \
+    --format dot \
+    --dot-view protection
 ./build/release/ltfa analyze \
     --model-root tests/fixtures/slice2 \
     --input main.ltfa \
@@ -157,6 +162,8 @@ Repository-local decisions define the implemented boundary:
 - [Bootstrap boundary](decisions/0001-bootstrap-boundary.md)
 - [CLI contract and first release boundary](decisions/0002-cli-contract-and-first-release-boundary.md)
 - [v0.2 offline assurance CLI contract](decisions/0003-v0.2-assurance-cli.md)
+- [semantic DOT views](decisions/0004-semantic-dot-views.md)
+- [links, aggregates, and protection domains](decisions/0005-link-aggregation-and-protection-domains.md)
 
 Accepted implementation and release evidence is retained under
 `docs/acceptance/` and `docs/plans/`. In particular:

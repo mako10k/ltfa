@@ -8,9 +8,29 @@ namespace {
 
 class RequirementAccumulator {
   public:
-    explicit RequirementAccumulator(RequirementMode mode) noexcept : mode_(mode) {}
+    explicit RequirementAccumulator(RequirementMode mode,
+                                    std::uint32_t minimum_providers = 0) noexcept
+        : mode_(mode), minimum_providers_(minimum_providers) {}
 
     void add(AvailabilityState state) noexcept {
+        if (mode_ == RequirementMode::at_least) {
+            has_state_ = true;
+            switch (state) {
+            case AvailabilityState::available:
+                ++available_;
+                break;
+            case AvailabilityState::degraded:
+                ++degraded_;
+                break;
+            case AvailabilityState::unknown:
+                ++unknown_;
+                break;
+            case AvailabilityState::unavailable:
+                ++unavailable_;
+                break;
+            }
+            return;
+        }
         if (!has_state_) {
             state_ = state;
             has_state_ = true;
@@ -45,11 +65,32 @@ class RequirementAccumulator {
     }
 
     [[nodiscard]] AvailabilityState state() const noexcept {
+        if (mode_ == RequirementMode::at_least) {
+            if (!has_state_ || minimum_providers_ == 0) {
+                return AvailabilityState::unknown;
+            }
+            if (available_ >= minimum_providers_) {
+                return degraded_ != 0 || unavailable_ != 0 ? AvailabilityState::degraded
+                                                           : AvailabilityState::available;
+            }
+            if (available_ + degraded_ >= minimum_providers_) {
+                return AvailabilityState::degraded;
+            }
+            if (available_ + degraded_ + unknown_ >= minimum_providers_) {
+                return AvailabilityState::unknown;
+            }
+            return AvailabilityState::unavailable;
+        }
         return has_state_ ? state_ : AvailabilityState::unknown;
     }
 
   private:
     RequirementMode mode_;
+    std::uint32_t minimum_providers_{0};
+    std::uint32_t available_{0};
+    std::uint32_t degraded_{0};
+    std::uint32_t unknown_{0};
+    std::uint32_t unavailable_{0};
     AvailabilityState state_{AvailabilityState::unknown};
     bool has_state_{false};
 };
@@ -135,10 +176,10 @@ AvailabilitySnapshot make_availability_snapshot(const NormalizedModel &model,
             std::vector<AvailabilityState>(model.endpoints.size(), initial)};
 }
 
-AvailabilityState
-evaluate_requirement_states(RequirementMode mode,
-                            const std::vector<AvailabilityState> &provider_states) noexcept {
-    RequirementAccumulator evaluation{mode};
+AvailabilityState evaluate_requirement_states(RequirementMode mode,
+                                              const std::vector<AvailabilityState> &provider_states,
+                                              std::uint32_t minimum_providers) noexcept {
+    RequirementAccumulator evaluation{mode, minimum_providers};
     for (const auto state : provider_states) {
         evaluation.add(state);
     }
@@ -156,8 +197,14 @@ evaluate_requirement_group(const NormalizedModel &model, RequirementGroupId grou
         !valid_range(requirement.providers, model.requirement_providers.size())) {
         return std::nullopt;
     }
+    if ((requirement.mode == RequirementMode::at_least &&
+         (requirement.minimum_providers == 0 ||
+          requirement.minimum_providers > requirement.providers.count)) ||
+        (requirement.mode != RequirementMode::at_least && requirement.minimum_providers != 0)) {
+        return std::nullopt;
+    }
 
-    RequirementAccumulator evaluation{requirement.mode};
+    RequirementAccumulator evaluation{requirement.mode, requirement.minimum_providers};
     for (std::uint32_t offset = 0; offset < requirement.providers.count; ++offset) {
         const auto provider = model.requirement_providers[requirement.providers.begin + offset];
         if (!provider.is_valid() || provider.value() >= model.entities.size()) {

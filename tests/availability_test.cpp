@@ -56,6 +56,9 @@ void test_truth_tables() {
            "an empty all group must fail closed as unknown");
     expect(ltfa::evaluate_requirement_states(ltfa::RequirementMode::any, {}) == State::unknown,
            "an empty any group must fail closed as unknown");
+    expect(ltfa::evaluate_requirement_states(ltfa::RequirementMode::at_least, {}, 1) ==
+               State::unknown,
+           "an empty at-least group must fail closed as unknown");
 
     for (const auto left : states) {
         expect(ltfa::evaluate_requirement_states(ltfa::RequirementMode::all, {left}) == left,
@@ -72,6 +75,30 @@ void test_truth_tables() {
                    "any truth table mismatch");
         }
     }
+
+    expect(ltfa::evaluate_requirement_states(ltfa::RequirementMode::at_least,
+                                             {State::available, State::available, State::available},
+                                             1) == State::available,
+           "at-least must be available when the threshold is met without known member loss");
+    expect(ltfa::evaluate_requirement_states(
+               ltfa::RequirementMode::at_least,
+               {State::available, State::unavailable, State::unavailable}, 1) == State::degraded,
+           "at-least must expose known redundancy loss while its threshold remains met");
+    expect(ltfa::evaluate_requirement_states(
+               ltfa::RequirementMode::at_least,
+               {State::available, State::degraded, State::unavailable}, 2) == State::degraded,
+           "at-least must be degraded when degraded providers are needed for the threshold");
+    expect(ltfa::evaluate_requirement_states(ltfa::RequirementMode::at_least,
+                                             {State::available, State::unknown, State::unavailable},
+                                             2) == State::unknown,
+           "at-least must remain unknown when unknown evidence decides the threshold");
+    expect(ltfa::evaluate_requirement_states(
+               ltfa::RequirementMode::at_least,
+               {State::available, State::unavailable, State::unavailable}, 2) == State::unavailable,
+           "at-least must be unavailable when the threshold cannot be reached");
+    expect(ltfa::evaluate_requirement_states(ltfa::RequirementMode::at_least, {State::available},
+                                             0) == State::unknown,
+           "at-least without a positive threshold must fail closed as unknown");
 }
 
 ltfa::StringId add_string(ltfa::NormalizedModel &model, std::string value) {
@@ -241,6 +268,29 @@ void test_requirement_evaluation() {
            "invalid requirement IDs must fail without an invented state");
     expect(!ltfa::evaluate_consumer_requirements(model, ltfa::EntityId{99}, snapshot).has_value(),
            "invalid consumer IDs must fail without an invented result");
+
+    auto threshold_model = make_model();
+    ltfa::RequirementGroup threshold;
+    threshold.id = ltfa::RequirementGroupId{2};
+    threshold.external_id = threshold_model.requirement_groups.front().external_id;
+    threshold.consumer = ltfa::EntityId{4};
+    threshold.mode = ltfa::RequirementMode::at_least;
+    threshold.minimum_providers = 2;
+    threshold.providers = {0, 2};
+    threshold_model.requirement_groups.push_back(threshold);
+    auto threshold_snapshot = ltfa::make_availability_snapshot(threshold_model);
+    expect(threshold_snapshot.set(ltfa::ObjectRef::from(ltfa::EntityId{2}), State::degraded),
+           "threshold provider state must be writable");
+    const auto threshold_degraded = ltfa::evaluate_requirement_group(
+        threshold_model, ltfa::RequirementGroupId{2}, threshold_snapshot);
+    expect(threshold_degraded.has_value() && threshold_degraded->state == State::degraded,
+           "normalized at-least group must use its minimum provider count");
+    expect(threshold_snapshot.set(ltfa::ObjectRef::from(ltfa::EntityId{2}), State::unavailable),
+           "threshold provider state must be writable");
+    const auto threshold_failed = ltfa::evaluate_requirement_group(
+        threshold_model, ltfa::RequirementGroupId{2}, threshold_snapshot);
+    expect(threshold_failed.has_value() && threshold_failed->state == State::unavailable,
+           "normalized at-least group must fail when its minimum cannot be met");
 }
 
 void test_failure_domains() {

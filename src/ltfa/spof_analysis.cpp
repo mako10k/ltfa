@@ -296,13 +296,15 @@ object_matches_filter(const NormalizedModel &model, const AvailabilitySnapshot &
         const bool from_selected = result.selected_objects[object_ordinal(model, relation.from)];
         const bool to_selected = result.selected_objects[object_ordinal(model, relation.to)];
         const bool kind_selected = relation_kind_selected(filter, relation.kind);
+        const bool structural_relation =
+            relation.kind == RelationKind::member_of || relation.kind == RelationKind::contained_in;
         if (from_selected && to_selected && kind_selected) {
             result.selected_relations[relation.id.value()] = true;
             const auto from = object_ordinal(model, relation.from);
             const auto to = object_ordinal(model, relation.to);
             result.adjacency[from].push_back({to, relation.id});
             result.adjacency[to].push_back({from, relation.id});
-        } else if ((from_selected && to_selected && !kind_selected) ||
+        } else if ((from_selected && to_selected && !kind_selected && !structural_relation) ||
                    (kind_selected && from_selected != to_selected)) {
             result.alternatives_excluded_by_filter = true;
         }

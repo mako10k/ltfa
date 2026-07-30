@@ -122,16 +122,17 @@ struct LineParseResult {
     case StatementKind::entity:
         return is_one_of(key, {"kind", "plane", "layer", "scope", "label", "network-space",
                                "failure-domain", "sensitivity", "source-ref", "address", "medium",
-                               "protocol", "role"});
+                               "protocol", "mode", "role"});
     case StatementKind::endpoint:
         return is_one_of(key, {"kind", "scope", "label", "network-space", "failure-domain",
                                "sensitivity", "source-ref", "address", "medium", "protocol", "role",
                                "normal-state", "current-range"});
     case StatementKind::connect:
     case StatementKind::relate:
-        return is_one_of(key, {"kind", "label", "scope", "sensitivity", "source-ref"});
+        return is_one_of(
+            key, {"kind", "label", "scope", "sensitivity", "source-ref", "role", "normal-state"});
     case StatementKind::requirement:
-        return is_one_of(key, {"group", "mode", "hold-up"});
+        return is_one_of(key, {"group", "mode", "minimum", "hold-up"});
     case StatementKind::failure:
         return is_one_of(key, {"mode", "after"});
     case StatementKind::probe:

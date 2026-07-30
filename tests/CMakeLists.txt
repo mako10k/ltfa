@@ -150,6 +150,7 @@ add_test(
         -DLTFA_VALID_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice1
         -DLTFA_INVALID_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice1-invalid
         -DLTFA_SLICE2_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice2
+        -DLTFA_RESILIENCE_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/resilience
         -P ${CMAKE_CURRENT_SOURCE_DIR}/cli_acceptance_test.cmake
 )
 
@@ -247,7 +248,7 @@ if(LTFA_DOT_EXECUTABLE)
             -DLTFA_SVG_FILE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-semantic-output.svg
             -P ${PROJECT_SOURCE_DIR}/cmake/verify_dot_render.cmake
     )
-    foreach(view power dependency overlay)
+    foreach(view logical protection power dependency overlay)
         add_test(
             NAME ltfa.model.output.semantic-${view}-graphviz
             COMMAND ${CMAKE_COMMAND}

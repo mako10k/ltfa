@@ -99,6 +99,9 @@ void test_model_enum_names() {
         std::pair{ltfa::EntityKind::device, std::string_view{"device"}},
         std::pair{ltfa::EntityKind::facility, std::string_view{"facility"}},
         std::pair{ltfa::EntityKind::bus, std::string_view{"bus"}},
+        std::pair{ltfa::EntityKind::link, std::string_view{"link"}},
+        std::pair{ltfa::EntityKind::aggregate, std::string_view{"aggregate"}},
+        std::pair{ltfa::EntityKind::control_domain, std::string_view{"control-domain"}},
         std::pair{ltfa::EntityKind::network_space, std::string_view{"network-space"}},
         std::pair{ltfa::EntityKind::tunnel, std::string_view{"tunnel"}},
         std::pair{ltfa::EntityKind::service, std::string_view{"service"}},
@@ -166,6 +169,7 @@ void test_model_enum_names() {
     expect_names(std::array{
         std::pair{ltfa::RequirementMode::all, std::string_view{"all"}},
         std::pair{ltfa::RequirementMode::any, std::string_view{"any"}},
+        std::pair{ltfa::RequirementMode::at_least, std::string_view{"at-least"}},
     });
     expect_names(std::array{
         std::pair{ltfa::FailureDomainKind::panel, std::string_view{"panel"}},

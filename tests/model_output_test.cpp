@@ -452,6 +452,37 @@ std::string relation_lens_source() {
            "relate device-a -> panel kind=powered_by\n";
 }
 
+std::string resilience_source() {
+    return "ltfa 1\n"
+           "scope s label=\"Resilient Site\" completeness=verified evidence-quality=confirmed\n"
+           "entity sw1 kind=device plane=communication layer=physical scope=s label=\"Switch 1\"\n"
+           "entity sw2 kind=device plane=communication layer=physical scope=s label=\"Switch 2\"\n"
+           "endpoint sw1:p1 owner=sw1 kind=network\n"
+           "endpoint sw1:p2 owner=sw1 kind=network\n"
+           "endpoint sw2:p1 owner=sw2 kind=network\n"
+           "endpoint sw2:p2 owner=sw2 kind=network\n"
+           "entity link:a kind=link plane=communication layer=physical scope=s "
+           "label=\"Member A\"\n"
+           "entity link:b kind=link plane=communication layer=physical scope=s "
+           "label=\"Member B\"\n"
+           "connect sw1:p1 -- link:a kind=network\n"
+           "connect link:a -- sw2:p1 kind=network\n"
+           "connect sw1:p2 -- link:b kind=network\n"
+           "connect link:b -- sw2:p2 kind=network\n"
+           "entity lag:uplink kind=aggregate plane=communication layer=l2 scope=s "
+           "label=\"LAG uplink\" protocol=lacp mode=active-active\n"
+           "relate link:a -> lag:uplink kind=member_of\n"
+           "relate link:b -> lag:uplink kind=member_of\n"
+           "require lag:uplink by link:a group=members mode=at-least minimum=1\n"
+           "require lag:uplink by link:b group=members mode=at-least minimum=1\n"
+           "entity stp:default kind=control-domain plane=communication layer=l2 scope=s "
+           "label=\"RSTP default\" protocol=rstp\n"
+           "relate link:a -> stp:default kind=member_of role=designated "
+           "normal-state=forwarding\n"
+           "relate link:b -> stp:default kind=member_of role=alternate "
+           "normal-state=discarding\n";
+}
+
 bool has_semantic_relation_kind(std::string_view dot, std::string_view kind) {
     return dot.find("ltfa_kind=\"" + std::string{kind} + "\"") != std::string_view::npos;
 }
@@ -462,7 +493,8 @@ void test_semantic_relation_lenses() {
         return;
     }
 
-    for (const auto view : {ltfa::DotView::raw, ltfa::DotView::topology, ltfa::DotView::power,
+    for (const auto view : {ltfa::DotView::raw, ltfa::DotView::topology, ltfa::DotView::logical,
+                            ltfa::DotView::protection, ltfa::DotView::power,
                             ltfa::DotView::dependency, ltfa::DotView::overlay}) {
         const auto parsed = ltfa::parse_dot_view(ltfa::to_string(view));
         expect(parsed.has_value() && *parsed == view,
@@ -534,6 +566,45 @@ void test_semantic_relation_lenses() {
     }
 }
 
+void test_resilience_lenses() {
+    const auto model = compile(resilience_source());
+    if (!model.has_value()) {
+        return;
+    }
+
+    ltfa::DotOutputOptions options;
+    options.view = ltfa::DotView::logical;
+    const auto logical = ltfa::render_model_dot(*model, {}, options);
+    expect(logical.find("view=\"logical\"") != std::string::npos &&
+               logical.find("cluster:aggregate:lag:uplink") != std::string::npos,
+           "logical view must fold aggregate membership into an aggregate cluster");
+    expect(logical.find("LAG uplink\\nlacp / active-active / min 1/2") != std::string::npos,
+           "aggregate cluster must state protocol, mode, and normalized threshold");
+    expect(logical.find("cluster:control-domain:stp:default") == std::string::npos &&
+               logical.find("\"stp:default\"") == std::string::npos,
+           "logical view must omit unrelated protection-domain structure");
+
+    options.view = ltfa::DotView::protection;
+    const auto protection = ltfa::render_model_dot(*model, {}, options);
+    expect(protection.find("view=\"protection\"") != std::string::npos &&
+               protection.find("cluster:control-domain:stp:default") != std::string::npos,
+           "protection view must fold control-domain membership into a domain cluster");
+    expect(protection.find("RSTP default\\nrstp") != std::string::npos,
+           "control-domain cluster must state its registered protocol");
+    expect(protection.find("Member B\\nalternate / discarding") != std::string::npos,
+           "protection member must expose its domain-specific role and normal state");
+    expect(protection.find("ltfa_normal_state=\"discarding\"") != std::string::npos &&
+               protection.find("style=\"dashed\"") != std::string::npos,
+           "discarding member network segments must remain visible as non-forwarding context");
+    expect(protection.find("cluster:aggregate:lag:uplink") == std::string::npos &&
+               protection.find("\"lag:uplink\"") == std::string::npos,
+           "protection view must omit unrelated aggregate structure");
+
+    const auto json = ltfa::render_model_json(*model);
+    expect(json.find("\"mode\":\"at-least\",\"minimum_providers\":1") != std::string::npos,
+           "model JSON must expose the normalized aggregate threshold");
+}
+
 void test_dot_views() {
     const auto model = compile(restricted_source());
     if (!model.has_value()) {
@@ -586,6 +657,10 @@ int main(int argc, char **argv) {
             emitted_view = ltfa::DotView::raw;
         } else if (argument == "--emit-semantic-dot") {
             emitted_view = ltfa::DotView::topology;
+        } else if (argument == "--emit-semantic-logical-dot") {
+            emitted_view = ltfa::DotView::logical;
+        } else if (argument == "--emit-semantic-protection-dot") {
+            emitted_view = ltfa::DotView::protection;
         } else if (argument == "--emit-semantic-power-dot") {
             emitted_view = ltfa::DotView::power;
         } else if (argument == "--emit-semantic-dependency-dot") {
@@ -595,15 +670,19 @@ int main(int argc, char **argv) {
         }
         if (!emitted_view.has_value()) {
             std::cerr << "usage: ltfa_model_output_test "
-                         "[--emit-dot|--emit-semantic-dot|--emit-semantic-power-dot|"
+                         "[--emit-dot|--emit-semantic-dot|--emit-semantic-logical-dot|"
+                         "--emit-semantic-protection-dot|--emit-semantic-power-dot|"
                          "--emit-semantic-dependency-dot|--emit-semantic-overlay-dot]\n";
             return 2;
         }
+        const bool resilience_lens =
+            *emitted_view == ltfa::DotView::logical || *emitted_view == ltfa::DotView::protection;
         const bool relation_lens = *emitted_view == ltfa::DotView::power ||
                                    *emitted_view == ltfa::DotView::dependency ||
                                    *emitted_view == ltfa::DotView::overlay;
         const auto model =
-            compile(relation_lens                              ? relation_lens_source()
+            compile(resilience_lens                            ? resilience_source()
+                    : relation_lens                            ? relation_lens_source()
                     : *emitted_view == ltfa::DotView::topology ? semantic_structure_source()
                                                                : minimal_source());
         if (!model.has_value()) {
@@ -627,6 +706,7 @@ int main(int argc, char **argv) {
     test_semantic_containment_clusters();
     test_semantic_containment_fallbacks();
     test_semantic_relation_lenses();
+    test_resilience_lenses();
     test_dot_views();
     return failures == 0 ? 0 : 1;
 }
