@@ -162,6 +162,14 @@ add_test(
 )
 
 add_test(
+    NAME ltfa.cli.assurance-output-parity
+    COMMAND ${CMAKE_COMMAND}
+        -DLTFA_CLI=$<TARGET_FILE:ltfa>
+        -DLTFA_SLICE2_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice2
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cli_assurance_output_parity_test.cmake
+)
+
+add_test(
     NAME ltfa.install.smoke
     COMMAND ${CMAKE_COMMAND}
         -DLTFA_BUILD_DIR=${PROJECT_BINARY_DIR}

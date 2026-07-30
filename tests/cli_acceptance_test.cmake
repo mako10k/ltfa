@@ -209,7 +209,7 @@ if(NOT analyze_human_result EQUAL 0 OR NOT analyze_human_error STREQUAL "" OR
    NOT analyze_human_output MATCHES
        "^result: complete\nschema: ltfa.assurance/v1\noperation: analyze" OR
    NOT analyze_human_output MATCHES "classification: confirmed-spof" OR
-   NOT analyze_human_output MATCHES "at-ms=30000 object=service:held")
+   NOT analyze_human_output MATCHES "at-ms: 30000\n      object: service:held")
     message(FATAL_ERROR "human analyze output must lead with and retain the result")
 endif()
 

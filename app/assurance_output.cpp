@@ -2,6 +2,7 @@
 
 #include <ostream>
 #include <sstream>
+#include <string>
 #include <string_view>
 
 namespace ltfa::app {
@@ -133,6 +134,24 @@ void human_domains(std::ostream &output, std::string_view name, const Normalized
     }
 }
 
+void human_spof_paths(std::ostream &output, std::string_view name, const NormalizedModel &model,
+                      const std::vector<SpofPathEvidence> &paths,
+                      std::string_view indent = "      ") {
+    output << indent << name << ":\n";
+    if (paths.empty()) {
+        output << indent << "  - none\n";
+        return;
+    }
+
+    std::string path_indent(indent);
+    path_indent += "    ";
+    for (const auto &path : paths) {
+        output << indent << "  - target: " << model.external_id(path.target) << '\n';
+        human_objects(output, "objects", model, path.objects, path_indent);
+        human_relations(output, "relations", model, path.relations, path_indent);
+    }
+}
+
 void json_objects(std::ostream &output, const NormalizedModel &model,
                   const std::vector<ObjectRef> &objects) {
     output << '[';
@@ -233,8 +252,12 @@ std::string render_assurance_human(const NormalizedModel &model, const Assurance
            << "restricted-output: " << (report.include_restricted ? "include-explicit" : "omit")
            << '\n'
            << "model-inputs:\n";
-    for (const auto &input : report.model_inputs) {
-        output << "  - " << input << '\n';
+    if (report.model_inputs.empty()) {
+        output << "  - none\n";
+    } else {
+        for (const auto &input : report.model_inputs) {
+            output << "  - " << input << '\n';
+        }
     }
     output << "path:\n"
            << "  status: " << analysis_status(report.path.status) << '\n'
@@ -250,13 +273,16 @@ std::string render_assurance_human(const NormalizedModel &model, const Assurance
            << " examined-relations=" << report.path.usage.examined_relations << '\n';
 
     if (!report.spof.has_value()) {
-        output << "spof:\n"
+        output << "structural:\n"
+               << "  status: not-applicable\n"
+               << "spof:\n"
                << "  status: not-applicable\n"
                << "  reason: "
-               << (report.path.status == AnalysisStatus::incomplete
-                       ? "path analysis stopped at its work budget"
-                       : "target is not reachable in the selected view")
-               << '\n';
+               << (report.path.status == AnalysisStatus::incomplete ? "path-incomplete"
+                                                                    : "target-unreachable")
+               << '\n'
+               << "  findings:\n"
+               << "    - none\n";
     } else {
         const auto &spof = *report.spof;
         output << "structural:\n"
@@ -271,6 +297,8 @@ std::string render_assurance_human(const NormalizedModel &model, const Assurance
                << (spof.structural.alternatives_excluded_by_filter ? "true" : "false") << '\n';
         human_objects(output, "articulation-points", model, spof.structural.articulation_points);
         human_relations(output, "bridges", model, spof.structural.bridges);
+        output << "  usage: visited-objects=" << spof.structural.usage.visited_objects
+               << " examined-relations=" << spof.structural.usage.examined_relations << '\n';
         output << "spof:\n"
                << "  status: " << analysis_status(spof.status) << '\n'
                << "  findings:\n";
@@ -278,17 +306,25 @@ std::string render_assurance_human(const NormalizedModel &model, const Assurance
             output << "    - none\n";
         }
         for (const auto &finding : spof.findings) {
-            output << "    - candidate: " << removal_kind(finding.candidate.kind) << ':'
-                   << candidate_id(model, finding.candidate) << '\n'
+            output << "    - candidate:\n"
+                   << "        kind: " << removal_kind(finding.candidate.kind) << '\n'
+                   << "        id: " << candidate_id(model, finding.candidate) << '\n'
                    << "      classification: " << to_string(finding.classification) << '\n';
             human_objects(output, "affected-targets", model, finding.affected_targets, "      ");
             human_objects(output, "affected-objects", model, finding.affected_objects, "      ");
             human_objects(output, "common-cause-members", model, finding.common_cause_members,
                           "      ");
             human_domains(output, "common-domains", model, finding.common_domains);
+            human_spof_paths(output, "baseline-paths", model, finding.baseline_paths);
+            human_spof_paths(output, "retained-paths", model, finding.retained_paths);
             human_objects(output, "remaining-unknowns", model, finding.remaining_unknowns,
                           "      ");
-            output << "      retained-paths: " << finding.retained_paths.size() << '\n';
+            output << "      completeness: " << to_string(finding.qualification.completeness)
+                   << '\n'
+                   << "      evidence-quality: "
+                   << to_string(finding.qualification.evidence_quality) << '\n'
+                   << "      alternatives-excluded-by-filter: "
+                   << (finding.alternatives_excluded_by_filter ? "true" : "false") << '\n';
         }
         output << "  usage: candidates-considered=" << spof.usage.candidates_considered
                << " visited-objects=" << spof.usage.visited_objects
@@ -305,19 +341,26 @@ std::string render_assurance_human(const NormalizedModel &model, const Assurance
                << "  completeness: " << to_string(propagation.qualification.completeness) << '\n'
                << "  evidence-quality: " << to_string(propagation.qualification.evidence_quality)
                << '\n'
+               << "  unresolved-failure-mode: "
+               << (propagation.unresolved_failure_mode ? "true" : "false") << '\n'
                << "  events:\n";
         if (propagation.events.empty()) {
             output << "    - none\n";
         }
         for (const auto &event : propagation.events) {
-            output << "    - at-ms=" << event.effective_time_ms
-                   << " object=" << model.external_id(event.object)
-                   << " state=" << to_string(event.state) << '\n';
+            output << "    - at-ms: " << event.effective_time_ms << '\n'
+                   << "      object: " << model.external_id(event.object) << '\n'
+                   << "      previous-state: " << to_string(event.previous_state) << '\n'
+                   << "      state: " << to_string(event.state) << '\n'
+                   << "      completeness: " << to_string(event.qualification.completeness) << '\n'
+                   << "      evidence-quality: " << to_string(event.qualification.evidence_quality)
+                   << '\n';
         }
         human_objects(output, "immediate-unavailable", model, propagation.immediate_unavailable);
         human_objects(output, "immediate-degraded", model, propagation.immediate_degraded);
         human_objects(output, "delayed-unavailable", model, propagation.delayed_unavailable);
         human_objects(output, "delayed-degraded", model, propagation.delayed_degraded);
+        human_objects(output, "unaffected", model, propagation.unaffected_objects);
         human_objects(output, "unknown", model, propagation.unknown_objects);
         human_objects(output, "detection-gaps", model, propagation.detection_gaps);
         output << "  usage: scheduled-events=" << propagation.usage.scheduled_events
