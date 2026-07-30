@@ -165,6 +165,7 @@ Accepted implementation and release evidence is retained under
 - [Issue #1 CLI repair acceptance](acceptance/issue-1-cli-repair-acceptance.md)
 - [v0.2.1 release metadata](acceptance/r021-release-metadata.md)
 - [v0.2.1 candidate acceptance](acceptance/v0.2.1-release-candidate.md)
+- [v0.2.1 publication acceptance](acceptance/v0.2.1-release-publication.md)
 - [v0.2.1 release history](plans/v0.2.1-release-history.md)
 
 ## Plan maintenance
