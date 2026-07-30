@@ -22,19 +22,12 @@ resource REVIEW:
 
 
 
-milestone DSV_STRUCTURE_READY:
-  title "Containment cluster rendering ready"
-  state reached
 
-milestone DSV_PORTS_READY:
-  title "Endpoint port rendering ready"
 
-milestone DSV_LENSES_READY:
-  title "Relation lenses ready"
-  state reached
 
 milestone DSV_RENDERER_INTEGRATED:
   title "Semantic renderer integrated"
+  state reached
 
 milestone DSV_CLI_READY:
   title "Semantic DOT CLI ready"
@@ -44,27 +37,9 @@ milestone DSV_ACCEPTED:
 
 
 
-task DSV_PORTS DSV_STRUCTURE_READY -> DSV_PORTS_READY:
-  title "Render owned endpoints as device ports"
-  description "Represent eligible endpoint ownership inside deterministic device labels, attach physical relations to stable endpoint ports, remove synthetic owns edges from semantic views, and retain safe fallback nodes when port folding is not valid."
-  estimate:
-    optimistic 1d
-    most_likely 2d
-    pessimistic 3d
-  status done
-  priority 90
-  requires:
-    CODEX 1
-  owner "codex"
-  tags [dot, ports, endpoints]
-  source "semantic DOT contract; requirements REQ-OUT-004..005, REQ-QLT-003"
 
 
-gate DSV_PORTS_GATE DSV_PORTS_READY -> DSV_RENDERER_INTEGRATED:
-  reason "Semantic renderer acceptance requires containment and endpoint structure"
 
-gate DSV_LENSES_GATE DSV_LENSES_READY -> DSV_RENDERER_INTEGRATED:
-  reason "Semantic renderer acceptance requires relation-lens selection"
 
 task DSV_CLI_DOCS DSV_RENDERER_INTEGRATED -> DSV_CLI_READY:
   title "Expose and document semantic DOT selection"
@@ -95,16 +70,3 @@ task DSV_EBINO_ACCEPTANCE DSV_CLI_READY -> DSV_ACCEPTED:
   owner "codex"
   tags [dot, acceptance, ebino]
   source "requirements AC-007..009, REQ-QLT-003..006; docs/ebino-configuration.md"
-
-work_event WE-a65eea7f41101380e3e46b5202a0bc26a2619398bedb24577961b63375d60906:
-  model 1
-  task DSV_PORTS
-  kind start
-  occurred_at 2026-07-30T17:43:46+09:00
-  planned_value 2d
-
-work_event WE-abc613dd420919bdde0d843c7e560f97a5c3b2055d06d4396e0b1518a1fdab0b:
-  model 1
-  task DSV_PORTS
-  kind finish
-  occurred_at 2026-07-30T17:48:29+09:00
