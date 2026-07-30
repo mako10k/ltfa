@@ -16,7 +16,9 @@ ports in semantic DOT:
 - port names are deterministic within the owner and selected graph
 - physical relations attach to the corresponding owner port
 - endpoint IDs remain available as port-cell tooltips
-- endpoint labels are HTML-escaped and do not expose evidence attributes
+- endpoint labels are HTML-escaped; when absent, only the final external-ID
+  component is shown while the complete ID remains in the tooltip
+- port rendering does not expose evidence attributes
 - folded endpoints do not also render as nodes
 - folded ownership does not emit synthetic `owns` edges
 

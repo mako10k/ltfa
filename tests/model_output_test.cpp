@@ -303,8 +303,9 @@ void test_semantic_containment_clusters() {
     options.view = ltfa::DotView::topology;
     const auto dot = ltfa::render_model_dot(*model, {}, options);
     expect(dot.find("ltfa_schema=\"ltfa.diagram.dot/v1\"") != std::string::npos &&
-               dot.find("view=\"topology\"") != std::string::npos,
-           "semantic DOT must identify its presentation schema and view");
+               dot.find("view=\"topology\"") != std::string::npos &&
+               dot.find("rankdir=\"LR\"") != std::string::npos,
+           "semantic DOT must identify its presentation schema, view, and stable orientation");
     const auto facility = dot.find("subgraph \"cluster:container:facility\"");
     const auto panel = dot.find("subgraph \"cluster:container:panel\"");
     const auto router = dot.find("\"router\" [label=");
@@ -493,7 +494,8 @@ void test_semantic_relation_lenses() {
            "power view must include physical power and powered_by");
     expect(power.find("\"@ltfa-anchor:container\" [label=<<TABLE") != std::string::npos &&
                power.find("\"@ltfa-anchor:container\":\"p0\" -> \"device-a\":\"p1\"") !=
-                   std::string::npos,
+                   std::string::npos &&
+               power.find("TOOLTIP=\"container:power\">power</TD>") != std::string::npos,
            "folded container endpoints must use stable ports on the internal cluster anchor");
     expect(!has_semantic_relation_kind(power, "network") &&
                !has_semantic_relation_kind(power, "depends_on"),

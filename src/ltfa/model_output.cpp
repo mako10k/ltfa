@@ -895,6 +895,19 @@ dot_group(const NormalizedModel &model, ObjectRef object, const DotOutputOptions
     return label_id.is_valid() ? model.string(label_id) : model.external_id(object);
 }
 
+[[nodiscard]] std::string_view semantic_port_label(const NormalizedModel &model,
+                                                   EndpointId endpoint) noexcept {
+    const auto &value = model.endpoints[endpoint.value()];
+    if (value.label.is_valid()) {
+        return model.string(value.label);
+    }
+    const auto external_id = model.string(value.external_id);
+    const auto separator = external_id.rfind(':');
+    return separator == std::string_view::npos || separator + 1 >= external_id.size()
+               ? external_id
+               : external_id.substr(separator + 1);
+}
+
 [[nodiscard]] std::string semantic_target(const NormalizedModel &model,
                                           const SemanticContainment &containment,
                                           ObjectRef object) {
@@ -926,7 +939,7 @@ void append_semantic_port_table(std::ostringstream &output, const NormalizedMode
         if (has_object(options.highlighted_objects, endpoint_object)) {
             output << " BGCOLOR=\"#fef3c7\"";
         }
-        output << '>' << escape_html(object_label(model, endpoint_object)) << "</TD></TR>";
+        output << '>' << escape_html(semantic_port_label(model, endpoint_id)) << "</TD></TR>";
     }
     output << "</TABLE>>";
 }
@@ -1060,7 +1073,7 @@ void append_semantic_tree(std::ostringstream &output, const NormalizedModel &mod
            << escape_dot(encoded_string_array(observation_inputs)) << "\",analysis_at=\""
            << escape_dot(context.analysis_at.has_value() ? *context.analysis_at : "null")
            << "\",restricted_omissions=\"" << visibility.restricted_omissions
-           << "\",compound=\"true\",newrank=\"true\"];\n"
+           << "\",compound=\"true\",newrank=\"true\",rankdir=\"LR\"];\n"
            << "  node [fontname=\"sans-serif\"];\n"
            << "  edge [fontname=\"sans-serif\"];\n";
 
