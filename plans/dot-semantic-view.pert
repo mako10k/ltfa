@@ -27,6 +27,7 @@ milestone DSV_CONTRACT_READY:
 
 milestone DSV_STRUCTURE_READY:
   title "Containment cluster rendering ready"
+  state reached
 
 milestone DSV_PORTS_READY:
   title "Endpoint port rendering ready"
@@ -44,20 +45,6 @@ milestone DSV_ACCEPTED:
   title "Semantic DOT views accepted"
 
 
-task DSV_STRUCTURE DSV_CONTRACT_READY -> DSV_STRUCTURE_READY:
-  title "Render containment as deterministic nested clusters"
-  description "Build a cycle-safe single-parent containment forest, replace eligible contained_in edges and container nodes with nested clusters, retain an explicit fallback for ambiguous structures, and preserve stable escaping, filtering, focus, and highlight behavior."
-  estimate:
-    optimistic 1d
-    most_likely 2d
-    pessimistic 3d
-  status done
-  priority 100
-  requires:
-    CODEX 1
-  owner "codex"
-  tags [dot, clusters, containment]
-  source "semantic DOT contract; requirements REQ-OUT-004..005, AC-007"
 
 task DSV_PORTS DSV_STRUCTURE_READY -> DSV_PORTS_READY:
   title "Render owned endpoints as device ports"
@@ -122,16 +109,3 @@ task DSV_EBINO_ACCEPTANCE DSV_CLI_READY -> DSV_ACCEPTED:
   owner "codex"
   tags [dot, acceptance, ebino]
   source "requirements AC-007..009, REQ-QLT-003..006; docs/ebino-configuration.md"
-
-work_event WE-a5fe8c4501d58a43d7f61349ee4fe14721ad4a48e1c07f8cc6268da2850a2526:
-  model 1
-  task DSV_STRUCTURE
-  kind start
-  occurred_at 2026-07-30T17:34:20+09:00
-  planned_value 2d
-
-work_event WE-feaa3ed66575b613726677d78a4f9b5970df1f6ab8c8842e678c539fc2df77d9:
-  model 1
-  task DSV_STRUCTURE
-  kind finish
-  occurred_at 2026-07-30T17:34:51+09:00
