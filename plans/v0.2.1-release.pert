@@ -18,31 +18,14 @@ resource REVIEW:
   title "Release acceptance capacity"
   capacity 1
 
-milestone CLI_REPAIR_ACCEPTED:
-  title "Issue #1 CLI repair accepted"
-  state reached
 
 milestone R021_METADATA_READY:
   title "v0.2.1 metadata ready"
+  state reached
 
 milestone R021_CANDIDATE_ACCEPTED:
   title "v0.2.1 release candidate accepted"
 
-task R021_RELEASE_METADATA CLI_REPAIR_ACCEPTED -> R021_METADATA_READY:
-  title "Prepare v0.2.1 release metadata"
-  description "Set the project version to 0.2.1, preserve v0.2.0 notes as history, write source-faithful patch release notes, update current-release documentation, and verify installed version and documentation without changing public contracts."
-  estimate:
-    optimistic 0.25d
-    most_likely 0.5d
-    pessimistic 1d
-  status done
-  priority 100
-  requires:
-    CODEX 1
-    REVIEW 1
-  owner "codex"
-  tags [release, metadata, patch]
-  source "GitHub Issue #1 acceptance; explicit owner authorization to release"
 
 task R021_CANDIDATE_ACCEPTANCE R021_METADATA_READY -> R021_CANDIDATE_ACCEPTED:
   title "Accept the v0.2.1 release candidate"
@@ -58,17 +41,3 @@ task R021_CANDIDATE_ACCEPTANCE R021_METADATA_READY -> R021_CANDIDATE_ACCEPTED:
   owner "codex"
   tags [release, acceptance, sanitizer, offline]
   source "v0.2.0 release workflow; GitHub Issue #1 acceptance criteria"
-
-work_event WE-00c2d3a37a34ee4dfdc7fb587493e6caa66def3433ea801e55bfdb7ac4bac5e8:
-  model 1
-  task R021_RELEASE_METADATA
-  kind start
-  occurred_at 2026-07-30T14:53:11+09:00
-  planned_value 13/24d
-
-work_event WE-3bca6656cf2cc9e04139c07cad71645fbfd98c35ebc6ea9982e795f1dc817458:
-  model 1
-  task R021_RELEASE_METADATA
-  kind finish
-  occurred_at 2026-07-30T14:55:35+09:00
-  effort 0.1ph
