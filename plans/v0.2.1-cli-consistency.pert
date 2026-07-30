@@ -21,53 +21,23 @@ resource REVIEW:
   description "Serialize public-contract and final acceptance review"
   capacity 1
 
-milestone BUDGET_REPAIR_READY:
-  title "Shared cumulative budgets repaired"
-  state reached
 
-milestone OUTPUT_CONTRACT_READY:
-  title "Assurance public field inventory accepted"
-  state reached
 
-milestone OUTPUT_PARITY_READY:
-  title "Human and JSON assurance output aligned"
 
-milestone HELP_COVERAGE_READY:
-  title "Exact help and CLI acceptance coverage ready"
-  state reached
 
 milestone CLI_REPAIR_INTEGRATED:
   title "CLI repair workstreams integrated"
+  state reached
 
 milestone CLI_REPAIR_ACCEPTED:
   title "Assurance CLI consistency repair accepted"
 
 
 
-task CLI_OUTPUT_PARITY OUTPUT_CONTRACT_READY -> OUTPUT_PARITY_READY:
-  title "Restore human and JSON output parity"
-  description "Render the accepted public field inventory in both formats with stable ordering, including SPOF path details and qualifications plus propagation previous state, event qualification, and unaffected objects. Add field-presence parity and deterministic-output tests without weakening restricted-ID handling."
-  estimate:
-    optimistic 0.5d
-    most_likely 1d
-    pessimistic 1.5d
-  status done
-  priority 90
-  requires:
-    CODEX 1
-  owner "codex"
-  tags [cli, human, json, regression]
-  source "GitHub Issue #1; accepted assurance public field inventory"
 
 
-gate CLI_BUDGET_REPAIR_GATE BUDGET_REPAIR_READY -> CLI_REPAIR_INTEGRATED:
-  reason "Integration requires the cumulative-budget contract repair"
 
-gate CLI_OUTPUT_PARITY_GATE OUTPUT_PARITY_READY -> CLI_REPAIR_INTEGRATED:
-  reason "Integration requires accepted human and JSON public-fact parity"
 
-gate CLI_HELP_COVERAGE_GATE HELP_COVERAGE_READY -> CLI_REPAIR_INTEGRATED:
-  reason "Integration requires exact help and complete CLI acceptance coverage"
 
 task CLI_REPAIR_ACCEPTANCE CLI_REPAIR_INTEGRATED -> CLI_REPAIR_ACCEPTED:
   title "Accept the assurance CLI consistency repair"
@@ -83,17 +53,3 @@ task CLI_REPAIR_ACCEPTANCE CLI_REPAIR_INTEGRATED -> CLI_REPAIR_ACCEPTED:
   owner "codex"
   tags [cli, acceptance, offline, patch]
   source "GitHub Issue #1 acceptance criteria; AGENTS.md build and offline boundaries"
-
-work_event WE-c3116a6d755019b8435c32b6d3eb46f178c5032501bc375ee3de1f6ca3f674cd:
-  model 1
-  task CLI_OUTPUT_PARITY
-  kind start
-  occurred_at 2026-07-30T13:19:01+09:00
-  planned_value 1d
-
-work_event WE-4bf82fb398654ab3365364120374a85f06f9f8fa94d7fc89a90555c9929609ab:
-  model 1
-  task CLI_OUTPUT_PARITY
-  kind finish
-  occurred_at 2026-07-30T13:24:57+09:00
-  effort 0.1ph
