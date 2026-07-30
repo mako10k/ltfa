@@ -51,7 +51,7 @@ task CLI_OUTPUT_PARITY OUTPUT_CONTRACT_READY -> OUTPUT_PARITY_READY:
     optimistic 0.5d
     most_likely 1d
     pessimistic 1.5d
-  status active
+  status done
   priority 90
   requires:
     CODEX 1
@@ -90,3 +90,10 @@ work_event WE-c3116a6d755019b8435c32b6d3eb46f178c5032501bc375ee3de1f6ca3f674cd:
   kind start
   occurred_at 2026-07-30T13:19:01+09:00
   planned_value 1d
+
+work_event WE-4bf82fb398654ab3365364120374a85f06f9f8fa94d7fc89a90555c9929609ab:
+  model 1
+  task CLI_OUTPUT_PARITY
+  kind finish
+  occurred_at 2026-07-30T13:24:57+09:00
+  effort 0.1ph
