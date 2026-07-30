@@ -2,7 +2,10 @@
 
 Date: 2026-07-30
 
-Implementation commit: `e1d8f3cbb7eaf831bdb662e18197aaa79678902c`
+Implementation commits:
+
+- `e1d8f3cbb7eaf831bdb662e18197aaa79678902c`
+- `1d8d8e6054070676c675e616468bc206d625c1fb`
 
 ## Accepted metadata
 
@@ -31,7 +34,12 @@ ctest --test-dir build/release --output-on-failure \
 
 Observed version: `ltfa 0.2.1`
 
-Focused result: 4/4 tests passed.
+The initial focused result was 4/4, but it did not include `ltfa.smoke`.
+The first complete Release candidate run correctly rejected the stale
+hard-coded `0.2.0` version in that test. The second implementation commit
+updates both string and structured-version expectations to `0.2.1`.
+
+After that cause-phase correction, the complete Release suite passed 24/24.
 
 `perttool document check plans/v0.2.1-release.pert
 --warnings-as-errors`, `git diff --check`, and a byte comparison between the
