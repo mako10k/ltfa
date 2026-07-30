@@ -25,12 +25,10 @@ resource REVIEW:
 
 
 
-milestone DSV_RENDERER_INTEGRATED:
-  title "Semantic renderer integrated"
-  state reached
 
 milestone DSV_CLI_READY:
   title "Semantic DOT CLI ready"
+  state reached
 
 milestone DSV_ACCEPTED:
   title "Semantic DOT views accepted"
@@ -41,21 +39,6 @@ milestone DSV_ACCEPTED:
 
 
 
-task DSV_CLI_DOCS DSV_RENDERER_INTEGRATED -> DSV_CLI_READY:
-  title "Expose and document semantic DOT selection"
-  description "Add descriptor-backed CLI options and exact help, preserve the current default until compatibility acceptance, document raw and semantic commands, and update install-smoke and error-contract coverage without changing non-DOT formats."
-  estimate:
-    optimistic 1d
-    most_likely 2d
-    pessimistic 3d
-  status done
-  priority 100
-  requires:
-    CODEX 1
-    REVIEW 1
-  owner "codex"
-  tags [dot, cli, documentation]
-  source "ADR 0002; CLI Contract 2; requirements REQ-OUT-004..007"
 
 task DSV_EBINO_ACCEPTANCE DSV_CLI_READY -> DSV_ACCEPTED:
   title "Accept semantic views on fixtures and the redacted Ebino model"
@@ -71,16 +54,3 @@ task DSV_EBINO_ACCEPTANCE DSV_CLI_READY -> DSV_ACCEPTED:
   owner "codex"
   tags [dot, acceptance, ebino]
   source "requirements AC-007..009, REQ-QLT-003..006; docs/ebino-configuration.md"
-
-work_event WE-e9e9b87238b245f4b950ccd27d591e1cd5562b08876f23959b2f70005c56d79d:
-  model 1
-  task DSV_CLI_DOCS
-  kind start
-  occurred_at 2026-07-30T17:50:19+09:00
-  planned_value 2d
-
-work_event WE-213d0b690d6bf9c7a1e316821341bbc3735b104a0ca0a24300e2419f1ca8465f:
-  model 1
-  task DSV_CLI_DOCS
-  kind finish
-  occurred_at 2026-07-30T17:53:52+09:00
