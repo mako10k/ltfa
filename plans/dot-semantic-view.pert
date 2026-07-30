@@ -51,6 +51,7 @@ task DSV_STRUCTURE DSV_CONTRACT_READY -> DSV_STRUCTURE_READY:
     optimistic 1d
     most_likely 2d
     pessimistic 3d
+  status done
   priority 100
   requires:
     CODEX 1
@@ -121,3 +122,16 @@ task DSV_EBINO_ACCEPTANCE DSV_CLI_READY -> DSV_ACCEPTED:
   owner "codex"
   tags [dot, acceptance, ebino]
   source "requirements AC-007..009, REQ-QLT-003..006; docs/ebino-configuration.md"
+
+work_event WE-a5fe8c4501d58a43d7f61349ee4fe14721ad4a48e1c07f8cc6268da2850a2526:
+  model 1
+  task DSV_STRUCTURE
+  kind start
+  occurred_at 2026-07-30T17:34:20+09:00
+  planned_value 2d
+
+work_event WE-feaa3ed66575b613726677d78a4f9b5970df1f6ab8c8842e678c539fc2df77d9:
+  model 1
+  task DSV_STRUCTURE
+  kind finish
+  occurred_at 2026-07-30T17:34:51+09:00
