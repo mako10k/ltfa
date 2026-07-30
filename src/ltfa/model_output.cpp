@@ -46,6 +46,12 @@ struct SemanticContainment {
     std::vector<std::vector<ObjectRef>> children;
 };
 
+struct SemanticPorts {
+    std::vector<bool> folded;
+    std::vector<std::string> names;
+    std::vector<std::vector<EndpointId>> by_owner;
+};
+
 [[nodiscard]] bool valid_object(const NormalizedModel &model, ObjectRef object) noexcept {
     if (!object.is_valid()) {
         return false;
@@ -328,6 +334,40 @@ template <typename Id>
             if (character < 0x20U) {
                 output << "\\x" << std::hex << std::setw(2) << std::setfill('0')
                        << static_cast<unsigned int>(character) << std::dec << std::setfill(' ');
+            } else {
+                output << static_cast<char>(character);
+            }
+        }
+    }
+    return output.str();
+}
+
+[[nodiscard]] std::string escape_html(std::string_view value) {
+    std::ostringstream output;
+    for (const unsigned char character : value) {
+        switch (character) {
+        case '&':
+            output << "&amp;";
+            break;
+        case '<':
+            output << "&lt;";
+            break;
+        case '>':
+            output << "&gt;";
+            break;
+        case '"':
+            output << "&quot;";
+            break;
+        case '\'':
+            output << "&#39;";
+            break;
+        case '\n':
+        case '\r':
+            output << "&#10;";
+            break;
+        default:
+            if (character < 0x20U) {
+                output << "&#" << static_cast<unsigned int>(character) << ';';
             } else {
                 output << static_cast<char>(character);
             }
@@ -657,6 +697,33 @@ void append_failure_domains(std::ostringstream &output, const NormalizedModel &m
     return containment;
 }
 
+[[nodiscard]] SemanticPorts build_semantic_ports(const NormalizedModel &model,
+                                                 const DotSelection &selection,
+                                                 const SemanticContainment &containment) {
+    SemanticPorts ports;
+    ports.folded.resize(model.endpoints.size());
+    ports.names.resize(model.endpoints.size());
+    ports.by_owner.resize(model.entities.size());
+    for (const auto index : sorted_indices(model, model.endpoints)) {
+        const auto &endpoint = model.endpoints[index];
+        if (!selection.endpoints[endpoint.id.value()] || !endpoint.owner.is_valid() ||
+            endpoint.owner.value() >= selection.entities.size() ||
+            !selection.entities[endpoint.owner.value()]) {
+            continue;
+        }
+        const auto spatial_parent =
+            containment.parents[object_slot(model, ObjectRef::from(endpoint.id))];
+        if (spatial_parent.has_value() && *spatial_parent != endpoint.owner) {
+            continue;
+        }
+        auto &owner_ports = ports.by_owner[endpoint.owner.value()];
+        ports.folded[endpoint.id.value()] = true;
+        ports.names[endpoint.id.value()] = "p" + std::to_string(owner_ports.size());
+        owner_ports.push_back(endpoint.id);
+    }
+    return ports;
+}
+
 [[nodiscard]] std::string plane_color(Plane plane) {
     switch (plane) {
     case Plane::facility:
@@ -837,9 +904,62 @@ dot_group(const NormalizedModel &model, ObjectRef object, const DotOutputOptions
     return std::string{model.external_id(object)};
 }
 
+void append_semantic_port_table(std::ostringstream &output, const NormalizedModel &model,
+                                const DotOutputOptions &options, const SemanticPorts &ports,
+                                EntityId owner, bool include_owner_label) {
+    const auto owner_object = ObjectRef::from(owner);
+    output << "<<TABLE BORDER=\"" << (include_owner_label ? "1" : "0")
+           << "\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\" COLOR=\""
+           << plane_color(model.entities[owner.value()].plane) << "\">";
+    if (include_owner_label) {
+        output << "<TR><TD";
+        if (has_object(options.highlighted_objects, owner_object)) {
+            output << " BGCOLOR=\"#fef3c7\"";
+        }
+        output << ">" << escape_html(object_label(model, owner_object)) << "</TD></TR>";
+    }
+    for (const auto endpoint_id : ports.by_owner[owner.value()]) {
+        const auto endpoint_object = ObjectRef::from(endpoint_id);
+        output << "<TR><TD PORT=\"" << ports.names[endpoint_id.value()] << "\" TOOLTIP=\""
+               << escape_html(model.string(model.endpoints[endpoint_id.value()].external_id))
+               << '"';
+        if (has_object(options.highlighted_objects, endpoint_object)) {
+            output << " BGCOLOR=\"#fef3c7\"";
+        }
+        output << '>' << escape_html(object_label(model, endpoint_object)) << "</TD></TR>";
+    }
+    output << "</TABLE>>";
+}
+
+[[nodiscard]] std::string semantic_edge_endpoint(const NormalizedModel &model,
+                                                 const SemanticContainment &containment,
+                                                 const SemanticPorts &ports, ObjectRef object) {
+    ObjectRef rendered_object = object;
+    std::string_view port;
+    if (object.kind == ObjectKind::endpoint && ports.folded[object.index]) {
+        rendered_object = ObjectRef::from(model.endpoints[object.index].owner);
+        port = ports.names[object.index];
+    }
+    std::ostringstream output;
+    output << '"' << escape_dot(semantic_target(model, containment, rendered_object)) << '"';
+    if (!port.empty()) {
+        output << ":\"" << escape_dot(port) << '"';
+    }
+    return output.str();
+}
+
 void append_semantic_node(std::ostringstream &output, const NormalizedModel &model,
-                          const DotOutputOptions &options, ObjectRef object, std::size_t indent) {
+                          const DotOutputOptions &options, const SemanticPorts &ports,
+                          ObjectRef object, std::size_t indent) {
     const auto highlighted = has_object(options.highlighted_objects, object);
+    if (object.kind == ObjectKind::entity && !ports.by_owner[object.index].empty()) {
+        output << std::string(indent, ' ') << '"' << escape_dot(model.external_id(object))
+               << "\" [label=";
+        append_semantic_port_table(output, model, options, ports, EntityId{object.index}, true);
+        output << ",tooltip=\"" << escape_dot(model.external_id(object))
+               << "\",ltfa_kind=\"entity\",shape=plain];\n";
+        return;
+    }
     output << std::string(indent, ' ') << '"' << escape_dot(model.external_id(object))
            << "\" [label=\"" << escape_dot(object_label(model, object)) << "\",tooltip=\""
            << escape_dot(model.external_id(object)) << "\",ltfa_kind=\"" << to_string(object.kind)
@@ -857,7 +977,8 @@ void append_semantic_node(std::ostringstream &output, const NormalizedModel &mod
 
 void append_semantic_tree(std::ostringstream &output, const NormalizedModel &model,
                           const DotOutputOptions &options, const SemanticContainment &containment,
-                          const std::vector<ObjectRef> &roots, std::size_t indent) {
+                          const SemanticPorts &ports, const std::vector<ObjectRef> &roots,
+                          std::size_t indent) {
     enum class EventKind {
         object,
         close_cluster,
@@ -880,8 +1001,11 @@ void append_semantic_tree(std::ostringstream &output, const NormalizedModel &mod
             continue;
         }
         const auto object = event.object;
+        if (object.kind == ObjectKind::endpoint && ports.folded[object.index]) {
+            continue;
+        }
         if (object.kind != ObjectKind::entity || !containment.containers[object.index]) {
-            append_semantic_node(output, model, options, object, event.indent);
+            append_semantic_node(output, model, options, ports, object, event.indent);
             continue;
         }
 
@@ -897,7 +1021,13 @@ void append_semantic_tree(std::ostringstream &output, const NormalizedModel &mod
                << std::string(event.indent + 2, ' ') << "color=\"" << plane_color(entity.plane)
                << "\";\n"
                << std::string(event.indent + 2, ' ') << "style=\"rounded\";\n";
-        if (containment.anchors[object.index]) {
+        if (!ports.by_owner[object.index].empty()) {
+            output << std::string(event.indent + 2, ' ') << '"'
+                   << escape_dot(semantic_anchor_id(model, entity_id)) << "\" [label=";
+            append_semantic_port_table(output, model, options, ports, entity_id, false);
+            output << ",tooltip=\"" << escape_dot(model.string(entity.external_id))
+                   << "\",ltfa_kind=\"container-anchor\",shape=plain];\n";
+        } else if (containment.anchors[object.index]) {
             output
                 << std::string(event.indent + 2, ' ') << '"'
                 << escape_dot(semantic_anchor_id(model, entity_id)) << "\" [label=\"\",tooltip=\""
@@ -919,6 +1049,7 @@ void append_semantic_tree(std::ostringstream &output, const NormalizedModel &mod
                                               const Visibility &visibility,
                                               const DotSelection &selection) {
     const auto containment = build_semantic_containment(model, selection, options.view);
+    const auto ports = build_semantic_ports(model, selection, containment);
     const auto model_inputs = sorted_unique_strings(context.model_inputs);
     const auto observation_inputs = sorted_unique_strings(context.observation_inputs);
     std::ostringstream output;
@@ -952,7 +1083,7 @@ void append_semantic_tree(std::ostringstream &output, const NormalizedModel &mod
     }
     for (const auto index : sorted_indices(model, model.endpoints)) {
         const auto &endpoint = model.endpoints[index];
-        if (selection.endpoints[endpoint.id.value()]) {
+        if (selection.endpoints[endpoint.id.value()] && !ports.folded[endpoint.id.value()]) {
             add_root(ObjectRef::from(endpoint.id));
         }
     }
@@ -976,20 +1107,20 @@ void append_semantic_tree(std::ostringstream &output, const NormalizedModel &mod
                << "    tooltip=\"" << escape_dot(scope_id) << "\";\n"
                << "    color=\"#9ca3af\";\n"
                << "    style=\"rounded\";\n";
-        append_semantic_tree(output, model, options, containment, roots, 4);
+        append_semantic_tree(output, model, options, containment, ports, roots, 4);
         output << "  }\n";
     }
 
     for (const auto index : sorted_indices(model, model.endpoints)) {
         const auto &endpoint = model.endpoints[index];
-        if (!selection.endpoints[endpoint.id.value()] || !endpoint.owner.is_valid() ||
-            !selection.entities[endpoint.owner.value()]) {
+        if (!selection.endpoints[endpoint.id.value()] || ports.folded[endpoint.id.value()] ||
+            !endpoint.owner.is_valid() || !selection.entities[endpoint.owner.value()]) {
             continue;
         }
         const auto owner = ObjectRef::from(endpoint.owner);
-        output << "  \"" << escape_dot(semantic_target(model, containment, owner)) << "\" -> \""
-               << escape_dot(model.string(endpoint.external_id))
-               << "\" [label=\"owns\",tooltip=\"owns\",ltfa_kind=\"owns\",color=\"#9ca3af\","
+        output << "  " << semantic_edge_endpoint(model, containment, ports, owner) << " -> "
+               << semantic_edge_endpoint(model, containment, ports, ObjectRef::from(endpoint.id))
+               << " [label=\"owns\",tooltip=\"owns\",ltfa_kind=\"owns\",color=\"#9ca3af\","
                   "style=\"dashed\",arrowhead=\"none\"];\n";
     }
     for (const auto index : sorted_indices(model, model.relations)) {
@@ -1001,9 +1132,8 @@ void append_semantic_tree(std::ostringstream &output, const NormalizedModel &mod
             continue;
         }
         const bool structural_fallback = relation.kind == RelationKind::contained_in;
-        output << "  \"" << escape_dot(semantic_target(model, containment, relation.from))
-               << "\" -> \"" << escape_dot(semantic_target(model, containment, relation.to))
-               << "\" [";
+        output << "  " << semantic_edge_endpoint(model, containment, ports, relation.from) << " -> "
+               << semantic_edge_endpoint(model, containment, ports, relation.to) << " [";
         if (structural_fallback) {
             output << "label=\"contained_in\",";
         }

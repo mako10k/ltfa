@@ -266,7 +266,8 @@ std::string semantic_structure_source(bool reordered = false) {
                "relate router -> panel kind=contained_in\n"
                "entity router kind=device plane=communication layer=physical scope=s "
                "label=\"Router\"\n"
-               "endpoint router:lan owner=router kind=network label=\"Router LAN\"\n"
+               "endpoint router:lan owner=router kind=network "
+               "label=\"Router <LAN> & edge\"\n"
                "relate panel -> facility kind=contained_in\n"
                "entity panel kind=facility plane=facility layer=physical scope=s "
                "label=\"Control Panel\"\n"
@@ -283,7 +284,7 @@ std::string semantic_structure_source(bool reordered = false) {
            "entity router kind=device plane=communication layer=physical scope=s label=\"Router\"\n"
            "entity switch kind=device plane=communication layer=physical scope=s "
            "label=\"Access Switch\"\n"
-           "endpoint router:lan owner=router kind=network label=\"Router LAN\"\n"
+           "endpoint router:lan owner=router kind=network label=\"Router <LAN> & edge\"\n"
            "endpoint switch:lan owner=switch kind=network label=\"Switch LAN\"\n"
            "relate panel -> facility kind=contained_in\n"
            "relate router -> panel kind=contained_in\n"
@@ -306,8 +307,8 @@ void test_semantic_containment_clusters() {
            "semantic DOT must identify its presentation schema and view");
     const auto facility = dot.find("subgraph \"cluster:container:facility\"");
     const auto panel = dot.find("subgraph \"cluster:container:panel\"");
-    const auto router = dot.find("\"router\" [label=\"Router\"");
-    const auto access_switch = dot.find("\"switch\" [label=\"Access Switch\"");
+    const auto router = dot.find("\"router\" [label=");
+    const auto access_switch = dot.find("\"switch\" [label=");
     expect(facility != std::string::npos && panel != std::string::npos &&
                router != std::string::npos && access_switch != std::string::npos &&
                facility < panel && panel < router && router < access_switch,
@@ -320,9 +321,16 @@ void test_semantic_containment_clusters() {
     expect(dot.find("label=\"network\"") == std::string::npos &&
                dot.find("ltfa_kind=\"network\"") != std::string::npos,
            "semantic relations must retain kind metadata without repeated visible labels");
-    expect(std::count(dot.begin(), dot.end(), '\n') > 0 &&
-               dot.find("label=\"owns\"") != std::string::npos,
-           "structure slice must retain explicit endpoint ownership until port folding");
+    expect(dot.find("PORT=\"p0\" TOOLTIP=\"router:lan\"") != std::string::npos &&
+               dot.find("PORT=\"p0\" TOOLTIP=\"switch:lan\"") != std::string::npos &&
+               dot.find("\"router\":\"p0\" -> \"switch\":\"p0\"") != std::string::npos,
+           "eligible endpoints must fold into stable owner ports used by relations");
+    expect(dot.find("Router &lt;LAN&gt; &amp; edge") != std::string::npos,
+           "semantic port labels must use deterministic HTML escaping");
+    expect(dot.find("\"router:lan\" [label=") == std::string::npos &&
+               dot.find("\"switch:lan\" [label=") == std::string::npos &&
+               dot.find("label=\"owns\"") == std::string::npos,
+           "folded semantic endpoints must omit endpoint nodes and synthetic owns edges");
     expect(ltfa::render_model_dot(*model, {}, options) ==
                ltfa::render_model_dot(*reordered, {}, options),
            "semantic containment output must not depend on declaration order");
@@ -385,6 +393,23 @@ void test_semantic_containment_fallbacks() {
     expect(cross_scope_dot.find("cluster:container:remote-parent") == std::string::npos &&
                cross_scope_dot.find("label=\"contained_in\"") != std::string::npos,
            "cross-scope containment must remain explicit instead of moving an object");
+
+    const auto endpoint_conflict =
+        compile("ltfa 1\n"
+                "scope s\n"
+                "entity owner kind=device plane=communication layer=physical scope=s\n"
+                "entity other-parent kind=facility plane=facility layer=physical scope=s\n"
+                "endpoint owner:net owner=owner kind=network label=\"Owner Network\"\n"
+                "relate owner:net -> other-parent kind=contained_in\n");
+    if (endpoint_conflict.has_value()) {
+        const auto fallback_dot = ltfa::render_model_dot(*endpoint_conflict, {}, options);
+        expect(fallback_dot.find("cluster:container:other-parent") != std::string::npos &&
+                   fallback_dot.find("\"owner:net\" [label=\"Owner Network\"") !=
+                       std::string::npos &&
+                   fallback_dot.find("\"owner\" -> \"owner:net\" [label=\"owns\"") !=
+                       std::string::npos,
+               "endpoint placement that conflicts with its owner must retain node and owns edge");
+    }
 }
 
 std::string relation_lens_source() {
@@ -403,7 +428,7 @@ std::string relation_lens_source() {
            "entity group kind=service plane=service layer=application scope=s\n"
            "endpoint device-a:net owner=device-a kind=network\n"
            "endpoint device-b:net owner=device-b kind=network\n"
-           "endpoint panel:power owner=panel kind=power-output\n"
+           "endpoint container:power owner=container kind=power-output\n"
            "endpoint device-a:power owner=device-a kind=power-input\n"
            "endpoint control-a:serial owner=control-a kind=serial\n"
            "endpoint control-b:serial owner=control-b kind=serial\n"
@@ -412,7 +437,7 @@ std::string relation_lens_source() {
            "endpoint control-a:analog owner=control-a kind=analog-current-output\n"
            "endpoint control-b:analog owner=control-b kind=analog-current-input\n"
            "connect device-a:net -- device-b:net kind=network\n"
-           "connect panel:power -> device-a:power kind=power\n"
+           "connect container:power -> device-a:power kind=power\n"
            "connect control-a:serial -- control-b:serial kind=serial\n"
            "connect control-a:contact -> control-b:contact kind=contact\n"
            "connect control-a:analog -> control-b:analog kind=analog-current\n"
@@ -466,6 +491,10 @@ void test_semantic_relation_lenses() {
     expect(has_semantic_relation_kind(power, "power") &&
                has_semantic_relation_kind(power, "powered_by"),
            "power view must include physical power and powered_by");
+    expect(power.find("\"@ltfa-anchor:container\" [label=<<TABLE") != std::string::npos &&
+               power.find("\"@ltfa-anchor:container\":\"p0\" -> \"device-a\":\"p1\"") !=
+                   std::string::npos,
+           "folded container endpoints must use stable ports on the internal cluster anchor");
     expect(!has_semantic_relation_kind(power, "network") &&
                !has_semantic_relation_kind(power, "depends_on"),
            "power view must exclude unrelated physical and dependency relations");
