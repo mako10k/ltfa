@@ -1,0 +1,59 @@
+# Existing .pert plans should normally be maintained through perttool commands; direct DSL editing bypasses goal/DAG owner-confirmation checks.
+project LTFA_RELEASE_021:
+  version 5
+  title "LTFA v0.2.1 release preparation"
+  description "Prepare and accept the v0.2.1 patch candidate containing the completed GitHub Issue #1 CLI consistency repair. This plan preserves CLI Contract 2, ltfa.assurance/v1, restricted-output handling, and the one-shot offline boundary. Tag creation and GitHub Release publication remain post-candidate operations authorized separately by the owner."
+  as_of 2026-07-30
+  duration_unit day
+  finish R021_CANDIDATE_ACCEPTED
+  goal_owner user
+  dag_owner user
+  dag_delegates [codex]
+
+resource CODEX:
+  title "Release preparation capacity"
+  capacity 1
+
+resource REVIEW:
+  title "Release acceptance capacity"
+  capacity 1
+
+milestone CLI_REPAIR_ACCEPTED:
+  title "Issue #1 CLI repair accepted"
+  state reached
+
+milestone R021_METADATA_READY:
+  title "v0.2.1 metadata ready"
+
+milestone R021_CANDIDATE_ACCEPTED:
+  title "v0.2.1 release candidate accepted"
+
+task R021_RELEASE_METADATA CLI_REPAIR_ACCEPTED -> R021_METADATA_READY:
+  title "Prepare v0.2.1 release metadata"
+  description "Set the project version to 0.2.1, preserve v0.2.0 notes as history, write source-faithful patch release notes, update current-release documentation, and verify installed version and documentation without changing public contracts."
+  estimate:
+    optimistic 0.25d
+    most_likely 0.5d
+    pessimistic 1d
+  priority 100
+  requires:
+    CODEX 1
+    REVIEW 1
+  owner "codex"
+  tags [release, metadata, patch]
+  source "GitHub Issue #1 acceptance; explicit owner authorization to release"
+
+task R021_CANDIDATE_ACCEPTANCE R021_METADATA_READY -> R021_CANDIDATE_ACCEPTED:
+  title "Accept the v0.2.1 release candidate"
+  description "Run the complete Release, ASan/UBSan, LeakSanitizer, and parser-seed matrices on the exact candidate; retain installed-tree, deterministic output, restricted handling, offline-boundary, format, version, tag-absence, and CI-state evidence."
+  estimate:
+    optimistic 0.5d
+    most_likely 1d
+    pessimistic 1.5d
+  priority 100
+  requires:
+    CODEX 1
+    REVIEW 1
+  owner "codex"
+  tags [release, acceptance, sanitizer, offline]
+  source "v0.2.0 release workflow; GitHub Issue #1 acceptance criteria"
