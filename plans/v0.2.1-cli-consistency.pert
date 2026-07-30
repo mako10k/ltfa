@@ -46,6 +46,7 @@ task CLI_REPAIR_ACCEPTANCE CLI_REPAIR_INTEGRATED -> CLI_REPAIR_ACCEPTED:
     optimistic 1d
     most_likely 1d
     pessimistic 2d
+  status active
   priority 100
   requires:
     CODEX 1
@@ -53,3 +54,10 @@ task CLI_REPAIR_ACCEPTANCE CLI_REPAIR_INTEGRATED -> CLI_REPAIR_ACCEPTED:
   owner "codex"
   tags [cli, acceptance, offline, patch]
   source "GitHub Issue #1 acceptance criteria; AGENTS.md build and offline boundaries"
+
+work_event WE-a2d57fab7624d73a370a3d13bf821f5ebfd57d5ff83007aada5b5ec28917e357:
+  model 1
+  task CLI_REPAIR_ACCEPTANCE
+  kind start
+  occurred_at 2026-07-30T14:14:33+09:00
+  planned_value 7/6d
