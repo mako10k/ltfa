@@ -9,8 +9,11 @@ Issue: [#1 Restore assurance CLI consistency, symmetry, and coverage](https://gi
 Final acceptance commit:
 `b7f3ab83d6fb73d47cddaaaf853b6583856bba94`
 
-The repair is accepted locally. `plans/v0.2.1-cli-consistency.pert` has reached
-`CLI_REPAIR_ACCEPTED` and contains no remaining task or gate.
+Published repair baseline:
+`d60d826b4352fb8d780bf8fee5833c23cc9805af`
+
+The repair is accepted and published. `plans/v0.2.1-cli-consistency.pert` has
+reached `CLI_REPAIR_ACCEPTED` and contains no remaining task or gate.
 
 ## Verification evidence
 
@@ -33,16 +36,18 @@ Detailed evidence is retained in
 
 ## Publication state
 
-The repair series remains local and has not been pushed. Issue #1 remains open.
-The following actions require separate owner direction:
+The repair baseline is published on the public `main` branch. GitHub Issue #1
+was closed as completed on 2026-07-30 with a comment linking the acceptance
+record and complete verification matrix.
 
-- push the local repair series
-- comment on or close Issue #1
-- prepare version `0.2.1`
-- create a tag or publish a release
+The repository currently has no configured GitHub Actions workflow. GitHub
+reported zero Actions runs, check-runs, and commit statuses for the published
+repair baseline. There is therefore no CI failure, but also no CI success
+signal; the acceptance authority is the recorded local verification matrix.
 
-The executable therefore still reports `ltfa 0.2.0`; no `v0.2.1` tag or
-release exists from this acceptance work.
+Preparing version `0.2.1`, creating a tag, and publishing a release remain
+separate owner decisions. The executable still reports `ltfa 0.2.0`; no
+`v0.2.1` tag or release exists from this acceptance work.
 
 ## Resume checks
 
