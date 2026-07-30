@@ -34,6 +34,7 @@ task R021_CANDIDATE_ACCEPTANCE R021_METADATA_READY -> R021_CANDIDATE_ACCEPTED:
     optimistic 0.5d
     most_likely 1d
     pessimistic 1.5d
+  status done
   priority 100
   requires:
     CODEX 1
@@ -41,3 +42,17 @@ task R021_CANDIDATE_ACCEPTANCE R021_METADATA_READY -> R021_CANDIDATE_ACCEPTED:
   owner "codex"
   tags [release, acceptance, sanitizer, offline]
   source "v0.2.0 release workflow; GitHub Issue #1 acceptance criteria"
+
+work_event WE-ba2bcaf93fce2d38907422aa903559a0ba6adc7e32d8e875ffbce9e1add7f012:
+  model 1
+  task R021_CANDIDATE_ACCEPTANCE
+  kind start
+  occurred_at 2026-07-30T14:56:22+09:00
+  planned_value 1d
+
+work_event WE-aad28b9849a3d13745e5e53667c7f4561657a1e09a60389ee68a4846274eedc7:
+  model 1
+  task R021_CANDIDATE_ACCEPTANCE
+  kind finish
+  occurred_at 2026-07-30T14:59:54+09:00
+  effort 0.2ph

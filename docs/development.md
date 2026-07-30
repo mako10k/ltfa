@@ -164,6 +164,8 @@ Accepted implementation and release evidence is retained under
 - [Issue #1 assurance output parity](acceptance/issue-1-assurance-output-parity.md)
 - [Issue #1 CLI repair acceptance](acceptance/issue-1-cli-repair-acceptance.md)
 - [v0.2.1 release metadata](acceptance/r021-release-metadata.md)
+- [v0.2.1 candidate acceptance](acceptance/v0.2.1-release-candidate.md)
+- [v0.2.1 release history](plans/v0.2.1-release-history.md)
 
 ## Plan maintenance
 
@@ -195,16 +197,18 @@ the residual graph.
 The completed v0.2 candidate-preparation plan remains at
 `plans/v0.2.0-release.pert`.
 
-The current Issue #1 resume point is recorded in the
-[2026-07-30 accepted CLI repair handoff](handoff-2026-07-30-cli-repair-accepted.md).
+The v0.2.1 patch candidate plan is `plans/v0.2.1-release.pert`. The current
+publication checkpoint is recorded in the
+[2026-07-30 v0.2.1 release handoff](handoff-2026-07-30-v0.2.1-release.md).
 
 ## Release work
 
 Normal development does not create tags, push releases, or mutate remote
-release state. The accepted v0.2 candidate and its verification matrix are
+release state. The accepted v0.2.1 candidate and its verification matrix are
 recorded in the
-[candidate evidence](acceptance/v0.2.0-release-candidate.md).
+[candidate evidence](acceptance/v0.2.1-release-candidate.md).
 
-Publication requires a separate owner instruction. The publication operation
-must tag the immutable candidate commit identified by that evidence and verify
-each requested remote reference after the write.
+Publication requires a separate owner instruction. The owner authorized
+v0.2.1 publication on 2026-07-30. The operation must tag the immutable
+candidate commit identified by that evidence and verify each requested remote
+reference after the write.
