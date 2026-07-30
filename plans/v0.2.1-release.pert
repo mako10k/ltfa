@@ -35,7 +35,7 @@ task R021_RELEASE_METADATA CLI_REPAIR_ACCEPTED -> R021_METADATA_READY:
     optimistic 0.25d
     most_likely 0.5d
     pessimistic 1d
-  status active
+  status done
   priority 100
   requires:
     CODEX 1
@@ -65,3 +65,10 @@ work_event WE-00c2d3a37a34ee4dfdc7fb587493e6caa66def3433ea801e55bfdb7ac4bac5e8:
   kind start
   occurred_at 2026-07-30T14:53:11+09:00
   planned_value 13/24d
+
+work_event WE-3bca6656cf2cc9e04139c07cad71645fbfd98c35ebc6ea9982e795f1dc817458:
+  model 1
+  task R021_RELEASE_METADATA
+  kind finish
+  occurred_at 2026-07-30T14:55:35+09:00
+  effort 0.1ph

@@ -163,6 +163,7 @@ Accepted implementation and release evidence is retained under
 - [Issue #1 assurance field inventory](acceptance/issue-1-assurance-field-inventory.md)
 - [Issue #1 assurance output parity](acceptance/issue-1-assurance-output-parity.md)
 - [Issue #1 CLI repair acceptance](acceptance/issue-1-cli-repair-acceptance.md)
+- [v0.2.1 release metadata](acceptance/r021-release-metadata.md)
 
 ## Plan maintenance
 
