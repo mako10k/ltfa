@@ -102,15 +102,20 @@ mixed with every analytical relation:
 | View | Model relation kinds rendered as normal edges |
 | --- | --- |
 | `raw` | all selected relation kinds, plus current ownership edges |
-| `topology` | `network`, `power`, `serial`, `contact`, `analog-current` |
+| `topology` | `network`, `power`, `serial`, `contact`, `analog-current`, `member_of` |
 | `power` | `power`, `powered_by` |
 | `dependency` | `depends_on` |
-| `overlay` | `routes_via`, `terminates_on` |
+| `overlay` | `carried_by`, `uses_underlay`, `routes_via`, `terminates_on` |
 
 All semantic views may use eligible `contained_in` relations and endpoint
 ownership as structural primitives. An ineligible structural relation remains
 an explicit fallback edge so filtering or malformed hierarchy cannot silently
 invent placement.
+
+Every built-in `RelationKind` is therefore represented by at least one semantic
+view or by the structural rules above. `power` appears in both `topology` and
+`power` because it is both a physical connection and the focused subject of the
+power lens.
 
 Semantic relation kinds use stable color, line, and arrow styles. Repeated kind
 names are not required as visible labels on every edge; the kind remains in

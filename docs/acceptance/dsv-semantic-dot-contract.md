@@ -32,6 +32,13 @@ The existing implementation was inspected before the decision:
 - every selected endpoint receives a synthetic `owns` edge
 - every selected normalized relation becomes a DOT edge
 
+Before renderer implementation, the accepted lens table was checked against
+all 13 built-in `RelationKind` values. The first draft omitted `member_of`,
+`carried_by`, and `uses_underlay`. The contract was corrected so `member_of`
+belongs to `topology`, while `carried_by` and `uses_underlay` belong to
+`overlay`. All built-in relation kinds are now assigned to a semantic lens or
+to the structural containment rule.
+
 The redacted Ebino model was compiled with LTFA 0.2.1 and counted without
 network or secret access:
 
