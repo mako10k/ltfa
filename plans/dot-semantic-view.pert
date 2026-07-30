@@ -67,6 +67,7 @@ task DSV_LENSES DSV_CONTRACT_READY -> DSV_LENSES_READY:
     optimistic 1d
     most_likely 2d
     pessimistic 3d
+  status done
   priority 90
   requires:
     CODEX 1
@@ -109,3 +110,16 @@ task DSV_EBINO_ACCEPTANCE DSV_CLI_READY -> DSV_ACCEPTED:
   owner "codex"
   tags [dot, acceptance, ebino]
   source "requirements AC-007..009, REQ-QLT-003..006; docs/ebino-configuration.md"
+
+work_event WE-b8ccbaebfced983bb5f3d7acef37c67faee712c117360002bd9bb5266a84fe85:
+  model 1
+  task DSV_LENSES
+  kind start
+  occurred_at 2026-07-30T17:36:40+09:00
+  planned_value 2d
+
+work_event WE-06ebb779176e1ac85d6f4417d1122bdf2a3144221bb1bfdcca06d548fb91766b:
+  model 1
+  task DSV_LENSES
+  kind finish
+  occurred_at 2026-07-30T17:41:37+09:00
