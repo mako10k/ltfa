@@ -21,9 +21,6 @@ resource REVIEW:
   capacity 1
 
 
-milestone DSV_CONTRACT_READY:
-  title "Semantic DOT contract accepted"
-  state reached
 
 milestone DSV_STRUCTURE_READY:
   title "Containment cluster rendering ready"
@@ -34,6 +31,7 @@ milestone DSV_PORTS_READY:
 
 milestone DSV_LENSES_READY:
   title "Relation lenses ready"
+  state reached
 
 milestone DSV_RENDERER_INTEGRATED:
   title "Semantic renderer integrated"
@@ -60,20 +58,6 @@ task DSV_PORTS DSV_STRUCTURE_READY -> DSV_PORTS_READY:
   tags [dot, ports, endpoints]
   source "semantic DOT contract; requirements REQ-OUT-004..005, REQ-QLT-003"
 
-task DSV_LENSES DSV_CONTRACT_READY -> DSV_LENSES_READY:
-  title "Implement semantic relation lenses"
-  description "Define deterministic raw, topology, power, dependency, and overlay views; keep structural relations spatial, retain relevant physical or logical relations per lens, move repeated relation names to graph metadata or legend styling, and reject unknown lens values through the public CLI grammar."
-  estimate:
-    optimistic 1d
-    most_likely 2d
-    pessimistic 3d
-  status done
-  priority 90
-  requires:
-    CODEX 1
-  owner "codex"
-  tags [dot, views, relations]
-  source "semantic DOT contract; requirements UC-002, REQ-OUT-004..005"
 
 gate DSV_PORTS_GATE DSV_PORTS_READY -> DSV_RENDERER_INTEGRATED:
   reason "Semantic renderer acceptance requires containment and endpoint structure"
@@ -110,16 +94,3 @@ task DSV_EBINO_ACCEPTANCE DSV_CLI_READY -> DSV_ACCEPTED:
   owner "codex"
   tags [dot, acceptance, ebino]
   source "requirements AC-007..009, REQ-QLT-003..006; docs/ebino-configuration.md"
-
-work_event WE-b8ccbaebfced983bb5f3d7acef37c67faee712c117360002bd9bb5266a84fe85:
-  model 1
-  task DSV_LENSES
-  kind start
-  occurred_at 2026-07-30T17:36:40+09:00
-  planned_value 2d
-
-work_event WE-06ebb779176e1ac85d6f4417d1122bdf2a3144221bb1bfdcca06d548fb91766b:
-  model 1
-  task DSV_LENSES
-  kind finish
-  occurred_at 2026-07-30T17:41:37+09:00
