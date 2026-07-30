@@ -11,7 +11,7 @@ dependencies beyond the C++ runtime. It does not access the network.
 
 - bounded LTFA DSL v1 parsing and model-root-safe local includes
 - typed validation and deterministic normalized-model compilation
-- human, `ltfa.model/v1` JSON, and DOT model output
+- human, `ltfa.model/v1` JSON, lossless raw DOT, and semantic DOT views
 - filtered reachability and deterministic representative paths
 - modeled object, relation, and failure-domain removal impact
 - requirement-group and failure-domain availability semantics
@@ -78,6 +78,23 @@ ltfa model \
     --format json
 ```
 
+Emit compatible lossless DOT, or select a smaller semantic relation lens:
+
+```sh
+ltfa model --model-root topology --input main.ltfa --format dot
+ltfa model --model-root topology --input main.ltfa \
+    --format dot --dot-view topology
+ltfa model --model-root topology --input main.ltfa \
+    --format dot --dot-view power
+```
+
+The default `raw` DOT view keeps every selected relation as an edge and uses
+schema `ltfa.model.dot/v1`. Semantic `topology`, `power`, `dependency`, and
+`overlay` views use `ltfa.diagram.dot/v1`: eligible `contained_in` relations
+become nested clusters, owned endpoints become ports, and only the selected
+relation lens remains as normal edges. `--dot-view` is valid only with
+`--format dot`. LTFA emits DOT text and does not invoke Graphviz.
+
 Analyze an explicit scope, source, and target:
 
 ```sh
@@ -105,6 +122,8 @@ Invoking `ltfa` without a command is a usage error with status 2.
 - CLI Contract: 2
 - DSL: LTFA DSL v1
 - model JSON: `ltfa.model/v1`
+- raw model DOT: `ltfa.model.dot/v1`
+- semantic diagram DOT: `ltfa.diagram.dot/v1`
 - assurance JSON: `ltfa.assurance/v1`
 - command help JSON: `ltfa.command-help/v1`
 - CLI error JSON: `ltfa.cli-error/v1`

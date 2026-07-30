@@ -71,6 +71,7 @@ struct ModelOptions {
     fs::path model_root;
     fs::path input;
     OutputFormat format{OutputFormat::human};
+    DotView dot_view{DotView::raw};
     bool include_restricted{false};
 };
 
@@ -388,6 +389,19 @@ std::optional<ModelOptions> model_options(const CommandDescriptor &command,
         return std::nullopt;
     }
     options.format = *model_output_format(parsed);
+    const auto dot_view = parse_dot_view(parsed.option_value("dot-view").value_or("raw"));
+    if (!dot_view.has_value()) {
+        usage =
+            make_usage_error("invalid_option_value", "option --dot-view has an invalid value",
+                             std::string{parsed.option_value("dot-view").value_or("")}, &command);
+        return std::nullopt;
+    }
+    if (parsed.has_option("dot-view") && options.format != OutputFormat::dot) {
+        usage = make_usage_error("option_dependency", "option --dot-view requires --format dot",
+                                 "--dot-view", &command);
+        return std::nullopt;
+    }
+    options.dot_view = *dot_view;
     options.include_restricted = parsed.has_option("include-restricted");
     return options;
 }
@@ -623,7 +637,9 @@ int run_model(const CommandDescriptor &command, const ParsedArguments &parsed, s
         output << render_model_json(*compiled.model, context);
         break;
     case OutputFormat::dot:
-        output << render_model_dot(*compiled.model, context);
+        DotOutputOptions dot_options;
+        dot_options.view = options->dot_view;
+        output << render_model_dot(*compiled.model, context, dot_options);
         break;
     }
     if (!output) {

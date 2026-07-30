@@ -121,6 +121,29 @@ endif()
 execute_process(
     COMMAND
         "${installed_cli}"
+        model
+        --model-root "${LTFA_MODEL_ROOT}"
+        --input main.ltfa
+        --format dot
+        --dot-view topology
+    RESULT_VARIABLE semantic_dot_result
+    OUTPUT_VARIABLE semantic_dot_output
+    ERROR_VARIABLE semantic_dot_error
+)
+if(NOT semantic_dot_result EQUAL 0 OR
+   NOT semantic_dot_error STREQUAL "" OR
+   NOT semantic_dot_output MATCHES "^digraph ltfa_diagram" OR
+   NOT semantic_dot_output MATCHES
+       "ltfa_schema=\"ltfa.diagram.dot/v1\".*view=\"topology\"")
+    message(FATAL_ERROR
+        "installed semantic DOT check failed: status=${semantic_dot_result}\n"
+        "stdout=${semantic_dot_output}\nstderr=${semantic_dot_error}"
+    )
+endif()
+
+execute_process(
+    COMMAND
+        "${installed_cli}"
         analyze
         --model-root "${LTFA_SLICE2_ROOT}"
         --input main.ltfa

@@ -48,6 +48,11 @@ Exercise the built CLI directly:
     --model-root tests/fixtures/slice1 \
     --input main.ltfa \
     --format json
+./build/release/ltfa model \
+    --model-root tests/fixtures/slice1 \
+    --input main.ltfa \
+    --format dot \
+    --dot-view topology
 ./build/release/ltfa analyze \
     --model-root tests/fixtures/slice2 \
     --input main.ltfa \
@@ -87,15 +92,17 @@ Clang libFuzzer commands and corpus rules are documented in the
 
 The suite statically rejects network, process-launch, plugin-loading, and
 environment-access symbols. On Linux with `strace`, it traces the parser,
-assurance core, and complete CLI. Graphviz validation renders emitted DOT to
-SVG when `dot` is installed.
+assurance core, and complete CLI. Graphviz validation renders compatible raw
+DOT and each semantic relation lens to SVG when `dot` is installed. Graphviz
+remains an external test/rendering tool and is never linked or invoked by
+LTFA.
 
 ## Install-tree verification
 
 `ltfa.install.smoke` owns only the build-local `install-smoke` prefix. It
 recreates that prefix, installs the candidate, checks the executable and
-distribution documents, and exercises installed version, help, model, and
-assurance operations.
+distribution documents, and exercises installed version, help, JSON model,
+semantic DOT model, and assurance operations.
 
 Do not use this test with a user or system installation prefix.
 

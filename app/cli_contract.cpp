@@ -47,7 +47,7 @@ constexpr std::array<OptionDescriptor, 2> kHelpOptions{{
      "", "", "Select human-readable or structured help output."},
 }};
 
-constexpr std::array<OptionDescriptor, 5> kModelOptions{{
+constexpr std::array<OptionDescriptor, 6> kModelOptions{{
     {"help", "h", OptionKind::flag, "", "", false, false, "false", "", "all other arguments", "",
      "Print detailed help for the model command."},
     {"model-root", "", OptionKind::value, "directory", "local-directory", true, false, "", "", "",
@@ -56,6 +56,9 @@ constexpr std::array<OptionDescriptor, 5> kModelOptions{{
      "Select the entry file relative to the model root."},
     {"format", "", OptionKind::value, "format", "output-format", false, false, "human",
      "human|json|dot", "", "", "Select human, JSON, or DOT model output."},
+    {"dot-view", "", OptionKind::value, "view", "dot-view", false, false, "raw",
+     "raw|topology|power|dependency|overlay", "", "format=dot",
+     "Select the lossless raw or a semantic DOT relation view; valid only with --format dot."},
     {"include-restricted", "", OptionKind::flag, "", "", false, false, "false", "", "", "",
      "Explicitly include restricted model objects."},
 }};
@@ -98,13 +101,16 @@ constexpr std::array<ExampleDescriptor, 4> kHelpExamples{{
     {"json", "ltfa help model --format json", "Discover the model command as JSON."},
 }};
 
-constexpr std::array<ExampleDescriptor, 3> kModelExamples{{
+constexpr std::array<ExampleDescriptor, 4> kModelExamples{{
     {"human", "ltfa model --model-root topology --input main.ltfa",
      "Validate and summarize one local model."},
     {"json", "ltfa model --model-root topology --input main.ltfa --format json",
      "Emit a deterministic JSON model."},
     {"dot", "ltfa model --model-root topology --input main.ltfa --format dot",
-     "Emit deterministic DOT without invoking Graphviz."},
+     "Emit deterministic lossless raw DOT without invoking Graphviz."},
+    {"semantic-dot",
+     "ltfa model --model-root topology --input main.ltfa --format dot --dot-view topology",
+     "Emit a deterministic semantic topology diagram."},
 }};
 
 constexpr std::array<ExampleDescriptor, 3> kAnalyzeExamples{{
@@ -125,9 +131,11 @@ constexpr std::array<ExampleDescriptor, 3> kAnalyzeExamples{{
 constexpr std::array<CommandDescriptor, 3> kCommands{{
     {"model", "model", "Load, validate, normalize, and render one local topology model.",
      "ltfa model --model-root <directory> --input <file> "
-     "[--format human|json|dot] [--include-restricted]",
+     "[--format human|json|dot] [--dot-view raw|topology|power|dependency|overlay] "
+     "[--include-restricted]",
      CommandHandler::model, nullptr, 0, kModelOptions.data(), kModelOptions.size(),
-     "local-model-tree", "human|json|dot", "model", "read", "ltfa.model/v1|ltfa.cli-error/v1",
+     "local-model-tree", "human|json|dot", "model", "read",
+     "ltfa.model/v1|ltfa.model.dot/v1|ltfa.diagram.dot/v1|ltfa.cli-error/v1",
      kModelExitStatuses.data(), kModelExitStatuses.size(), kModelExamples.data(),
      kModelExamples.size()},
     {"analyze", "analyze",

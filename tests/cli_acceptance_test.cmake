@@ -379,10 +379,22 @@ string(JSON model_help_flag_default_type TYPE
 string(JSON model_help_required_default_type TYPE
     "${model_help_json_first_output}" commands 0 options 1 default
 )
+string(JSON model_help_dot_view_name GET
+    "${model_help_json_first_output}" commands 0 options 4 name
+)
+string(JSON model_help_dot_view_default GET
+    "${model_help_json_first_output}" commands 0 options 4 default
+)
+string(JSON model_help_dot_view_requires GET
+    "${model_help_json_first_output}" commands 0 options 4 requires 0
+)
 if(NOT model_help_query STREQUAL "model" OR NOT model_help_count EQUAL 1 OR
    NOT model_help_effect STREQUAL "read" OR NOT model_help_exit_count EQUAL 5 OR
    NOT model_help_flag_default_type STREQUAL "BOOLEAN" OR
-   NOT model_help_required_default_type STREQUAL "NULL")
+   NOT model_help_required_default_type STREQUAL "NULL" OR
+   NOT model_help_dot_view_name STREQUAL "dot-view" OR
+   NOT model_help_dot_view_default STREQUAL "raw" OR
+   NOT model_help_dot_view_requires STREQUAL "format=dot")
     message(FATAL_ERROR "structured model help is incomplete")
 endif()
 
@@ -467,6 +479,25 @@ if(NOT dot_first_output STREQUAL dot_second_output OR
    NOT dot_first_output MATCHES "^digraph ltfa_model")
     message(FATAL_ERROR "DOT model output must be valid-looking and deterministic")
 endif()
+
+run_cli(dot_raw_explicit ${model_command} --format dot --dot-view raw)
+if(NOT dot_raw_explicit_result EQUAL 0 OR NOT dot_raw_explicit_error STREQUAL "" OR
+   NOT dot_raw_explicit_output STREQUAL dot_first_output)
+    message(FATAL_ERROR "explicit raw DOT view must match the compatible default byte-for-byte")
+endif()
+
+foreach(view topology power dependency overlay)
+    run_cli(dot_semantic_${view}
+        ${model_command} --format dot --dot-view "${view}"
+    )
+    if(NOT dot_semantic_${view}_result EQUAL 0 OR
+       NOT dot_semantic_${view}_error STREQUAL "" OR
+       NOT dot_semantic_${view}_output MATCHES "^digraph ltfa_diagram" OR
+       NOT dot_semantic_${view}_output MATCHES
+           "ltfa_schema=\"ltfa.diagram.dot/v1\".*view=\"${view}\"")
+        message(FATAL_ERROR "semantic ${view} DOT view did not emit its stable contract")
+    endif()
+endforeach()
 
 run_cli(restricted_default
     model --model-root "${LTFA_VALID_ROOT}" --input restricted.ltfa --format json
@@ -595,6 +626,42 @@ if(NOT invalid_format_result EQUAL 2 OR NOT invalid_format_output STREQUAL "" OR
    NOT invalid_format_error MATCHES
        "^LTCLI-001 error: option --format must be one of human, json, or dot")
     message(FATAL_ERROR "invalid CLI enum must return a stable usage error")
+endif()
+
+run_cli(invalid_dot_view
+    model --model-root "${LTFA_VALID_ROOT}" --input main.ltfa
+    --format dot --dot-view map
+)
+if(NOT invalid_dot_view_result EQUAL 2 OR NOT invalid_dot_view_output STREQUAL "" OR
+   NOT invalid_dot_view_error MATCHES
+       "^LTCLI-001 error: option --dot-view must be one of raw, topology, power, dependency, or overlay")
+    message(FATAL_ERROR "unknown DOT view must return a stable usage error")
+endif()
+
+run_cli(dot_view_without_dot
+    model --model-root "${LTFA_VALID_ROOT}" --input main.ltfa
+    --format human --dot-view topology
+)
+if(NOT dot_view_without_dot_result EQUAL 2 OR
+   NOT dot_view_without_dot_output STREQUAL "" OR
+   NOT dot_view_without_dot_error MATCHES
+       "^LTCLI-001 error: option --dot-view requires --format dot")
+    message(FATAL_ERROR "DOT view must reject non-DOT output with a stable dependency error")
+endif()
+
+run_cli(dot_view_json_conflict
+    model --model-root "${LTFA_VALID_ROOT}" --input main.ltfa
+    --format json --dot-view topology
+)
+if(NOT dot_view_json_conflict_result EQUAL 2 OR
+   NOT dot_view_json_conflict_error STREQUAL "")
+    message(FATAL_ERROR "JSON-mode DOT view dependency error must be emitted on stdout")
+endif()
+string(JSON dot_view_usage_kind GET "${dot_view_json_conflict_output}" usage kind)
+string(JSON dot_view_usage_token GET "${dot_view_json_conflict_output}" usage token)
+if(NOT dot_view_usage_kind STREQUAL "option_dependency" OR
+   NOT dot_view_usage_token STREQUAL "--dot-view")
+    message(FATAL_ERROR "structured DOT view dependency error is incomplete")
 endif()
 
 run_cli(missing_required model --input main.ltfa)
