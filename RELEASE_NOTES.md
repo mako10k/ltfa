@@ -1,34 +1,45 @@
-# LTFA v0.2.0
+# LTFA v0.2.1
 
-Release date: 2026-07-29
+Release date: 2026-07-30
 
-LTFA v0.2.0 is the first offline assurance candidate. It keeps the deterministic
-local model compiler from v0.1.0 and adds explicit, bounded path, impact, SPOF,
-and declared-failure analysis through the one-shot CLI.
+LTFA v0.2.1 is a compatibility-preserving patch for the offline assurance CLI.
+It repairs the cumulative work-budget contract and makes human assurance
+output a lossless presentation of the existing `ltfa.assurance/v1` JSON
+contract.
 
-## Included
+## Fixed
 
-- native C++17 core and one-shot `ltfa` CLI
-- bounded DSL v1 lexer, parser, and model-root-safe include resolver
-- typed model validation and deterministic normalization
-- human summaries, `ltfa.model/v1` JSON, and DOT model output
-- requirement-group availability and failure-domain semantics
-- filtered reachability, representative paths, and modeled removal impact
-- immediate and fixed-delay declared failure propagation
-- articulation, bridge, and completeness-qualified SPOF analysis
-- descriptor-backed CLI Contract 2 human and JSON help
-- deterministic human and `ltfa.assurance/v1` analysis output
-- explicit analysis scope, source, target, resource budgets, and restricted-ID
-  acknowledgment
-- stable usage, input, validation, and analysis-selection diagnostics
-- MIT licensing and CMake install support
+- enforce one cumulative object-work budget across path and SPOF analysis
+- enforce one cumulative relation-work budget across path and SPOF analysis
+- preserve deterministic successful incomplete results when either shared
+  budget is exhausted
+- render structural usage and explicit not-applicable state in human output
+- render complete SPOF candidate, baseline path, retained path, qualification,
+  and filtering facts in human output
+- render propagation unresolved-mode, previous-state, event qualification,
+  and unaffected-object facts in human output
+- use stable `path-incomplete` and `target-unreachable` reason tokens
+- show every accepted budget option in descriptor-backed `analyze` help
+- cover structured `analyze` help, all budget options, selection failures,
+  shared-budget boundaries, and human/JSON field parity with focused tests
 
-## Explicitly Not Included
+## Compatibility
 
-This release does not collect observations, diagnose or infer a live failure
-cause, calculate service-oriented cut sets, probe a target, execute a command,
-integrate with monitoring, load plugins, use a database, run as a daemon, or
-access the network.
+- CLI Contract remains version 2.
+- LTFA DSL remains version 1.
+- Model JSON remains `ltfa.model/v1`.
+- Assurance JSON remains `ltfa.assurance/v1`; no field was added, removed, or
+  renamed.
+- Command help and CLI error schemas remain at version 1.
+- Restricted stable IDs still require explicit `--include-restricted`.
+- Exit statuses remain 0 result, 2 usage, 3 input, 4 validation, and 5 output.
+
+## Safety Boundary
+
+This release remains a one-shot, read-only, offline tool. It does not collect
+observations, infer a live failure cause, probe a target, execute commands,
+load plugins, use a database, run as a daemon, retrieve secrets, or access the
+network.
 
 ## Build, Test, And Install
 
@@ -41,24 +52,16 @@ cmake --install build/release --prefix /path/to/ltfa
 
 The installed executable is `/path/to/ltfa/bin/ltfa`. License, README, release
 notes, and the development guide are installed under
-`/path/to/ltfa/share/doc/ltfa`. The install smoke test exercises installed
-version and help output, model compilation, and one complete assurance
-analysis.
+`/path/to/ltfa/share/doc/ltfa`.
 
-The `v0.2.0` tag identifies the immutable candidate recorded in
-`docs/acceptance/v0.2.0-release-candidate.md`.
+The `v0.2.1` tag identifies the immutable candidate recorded in
+`docs/acceptance/v0.2.1-release-candidate.md`.
 
-## Public Contract
+## Trace
 
-- CLI Contract: 2
-- DSL: LTFA DSL v1
-- model JSON: `ltfa.model/v1`
-- assurance JSON: `ltfa.assurance/v1`
-- command help JSON: `ltfa.command-help/v1`
-- CLI error JSON: `ltfa.cli-error/v1`
-- process statuses: 0 result, 2 usage, 3 input, 4 validation, 5 output
-
-See `docs/decisions/0001-bootstrap-boundary.md`,
-`docs/decisions/0002-cli-contract-and-first-release-boundary.md`, and
-`docs/decisions/0003-v0.2-assurance-cli.md` for the accepted architecture and
-release boundaries.
+- Repair issue: [GitHub Issue #1](https://github.com/mako10k/ltfa/issues/1)
+- Repair acceptance:
+  `docs/acceptance/issue-1-cli-repair-acceptance.md`
+- Assurance field inventory:
+  `docs/decisions/0003-v0.2-assurance-cli.md`
+- Previous release notes: `docs/releases/v0.2.0.md`

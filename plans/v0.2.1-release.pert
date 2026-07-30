@@ -35,6 +35,7 @@ task R021_RELEASE_METADATA CLI_REPAIR_ACCEPTED -> R021_METADATA_READY:
     optimistic 0.25d
     most_likely 0.5d
     pessimistic 1d
+  status active
   priority 100
   requires:
     CODEX 1
@@ -57,3 +58,10 @@ task R021_CANDIDATE_ACCEPTANCE R021_METADATA_READY -> R021_CANDIDATE_ACCEPTED:
   owner "codex"
   tags [release, acceptance, sanitizer, offline]
   source "v0.2.0 release workflow; GitHub Issue #1 acceptance criteria"
+
+work_event WE-00c2d3a37a34ee4dfdc7fb587493e6caa66def3433ea801e55bfdb7ac4bac5e8:
+  model 1
+  task R021_RELEASE_METADATA
+  kind start
+  occurred_at 2026-07-30T14:53:11+09:00
+  planned_value 13/24d
