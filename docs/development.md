@@ -195,7 +195,7 @@ The completed v0.2 candidate-preparation plan remains at
 `plans/v0.2.0-release.pert`.
 
 The current Issue #1 resume point is recorded in the
-[2026-07-30 CLI repair handoff](handoff-2026-07-30-cli-repair.md).
+[2026-07-30 accepted CLI repair handoff](handoff-2026-07-30-cli-repair-accepted.md).
 
 ## Release work
 

@@ -25,46 +25,7 @@ resource REVIEW:
 
 
 
-milestone CLI_REPAIR_INTEGRATED:
-  title "CLI repair workstreams integrated"
-  state reached
 
 milestone CLI_REPAIR_ACCEPTED:
   title "Assurance CLI consistency repair accepted"
-
-
-
-
-
-
-
-
-task CLI_REPAIR_ACCEPTANCE CLI_REPAIR_INTEGRATED -> CLI_REPAIR_ACCEPTED:
-  title "Accept the assurance CLI consistency repair"
-  description "Record Issue-linked acceptance evidence, run the Release build and complete CTest suite with warnings as errors, rerun sanitizer, installed-tree, and offline-boundary gates, verify deterministic complete and incomplete output, and confirm that tag creation and release publication remain outside this repair plan."
-  estimate:
-    optimistic 1d
-    most_likely 1d
-    pessimistic 2d
-  status done
-  priority 100
-  requires:
-    CODEX 1
-    REVIEW 1
-  owner "codex"
-  tags [cli, acceptance, offline, patch]
-  source "GitHub Issue #1 acceptance criteria; AGENTS.md build and offline boundaries"
-
-work_event WE-a2d57fab7624d73a370a3d13bf821f5ebfd57d5ff83007aada5b5ec28917e357:
-  model 1
-  task CLI_REPAIR_ACCEPTANCE
-  kind start
-  occurred_at 2026-07-30T14:14:33+09:00
-  planned_value 7/6d
-
-work_event WE-09f63fcef4a693485b5586b8dd3c185d115e2cadf42b560a519299a1e00bc43c:
-  model 1
-  task CLI_REPAIR_ACCEPTANCE
-  kind finish
-  occurred_at 2026-07-30T14:16:48+09:00
-  effort 0.1ph
+  state reached
