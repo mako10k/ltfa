@@ -1,0 +1,139 @@
+# Existing .pert plans should normally be maintained through perttool commands; direct DSL editing bypasses goal/DAG owner-confirmation checks.
+project LTFA_DOT_SEMANTIC_VIEW:
+  version 5
+  title "LTFA semantic DOT views"
+  description "Add readable, deterministic DOT presentation views without changing the normalized model or the existing lossless DOT behavior. The work converts single-parent contained_in structure to nested clusters, represents endpoint ownership as ports, separates physical, power, dependency, and overlay relation lenses, and exposes the reviewed selection through the descriptor-backed CLI. It preserves restricted-output filtering, offline one-shot execution, Graphviz as an optional external renderer, and dependency-free C++17. Fixed coordinates, interactive HTML, external layout libraries, release metadata, tags, and publication are excluded."
+  as_of 2026-07-30
+  duration_unit day
+  finish DSV_ACCEPTED
+  goal_owner user
+  dag_owner user
+  dag_delegates [codex]
+
+resource CODEX:
+  title "LTFA implementation capacity"
+  description "Serialize implementation and test changes in this checkout"
+  capacity 1
+
+resource REVIEW:
+  title "Contract and acceptance review capacity"
+  description "Serialize public-contract and final acceptance review"
+  capacity 1
+
+milestone V021_RELEASED:
+  title "LTFA v0.2.1 released"
+  state reached
+
+milestone DSV_CONTRACT_READY:
+  title "Semantic DOT contract accepted"
+
+milestone DSV_STRUCTURE_READY:
+  title "Containment cluster rendering ready"
+
+milestone DSV_PORTS_READY:
+  title "Endpoint port rendering ready"
+
+milestone DSV_LENSES_READY:
+  title "Relation lenses ready"
+
+milestone DSV_RENDERER_INTEGRATED:
+  title "Semantic renderer integrated"
+
+milestone DSV_CLI_READY:
+  title "Semantic DOT CLI ready"
+
+milestone DSV_ACCEPTED:
+  title "Semantic DOT views accepted"
+
+task DSV_CONTRACT V021_RELEASED -> DSV_CONTRACT_READY:
+  title "Define the semantic DOT compatibility contract"
+  description "Record raw-view compatibility, a separately versioned presentation schema, nested containment semantics, endpoint port semantics, relation-lens membership, deterministic ordering, restricted-output behavior, and explicit exclusion of coordinates and renderer dependencies."
+  estimate:
+    optimistic 1d
+    most_likely 1d
+    pessimistic 2d
+  priority 100
+  requires:
+    CODEX 1
+    REVIEW 1
+  owner "codex"
+  tags [dot, contract, compatibility]
+  source "requirements REQ-OUT-004..005, REQ-NFR-005, REQ-QLT-003..005; basic design section 12.3; ADR 0001"
+
+task DSV_STRUCTURE DSV_CONTRACT_READY -> DSV_STRUCTURE_READY:
+  title "Render containment as deterministic nested clusters"
+  description "Build a cycle-safe single-parent containment forest, replace eligible contained_in edges and container nodes with nested clusters, retain an explicit fallback for ambiguous structures, and preserve stable escaping, filtering, focus, and highlight behavior."
+  estimate:
+    optimistic 1d
+    most_likely 2d
+    pessimistic 3d
+  priority 100
+  requires:
+    CODEX 1
+  owner "codex"
+  tags [dot, clusters, containment]
+  source "semantic DOT contract; requirements REQ-OUT-004..005, AC-007"
+
+task DSV_PORTS DSV_STRUCTURE_READY -> DSV_PORTS_READY:
+  title "Render owned endpoints as device ports"
+  description "Represent eligible endpoint ownership inside deterministic device labels, attach physical relations to stable endpoint ports, remove synthetic owns edges from semantic views, and retain safe fallback nodes when port folding is not valid."
+  estimate:
+    optimistic 1d
+    most_likely 2d
+    pessimistic 3d
+  priority 90
+  requires:
+    CODEX 1
+  owner "codex"
+  tags [dot, ports, endpoints]
+  source "semantic DOT contract; requirements REQ-OUT-004..005, REQ-QLT-003"
+
+task DSV_LENSES DSV_CONTRACT_READY -> DSV_LENSES_READY:
+  title "Implement semantic relation lenses"
+  description "Define deterministic raw, topology, power, dependency, and overlay views; keep structural relations spatial, retain relevant physical or logical relations per lens, move repeated relation names to graph metadata or legend styling, and reject unknown lens values through the public CLI grammar."
+  estimate:
+    optimistic 1d
+    most_likely 2d
+    pessimistic 3d
+  priority 90
+  requires:
+    CODEX 1
+  owner "codex"
+  tags [dot, views, relations]
+  source "semantic DOT contract; requirements UC-002, REQ-OUT-004..005"
+
+gate DSV_PORTS_GATE DSV_PORTS_READY -> DSV_RENDERER_INTEGRATED:
+  reason "Semantic renderer acceptance requires containment and endpoint structure"
+
+gate DSV_LENSES_GATE DSV_LENSES_READY -> DSV_RENDERER_INTEGRATED:
+  reason "Semantic renderer acceptance requires relation-lens selection"
+
+task DSV_CLI_DOCS DSV_RENDERER_INTEGRATED -> DSV_CLI_READY:
+  title "Expose and document semantic DOT selection"
+  description "Add descriptor-backed CLI options and exact help, preserve the current default until compatibility acceptance, document raw and semantic commands, and update install-smoke and error-contract coverage without changing non-DOT formats."
+  estimate:
+    optimistic 1d
+    most_likely 2d
+    pessimistic 3d
+  priority 100
+  requires:
+    CODEX 1
+    REVIEW 1
+  owner "codex"
+  tags [dot, cli, documentation]
+  source "ADR 0002; CLI Contract 2; requirements REQ-OUT-004..007"
+
+task DSV_EBINO_ACCEPTANCE DSV_CLI_READY -> DSV_ACCEPTED:
+  title "Accept semantic views on fixtures and the redacted Ebino model"
+  description "Pass golden, declaration-order, restricted-output, malformed-selection, optional Graphviz, Release, and sanitizer tests; verify Ebino nested clusters, port folding, relation-count reduction, byte stability, and zero network or secret access without committing generated site diagrams."
+  estimate:
+    optimistic 1d
+    most_likely 2d
+    pessimistic 3d
+  priority 100
+  requires:
+    CODEX 1
+    REVIEW 1
+  owner "codex"
+  tags [dot, acceptance, ebino]
+  source "requirements AC-007..009, REQ-QLT-003..006; docs/ebino-configuration.md"
