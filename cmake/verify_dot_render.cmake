@@ -4,8 +4,12 @@ foreach(required LTFA_DOT LTFA_DOT_PRODUCER LTFA_DOT_FILE LTFA_SVG_FILE)
     endif()
 endforeach()
 
+if(NOT DEFINED LTFA_DOT_PRODUCER_ARG OR "${LTFA_DOT_PRODUCER_ARG}" STREQUAL "")
+    set(LTFA_DOT_PRODUCER_ARG --emit-dot)
+endif()
+
 execute_process(
-    COMMAND "${LTFA_DOT_PRODUCER}" --emit-dot
+    COMMAND "${LTFA_DOT_PRODUCER}" "${LTFA_DOT_PRODUCER_ARG}"
     RESULT_VARIABLE producer_result
     OUTPUT_FILE "${LTFA_DOT_FILE}"
     ERROR_VARIABLE producer_error

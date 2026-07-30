@@ -4,6 +4,7 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace ltfa {
@@ -21,6 +22,16 @@ enum class DotGrouping {
     failure_domain,
 };
 
+enum class DotView {
+    raw,
+    topology,
+    power,
+    dependency,
+    overlay,
+};
+
+[[nodiscard]] std::string_view to_string(DotView value) noexcept;
+
 struct ModelOutputContext {
     std::vector<std::string> model_inputs;
     std::vector<std::string> observation_inputs;
@@ -29,6 +40,7 @@ struct ModelOutputContext {
 };
 
 struct DotOutputOptions {
+    DotView view{DotView::raw};
     DotGrouping grouping{DotGrouping::scope};
     std::optional<Plane> plane;
     std::optional<Layer> layer;

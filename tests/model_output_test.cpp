@@ -247,6 +247,144 @@ void test_determinism_and_escaping() {
            "DOT must escape quotes, slashes, and line breaks");
     expect(human.find("Edge \\\"A\\\"\\\\path\\nline") != std::string::npos,
            "human output must make slashes and line breaks unambiguous");
+
+    ltfa::DotOutputOptions semantic;
+    semantic.view = ltfa::DotView::topology;
+    const auto semantic_dot = ltfa::render_model_dot(*first, {}, semantic);
+    expect(semantic_dot.find("Edge \\\"A\\\"\\\\path\\nline") != std::string::npos,
+           "semantic DOT must escape quotes, slashes, and line breaks");
+}
+
+std::string semantic_structure_source(bool reordered = false) {
+    if (reordered) {
+        return "ltfa 1\n"
+               "connect router:lan -- switch:lan kind=network\n"
+               "relate switch -> panel kind=contained_in\n"
+               "endpoint switch:lan owner=switch kind=network label=\"Switch LAN\"\n"
+               "entity switch kind=device plane=communication layer=physical scope=s "
+               "label=\"Access Switch\"\n"
+               "relate router -> panel kind=contained_in\n"
+               "entity router kind=device plane=communication layer=physical scope=s "
+               "label=\"Router\"\n"
+               "endpoint router:lan owner=router kind=network label=\"Router LAN\"\n"
+               "relate panel -> facility kind=contained_in\n"
+               "entity panel kind=facility plane=facility layer=physical scope=s "
+               "label=\"Control Panel\"\n"
+               "entity facility kind=facility plane=facility layer=physical scope=s "
+               "label=\"Facility\"\n"
+               "scope s kind=site label=\"Semantic Site\"\n";
+    }
+    return "ltfa 1\n"
+           "scope s kind=site label=\"Semantic Site\"\n"
+           "entity facility kind=facility plane=facility layer=physical scope=s "
+           "label=\"Facility\"\n"
+           "entity panel kind=facility plane=facility layer=physical scope=s "
+           "label=\"Control Panel\"\n"
+           "entity router kind=device plane=communication layer=physical scope=s label=\"Router\"\n"
+           "entity switch kind=device plane=communication layer=physical scope=s "
+           "label=\"Access Switch\"\n"
+           "endpoint router:lan owner=router kind=network label=\"Router LAN\"\n"
+           "endpoint switch:lan owner=switch kind=network label=\"Switch LAN\"\n"
+           "relate panel -> facility kind=contained_in\n"
+           "relate router -> panel kind=contained_in\n"
+           "relate switch -> panel kind=contained_in\n"
+           "connect router:lan -- switch:lan kind=network\n";
+}
+
+void test_semantic_containment_clusters() {
+    const auto model = compile(semantic_structure_source());
+    const auto reordered = compile(semantic_structure_source(true));
+    if (!model.has_value() || !reordered.has_value()) {
+        return;
+    }
+
+    ltfa::DotOutputOptions options;
+    options.view = ltfa::DotView::topology;
+    const auto dot = ltfa::render_model_dot(*model, {}, options);
+    expect(dot.find("ltfa_schema=\"ltfa.diagram.dot/v1\"") != std::string::npos &&
+               dot.find("view=\"topology\"") != std::string::npos,
+           "semantic DOT must identify its presentation schema and view");
+    const auto facility = dot.find("subgraph \"cluster:container:facility\"");
+    const auto panel = dot.find("subgraph \"cluster:container:panel\"");
+    const auto router = dot.find("\"router\" [label=\"Router\"");
+    const auto access_switch = dot.find("\"switch\" [label=\"Access Switch\"");
+    expect(facility != std::string::npos && panel != std::string::npos &&
+               router != std::string::npos && access_switch != std::string::npos &&
+               facility < panel && panel < router && router < access_switch,
+           "eligible containment must produce a stable nested cluster hierarchy");
+    expect(dot.find("\"facility\" [label=") == std::string::npos &&
+               dot.find("\"panel\" [label=") == std::string::npos,
+           "folded containment parents must not also render as ordinary nodes");
+    expect(dot.find("contained_in") == std::string::npos,
+           "eligible containment must not remain as a semantic edge");
+    expect(dot.find("label=\"network\"") == std::string::npos &&
+               dot.find("ltfa_kind=\"network\"") != std::string::npos,
+           "semantic relations must retain kind metadata without repeated visible labels");
+    expect(std::count(dot.begin(), dot.end(), '\n') > 0 &&
+               dot.find("label=\"owns\"") != std::string::npos,
+           "structure slice must retain explicit endpoint ownership until port folding");
+    expect(ltfa::render_model_dot(*model, {}, options) ==
+               ltfa::render_model_dot(*reordered, {}, options),
+           "semantic containment output must not depend on declaration order");
+
+    const auto restricted = compile(restricted_source());
+    if (restricted.has_value()) {
+        const auto restricted_dot = ltfa::render_model_dot(*restricted, {}, options);
+        expect(restricted_dot.find("\"hidden\"") == std::string::npos,
+               "semantic DOT must retain default restricted filtering");
+    }
+}
+
+void test_semantic_containment_fallbacks() {
+    const auto ambiguous =
+        compile("ltfa 1\n"
+                "scope s\n"
+                "entity parent-a kind=facility plane=facility layer=physical scope=s\n"
+                "entity parent-b kind=facility plane=facility layer=physical scope=s\n"
+                "entity child kind=device plane=communication layer=physical scope=s\n"
+                "relate child -> parent-a kind=contained_in\n"
+                "relate child -> parent-b kind=contained_in\n");
+    const auto cyclic =
+        compile("ltfa 1\n"
+                "scope s\n"
+                "entity cycle-a kind=facility plane=facility layer=physical scope=s\n"
+                "entity cycle-b kind=facility plane=facility layer=physical scope=s\n"
+                "relate cycle-a -> cycle-b kind=contained_in\n"
+                "relate cycle-b -> cycle-a kind=contained_in\n");
+    const auto cross_scope =
+        compile("ltfa 1\n"
+                "scope local\n"
+                "scope remote\n"
+                "entity local-child kind=device plane=communication layer=physical scope=local\n"
+                "entity remote-parent kind=facility plane=facility layer=physical scope=remote\n"
+                "relate local-child -> remote-parent kind=contained_in\n");
+    if (!ambiguous.has_value() || !cyclic.has_value() || !cross_scope.has_value()) {
+        return;
+    }
+
+    ltfa::DotOutputOptions options;
+    options.view = ltfa::DotView::topology;
+    const auto ambiguous_dot = ltfa::render_model_dot(*ambiguous, {}, options);
+    expect(ambiguous_dot.find("cluster:container:parent-a") == std::string::npos &&
+               ambiguous_dot.find("cluster:container:parent-b") == std::string::npos,
+           "multi-parent containment must not infer a spatial parent");
+    const auto first_fallback = ambiguous_dot.find("label=\"contained_in\"");
+    expect(first_fallback != std::string::npos &&
+               ambiguous_dot.find("label=\"contained_in\"", first_fallback + 1) !=
+                   std::string::npos,
+           "multi-parent containment must retain every selected structural fact");
+
+    const auto cyclic_dot = ltfa::render_model_dot(*cyclic, {}, options);
+    expect(cyclic_dot.find("cluster:container:cycle-a") == std::string::npos &&
+               cyclic_dot.find("cluster:container:cycle-b") == std::string::npos,
+           "cyclic containment must not create nested clusters");
+    expect(cyclic_dot.find("label=\"contained_in\"") != std::string::npos,
+           "cyclic containment must remain an explicit structural edge");
+
+    const auto cross_scope_dot = ltfa::render_model_dot(*cross_scope, {}, options);
+    expect(cross_scope_dot.find("cluster:container:remote-parent") == std::string::npos &&
+               cross_scope_dot.find("label=\"contained_in\"") != std::string::npos,
+           "cross-scope containment must remain explicit instead of moving an object");
 }
 
 void test_dot_views() {
@@ -294,24 +432,30 @@ void test_dot_views() {
 } // namespace
 
 int main(int argc, char **argv) {
-    if (argc == 2 && std::string_view{argv[1]} == "--emit-dot") {
-        const auto model = compile(minimal_source());
+    if (argc == 2 && (std::string_view{argv[1]} == "--emit-dot" ||
+                      std::string_view{argv[1]} == "--emit-semantic-dot")) {
+        const bool semantic = std::string_view{argv[1]} == "--emit-semantic-dot";
+        const auto model = compile(semantic ? semantic_structure_source() : minimal_source());
         if (!model.has_value()) {
             return 1;
         }
         ltfa::ModelOutputContext context;
         context.model_inputs = {"z.ltfa", "a.ltfa", "a.ltfa"};
-        std::cout << ltfa::render_model_dot(*model, context);
+        ltfa::DotOutputOptions options;
+        options.view = semantic ? ltfa::DotView::topology : ltfa::DotView::raw;
+        std::cout << ltfa::render_model_dot(*model, context, options);
         return failures == 0 ? 0 : 1;
     }
     if (argc != 1) {
-        std::cerr << "usage: ltfa_model_output_test [--emit-dot]\n";
+        std::cerr << "usage: ltfa_model_output_test [--emit-dot|--emit-semantic-dot]\n";
         return 2;
     }
 
     test_golden_outputs();
     test_restricted_policy();
     test_determinism_and_escaping();
+    test_semantic_containment_clusters();
+    test_semantic_containment_fallbacks();
     test_dot_views();
     return failures == 0 ? 0 : 1;
 }

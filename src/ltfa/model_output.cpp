@@ -18,6 +18,7 @@ namespace {
 
 constexpr std::string_view kModelSchema{"ltfa.model/v1"};
 constexpr std::string_view kDotSchema{"ltfa.model.dot/v1"};
+constexpr std::string_view kDiagramDotSchema{"ltfa.diagram.dot/v1"};
 
 struct Visibility {
     std::vector<bool> entities;
@@ -35,6 +36,14 @@ struct DotSelection {
     std::vector<bool> entities;
     std::vector<bool> endpoints;
     std::vector<bool> relations;
+};
+
+struct SemanticContainment {
+    std::vector<std::optional<EntityId>> parents;
+    std::vector<bool> spatial_relations;
+    std::vector<bool> containers;
+    std::vector<bool> anchors;
+    std::vector<std::vector<ObjectRef>> children;
 };
 
 [[nodiscard]] bool valid_object(const NormalizedModel &model, ObjectRef object) noexcept {
@@ -500,6 +509,154 @@ void append_failure_domains(std::ostringstream &output, const NormalizedModel &m
     return selection;
 }
 
+[[nodiscard]] std::size_t object_slot(const NormalizedModel &model, ObjectRef object) noexcept {
+    return object.kind == ObjectKind::entity ? object.index : model.entities.size() + object.index;
+}
+
+[[nodiscard]] bool semantic_relation_visible(DotView view, RelationKind kind) noexcept {
+    if (kind == RelationKind::contained_in) {
+        return true;
+    }
+    switch (view) {
+    case DotView::raw:
+        return true;
+    case DotView::topology:
+        return kind == RelationKind::network || kind == RelationKind::power ||
+               kind == RelationKind::serial || kind == RelationKind::contact ||
+               kind == RelationKind::analog_current || kind == RelationKind::member_of;
+    case DotView::power:
+        return kind == RelationKind::power || kind == RelationKind::powered_by;
+    case DotView::dependency:
+        return kind == RelationKind::depends_on;
+    case DotView::overlay:
+        return kind == RelationKind::carried_by || kind == RelationKind::uses_underlay ||
+               kind == RelationKind::terminates_on || kind == RelationKind::routes_via;
+    }
+    return false;
+}
+
+[[nodiscard]] SemanticContainment build_semantic_containment(const NormalizedModel &model,
+                                                             const DotSelection &selection,
+                                                             DotView view) {
+    const auto object_count = model.entities.size() + model.endpoints.size();
+    SemanticContainment containment;
+    containment.parents.resize(object_count);
+    containment.spatial_relations.resize(model.relations.size());
+    containment.containers.resize(model.entities.size());
+    containment.anchors.resize(model.entities.size());
+    containment.children.resize(model.entities.size());
+
+    std::vector<std::size_t> parent_counts(object_count);
+    std::vector<std::optional<RelationId>> candidate_relations(object_count);
+    for (const auto &relation : model.relations) {
+        if (!selection.relations[relation.id.value()] ||
+            relation.kind != RelationKind::contained_in) {
+            continue;
+        }
+        const auto slot = object_slot(model, relation.from);
+        ++parent_counts[slot];
+        if (parent_counts[slot] == 1 && relation.direction == Direction::directed &&
+            relation.to.kind == ObjectKind::entity &&
+            object_scope(model, relation.from) == object_scope(model, relation.to)) {
+            containment.parents[slot] = EntityId{relation.to.index};
+            candidate_relations[slot] = relation.id;
+        } else {
+            containment.parents[slot].reset();
+            candidate_relations[slot].reset();
+        }
+    }
+
+    constexpr int kUnknown = 0;
+    constexpr int kVisiting = 1;
+    constexpr int kValid = 2;
+    constexpr int kInvalid = 3;
+    std::vector<int> states(model.entities.size(), kUnknown);
+    for (std::size_t start = 0; start < model.entities.size(); ++start) {
+        if (!selection.entities[start] || states[start] != kUnknown) {
+            continue;
+        }
+        std::vector<std::size_t> path;
+        auto current = start;
+        auto outcome = kValid;
+        while (true) {
+            if (states[current] == kValid || states[current] == kInvalid) {
+                outcome = states[current];
+                break;
+            }
+            if (states[current] == kVisiting) {
+                outcome = kInvalid;
+                break;
+            }
+            states[current] = kVisiting;
+            path.push_back(current);
+            if (parent_counts[current] != 1 || !containment.parents[current].has_value()) {
+                outcome = kValid;
+                break;
+            }
+            current = containment.parents[current]->value();
+        }
+        for (const auto entity : path) {
+            states[entity] = outcome;
+        }
+    }
+
+    for (std::size_t slot = 0; slot < object_count; ++slot) {
+        if (parent_counts[slot] != 1 || !candidate_relations[slot].has_value() ||
+            !containment.parents[slot].has_value()) {
+            containment.parents[slot].reset();
+            continue;
+        }
+        const bool valid_chain = slot < model.entities.size()
+                                     ? states[slot] == kValid
+                                     : states[containment.parents[slot]->value()] == kValid;
+        if (!valid_chain) {
+            containment.parents[slot].reset();
+            continue;
+        }
+        containment.spatial_relations[candidate_relations[slot]->value()] = true;
+        const auto parent = containment.parents[slot]->value();
+        containment.containers[parent] = true;
+        const auto child = slot < model.entities.size()
+                               ? ObjectRef::from(EntityId{static_cast<std::uint32_t>(slot)})
+                               : ObjectRef::from(EndpointId{
+                                     static_cast<std::uint32_t>(slot - model.entities.size())});
+        containment.children[parent].push_back(child);
+    }
+
+    auto object_less = [&](ObjectRef left, ObjectRef right) {
+        const auto left_id = model.external_id(left);
+        const auto right_id = model.external_id(right);
+        return left_id != right_id ? left_id < right_id
+                                   : static_cast<int>(left.kind) < static_cast<int>(right.kind);
+    };
+    for (auto &children : containment.children) {
+        std::sort(children.begin(), children.end(), object_less);
+    }
+
+    for (const auto &endpoint : model.endpoints) {
+        if (selection.endpoints[endpoint.id.value()] && endpoint.owner.is_valid() &&
+            endpoint.owner.value() < containment.containers.size() &&
+            containment.containers[endpoint.owner.value()]) {
+            containment.anchors[endpoint.owner.value()] = true;
+        }
+    }
+    for (const auto &relation : model.relations) {
+        if (!selection.relations[relation.id.value()] ||
+            (relation.kind == RelationKind::contained_in &&
+             containment.spatial_relations[relation.id.value()]) ||
+            !semantic_relation_visible(view, relation.kind)) {
+            continue;
+        }
+        for (const auto object : {relation.from, relation.to}) {
+            if (object.kind == ObjectKind::entity && object.index < containment.containers.size() &&
+                containment.containers[object.index]) {
+                containment.anchors[object.index] = true;
+            }
+        }
+    }
+    return containment;
+}
+
 [[nodiscard]] std::string plane_color(Plane plane) {
     switch (plane) {
     case Plane::facility:
@@ -606,7 +763,236 @@ dot_group(const NormalizedModel &model, ObjectRef object, const DotOutputOptions
     return output.str();
 }
 
+[[nodiscard]] std::string semantic_anchor_id(const NormalizedModel &model, EntityId entity) {
+    return "@ltfa-anchor:" + std::string{model.string(model.entities[entity.value()].external_id)};
+}
+
+[[nodiscard]] std::string_view object_label(const NormalizedModel &model,
+                                            ObjectRef object) noexcept {
+    const auto label_id = object.kind == ObjectKind::entity ? model.entities[object.index].label
+                                                            : model.endpoints[object.index].label;
+    return label_id.is_valid() ? model.string(label_id) : model.external_id(object);
+}
+
+[[nodiscard]] std::string semantic_target(const NormalizedModel &model,
+                                          const SemanticContainment &containment,
+                                          ObjectRef object) {
+    if (object.kind == ObjectKind::entity && containment.containers[object.index]) {
+        return semantic_anchor_id(model, EntityId{object.index});
+    }
+    return std::string{model.external_id(object)};
+}
+
+void append_semantic_node(std::ostringstream &output, const NormalizedModel &model,
+                          const DotOutputOptions &options, ObjectRef object, std::size_t indent) {
+    const auto highlighted = has_object(options.highlighted_objects, object);
+    output << std::string(indent, ' ') << '"' << escape_dot(model.external_id(object))
+           << "\" [label=\"" << escape_dot(object_label(model, object)) << "\",tooltip=\""
+           << escape_dot(model.external_id(object)) << "\",ltfa_kind=\"" << to_string(object.kind)
+           << "\",shape=" << (object.kind == ObjectKind::entity ? "box" : "ellipse") << ",color=\""
+           << plane_color(object_plane(model, object)) << "\",style=\""
+           << (highlighted                         ? "filled,bold"
+               : object.kind == ObjectKind::entity ? "rounded"
+                                                   : "solid")
+           << '"';
+    if (highlighted) {
+        output << ",fillcolor=\"#fef3c7\"";
+    }
+    output << "];\n";
+}
+
+void append_semantic_tree(std::ostringstream &output, const NormalizedModel &model,
+                          const DotOutputOptions &options, const SemanticContainment &containment,
+                          const std::vector<ObjectRef> &roots, std::size_t indent) {
+    enum class EventKind {
+        object,
+        close_cluster,
+    };
+    struct Event {
+        EventKind kind{EventKind::object};
+        ObjectRef object;
+        std::size_t indent{0};
+    };
+
+    std::vector<Event> events;
+    for (auto iterator = roots.rbegin(); iterator != roots.rend(); ++iterator) {
+        events.push_back({EventKind::object, *iterator, indent});
+    }
+    while (!events.empty()) {
+        const auto event = events.back();
+        events.pop_back();
+        if (event.kind == EventKind::close_cluster) {
+            output << std::string(event.indent, ' ') << "}\n";
+            continue;
+        }
+        const auto object = event.object;
+        if (object.kind != ObjectKind::entity || !containment.containers[object.index]) {
+            append_semantic_node(output, model, options, object, event.indent);
+            continue;
+        }
+
+        const auto entity_id = EntityId{object.index};
+        const auto &entity = model.entities[object.index];
+        output << std::string(event.indent, ' ')
+               << "subgraph \"cluster:container:" << escape_dot(model.string(entity.external_id))
+               << "\" {\n"
+               << std::string(event.indent + 2, ' ') << "label=\""
+               << escape_dot(object_label(model, object)) << "\";\n"
+               << std::string(event.indent + 2, ' ') << "tooltip=\""
+               << escape_dot(model.string(entity.external_id)) << "\";\n"
+               << std::string(event.indent + 2, ' ') << "color=\"" << plane_color(entity.plane)
+               << "\";\n"
+               << std::string(event.indent + 2, ' ') << "style=\"rounded\";\n";
+        if (containment.anchors[object.index]) {
+            output
+                << std::string(event.indent + 2, ' ') << '"'
+                << escape_dot(semantic_anchor_id(model, entity_id)) << "\" [label=\"\",tooltip=\""
+                << escape_dot(model.string(entity.external_id))
+                << "\",ltfa_kind=\"container-anchor\",shape=point,width=\"0.01\",height=\"0.01\","
+                   "style=invis];\n";
+        }
+        events.push_back({EventKind::close_cluster, {}, event.indent});
+        const auto &children = containment.children[object.index];
+        for (auto iterator = children.rbegin(); iterator != children.rend(); ++iterator) {
+            events.push_back({EventKind::object, *iterator, event.indent + 2});
+        }
+    }
+}
+
+[[nodiscard]] std::string render_semantic_dot(const NormalizedModel &model,
+                                              const ModelOutputContext &context,
+                                              const DotOutputOptions &options,
+                                              const Visibility &visibility,
+                                              const DotSelection &selection) {
+    const auto containment = build_semantic_containment(model, selection, options.view);
+    const auto model_inputs = sorted_unique_strings(context.model_inputs);
+    const auto observation_inputs = sorted_unique_strings(context.observation_inputs);
+    std::ostringstream output;
+    output << "digraph ltfa_diagram {\n"
+           << "  graph [ltfa_schema=\"" << kDiagramDotSchema << "\",operation=\"model\",view=\""
+           << to_string(options.view) << "\",model_inputs=\""
+           << escape_dot(encoded_string_array(model_inputs)) << "\",observation_inputs=\""
+           << escape_dot(encoded_string_array(observation_inputs)) << "\",analysis_at=\""
+           << escape_dot(context.analysis_at.has_value() ? *context.analysis_at : "null")
+           << "\",restricted_omissions=\"" << visibility.restricted_omissions
+           << "\",compound=\"true\",newrank=\"true\"];\n"
+           << "  node [fontname=\"sans-serif\"];\n"
+           << "  edge [fontname=\"sans-serif\"];\n";
+
+    std::map<std::string, std::vector<ObjectRef>> roots_by_scope;
+    auto add_root = [&](ObjectRef object) {
+        if (!containment.parents[object_slot(model, object)].has_value()) {
+            const auto scope = object_scope(model, object);
+            const auto scope_id =
+                scope.is_valid() && scope.value() < model.scopes.size()
+                    ? std::string{model.string(model.scopes[scope.value()].external_id)}
+                    : std::string{"none"};
+            roots_by_scope[scope_id].push_back(object);
+        }
+    };
+    for (const auto index : sorted_indices(model, model.entities)) {
+        const auto &entity = model.entities[index];
+        if (selection.entities[entity.id.value()]) {
+            add_root(ObjectRef::from(entity.id));
+        }
+    }
+    for (const auto index : sorted_indices(model, model.endpoints)) {
+        const auto &endpoint = model.endpoints[index];
+        if (selection.endpoints[endpoint.id.value()]) {
+            add_root(ObjectRef::from(endpoint.id));
+        }
+    }
+    auto object_less = [&](ObjectRef left, ObjectRef right) {
+        const auto left_id = model.external_id(left);
+        const auto right_id = model.external_id(right);
+        return left_id != right_id ? left_id < right_id
+                                   : static_cast<int>(left.kind) < static_cast<int>(right.kind);
+    };
+    for (auto &[scope_id, roots] : roots_by_scope) {
+        std::sort(roots.begin(), roots.end(), object_less);
+        const auto scope =
+            std::find_if(model.scopes.begin(), model.scopes.end(), [&](const auto &candidate) {
+                return model.string(candidate.external_id) == scope_id;
+            });
+        const auto label = scope != model.scopes.end() && scope->label.is_valid()
+                               ? model.string(scope->label)
+                               : std::string_view{scope_id};
+        output << "  subgraph \"cluster:scope:" << escape_dot(scope_id) << "\" {\n"
+               << "    label=\"" << escape_dot(label) << "\";\n"
+               << "    tooltip=\"" << escape_dot(scope_id) << "\";\n"
+               << "    color=\"#9ca3af\";\n"
+               << "    style=\"rounded\";\n";
+        append_semantic_tree(output, model, options, containment, roots, 4);
+        output << "  }\n";
+    }
+
+    for (const auto index : sorted_indices(model, model.endpoints)) {
+        const auto &endpoint = model.endpoints[index];
+        if (!selection.endpoints[endpoint.id.value()] || !endpoint.owner.is_valid() ||
+            !selection.entities[endpoint.owner.value()]) {
+            continue;
+        }
+        const auto owner = ObjectRef::from(endpoint.owner);
+        output << "  \"" << escape_dot(semantic_target(model, containment, owner)) << "\" -> \""
+               << escape_dot(model.string(endpoint.external_id))
+               << "\" [label=\"owns\",tooltip=\"owns\",ltfa_kind=\"owns\",color=\"#9ca3af\","
+                  "style=\"dashed\",arrowhead=\"none\"];\n";
+    }
+    for (const auto index : sorted_indices(model, model.relations)) {
+        const auto &relation = model.relations[index];
+        if (!selection.relations[relation.id.value()] ||
+            (relation.kind == RelationKind::contained_in &&
+             containment.spatial_relations[relation.id.value()]) ||
+            !semantic_relation_visible(options.view, relation.kind)) {
+            continue;
+        }
+        const bool structural_fallback = relation.kind == RelationKind::contained_in;
+        output << "  \"" << escape_dot(semantic_target(model, containment, relation.from))
+               << "\" -> \"" << escape_dot(semantic_target(model, containment, relation.to))
+               << "\" [";
+        if (structural_fallback) {
+            output << "label=\"contained_in\",";
+        }
+        output << "tooltip=\"" << escape_dot(model.string(relation.external_id)) << " ("
+               << escape_dot(to_string(relation.kind)) << ")\",ltfa_relation=\""
+               << escape_dot(model.string(relation.external_id)) << "\",ltfa_kind=\""
+               << escape_dot(to_string(relation.kind)) << "\",color=\""
+               << relation_color(relation.kind) << "\",style=\""
+               << (structural_fallback ? "dotted"
+                   : static_cast<std::size_t>(relation.kind) <=
+                           static_cast<std::size_t>(RelationKind::analog_current)
+                       ? "solid"
+                       : "dashed")
+               << '"';
+        if (relation.direction == Direction::bidirectional) {
+            output << ",dir=\"both\"";
+        }
+        if (has_relation(options.highlighted_relations, relation.id)) {
+            output << ",penwidth=\"3\"";
+        }
+        output << "];\n";
+    }
+    output << "}\n";
+    return output.str();
+}
+
 } // namespace
+
+std::string_view to_string(DotView value) noexcept {
+    switch (value) {
+    case DotView::raw:
+        return "raw";
+    case DotView::topology:
+        return "topology";
+    case DotView::power:
+        return "power";
+    case DotView::dependency:
+        return "dependency";
+    case DotView::overlay:
+        return "overlay";
+    }
+    return "raw";
+}
 
 std::string render_model_human(const NormalizedModel &model, const ModelOutputContext &context) {
     const auto visibility = build_visibility(model, context);
@@ -1001,6 +1387,9 @@ std::string render_model_dot(const NormalizedModel &model, const ModelOutputCont
                              const DotOutputOptions &options) {
     const auto visibility = build_visibility(model, context);
     const auto selection = select_dot_graph(model, visibility, options);
+    if (options.view != DotView::raw) {
+        return render_semantic_dot(model, context, options, visibility, selection);
+    }
     const auto model_inputs = sorted_unique_strings(context.model_inputs);
     const auto observation_inputs = sorted_unique_strings(context.observation_inputs);
     std::ostringstream output;
