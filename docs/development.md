@@ -198,6 +198,8 @@ Accepted implementation and release evidence is retained under
 - [v0.2.1 candidate acceptance](acceptance/v0.2.1-release-candidate.md)
 - [v0.2.1 publication acceptance](acceptance/v0.2.1-release-publication.md)
 - [v0.2.1 release history](plans/v0.2.1-release-history.md)
+- [v0.3.0-alpha.1 release metadata](acceptance/r030a1-release-metadata.md)
+- [v0.3.0-alpha.1 release preparation history](plans/v0.3.0-alpha.1-release-history.md)
 
 ## Plan maintenance
 
@@ -233,14 +235,16 @@ The v0.2.1 patch candidate plan is `plans/v0.2.1-release.pert`. The current
 publication checkpoint is recorded in the
 [2026-07-30 v0.2.1 release handoff](handoff-2026-07-30-v0.2.1-release.md).
 
+The active prerelease checkpoint plan is
+`plans/v0.3.0-alpha.1-release.pert`. It accepts metadata and the immutable
+candidate before the separately authorized annotated tag is created.
+
 ## Release work
 
 Normal development does not create tags, push releases, or mutate remote
-release state. The accepted v0.2.1 candidate and its verification matrix are
-recorded in the
-[candidate evidence](acceptance/v0.2.1-release-candidate.md).
-
-Publication requires a separate owner instruction. The owner authorized
-v0.2.1 publication on 2026-07-30. The operation must tag the immutable
-candidate commit identified by that evidence and verify each requested remote
-reference after the write.
+release state. The owner authorized `v0.3.0-alpha.1` preparation and annotated
+tag publication on 2026-07-31. Publication must tag only the immutable
+candidate commit identified by its evidence and verify the remote branch,
+annotated tag object, and peeled target after each write. This authorization
+does not include a GitHub Release, stable `v0.3.0`, or latest-release
+promotion.

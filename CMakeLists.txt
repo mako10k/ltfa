@@ -2,10 +2,17 @@ cmake_minimum_required(VERSION 3.20)
 
 project(
     ltfa
-    VERSION 0.2.1
+    VERSION 0.3.0
     DESCRIPTION "Lightweight multilayer topology and fault analyzer"
     LANGUAGES C CXX
 )
+
+set(LTFA_VERSION_PRERELEASE "alpha.1")
+if(LTFA_VERSION_PRERELEASE)
+    set(LTFA_VERSION_STRING "${PROJECT_VERSION}-${LTFA_VERSION_PRERELEASE}")
+else()
+    set(LTFA_VERSION_STRING "${PROJECT_VERSION}")
+endif()
 
 include(CTest)
 include(GNUInstallDirs)
