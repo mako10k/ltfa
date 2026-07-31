@@ -174,6 +174,7 @@ Repository-local decisions define the implemented boundary:
 - [strict observation JSON Lines contract](decisions/0007-observation-json-lines-contract.md)
 - [observation evidence index](decisions/0008-observation-evidence-index.md)
 - [bounded deterministic diagnosis](decisions/0009-bounded-deterministic-diagnosis.md)
+- [redacted historical structure fixture](decisions/0010-redacted-historical-fixture.md)
 
 Accepted implementation and release evidence is retained under
 `docs/acceptance/` and `docs/plans/`. In particular:
@@ -181,6 +182,7 @@ Accepted implementation and release evidence is retained under
 - [M3 observation JSON Lines decoder](acceptance/m3-observation-decoder.md)
 - [M3 observation evidence index](acceptance/m3-evidence-index.md)
 - [M3 bounded deterministic diagnosis](acceptance/m3-diagnosis.md)
+- [M3 redacted historical fixture](acceptance/m3-redacted-history-fixture.md)
 - [integrated Slice 2 acceptance](acceptance/m2-offline-assurance-slice.md)
 - [v0.2 CLI implementation](acceptance/r020-cli-implementation.md)
 - [v0.2 release metadata](acceptance/r020-release-metadata.md)

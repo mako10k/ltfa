@@ -1,0 +1,36 @@
+ltfa 1
+scope site:fixture kind=site label="Synthetic Site View" completeness=partial evidence-quality=inferred x-origin=structure-derived
+scope cloud:fixture kind=cloud label="Synthetic Remote View" completeness=partial evidence-quality=inferred x-origin=structure-derived
+
+entity device:access-router kind=device plane=communication layer=physical scope=site:fixture
+entity device:converter-target-01 kind=device plane=communication layer=physical scope=site:fixture
+entity device:converter-target-02 kind=device plane=communication layer=physical scope=site:fixture
+entity device:converter-target-03 kind=device plane=communication layer=physical scope=site:fixture
+entity service:observed-reachability kind=service plane=service layer=application scope=site:fixture
+entity service:collector-01 kind=service plane=service layer=application scope=site:fixture x-device-count=11
+entity service:collector-02 kind=service plane=service layer=application scope=site:fixture x-device-count=2
+entity service:collector-03 kind=service plane=service layer=application scope=site:fixture x-device-count=11
+entity service:collector-04 kind=service plane=service layer=application scope=site:fixture x-device-count=2
+entity service:collector-05 kind=service plane=service layer=application scope=site:fixture x-device-count=9
+entity process:site-observer kind=process plane=service layer=application scope=site:fixture
+entity process:remote-observer kind=process plane=service layer=application scope=cloud:fixture
+
+relate service:observed-reachability -> device:access-router kind=depends_on
+relate device:converter-target-01 -> device:access-router kind=depends_on
+relate device:converter-target-02 -> device:access-router kind=depends_on
+relate device:converter-target-03 -> device:access-router kind=depends_on
+relate service:collector-01 -> device:converter-target-01 kind=depends_on
+relate service:collector-02 -> device:converter-target-01 kind=depends_on
+relate service:collector-03 -> device:converter-target-02 kind=depends_on
+relate service:collector-04 -> device:converter-target-02 kind=depends_on
+relate service:collector-05 -> device:converter-target-03 kind=depends_on
+
+failure failure:access-router target=device:access-router mode=device-failure
+failure failure:converter-target-01 target=device:converter-target-01 mode=peer-unreachable
+failure failure:converter-target-03 target=device:converter-target-03 mode=peer-unreachable
+failure failure:remote-path target=process:remote-observer mode=probe-path-loss
+
+probe probe:site-gateway target=service:observed-reachability vantage=process:site-observer kind=icmp valid-for=60s
+probe probe:remote-gateway target=service:observed-reachability vantage=process:remote-observer kind=icmp valid-for=60s
+probe probe:site-converter-01 target=device:converter-target-01 vantage=process:site-observer kind=icmp valid-for=60s
+probe probe:remote-converter-03 target=device:converter-target-03 vantage=process:remote-observer kind=icmp valid-for=60s
