@@ -43,6 +43,16 @@ enum class DiagnosticCode {
     limit_total_source_bytes,
     limit_line_bytes,
     observation_invalid,
+    observation_invalid_json,
+    observation_missing_field,
+    observation_duplicate_field,
+    observation_unknown_field,
+    observation_invalid_field,
+    observation_unsupported_schema,
+    limit_observation_input_bytes,
+    limit_observation_line_bytes,
+    limit_observation_records,
+    limit_observation_extensions,
 };
 
 [[nodiscard]] std::string_view to_string(DiagnosticSeverity value) noexcept;

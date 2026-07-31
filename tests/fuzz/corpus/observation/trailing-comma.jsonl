@@ -1,0 +1,1 @@
+{"schema":"ltfa.observation/v1","probe_id":"probe:synthetic:ping","target":"endpoint:synthetic:lan","vantage":"node:synthetic:monitor","kind":"icmp","outcome":"timeout","observed_at":"2026-07-31T12:00:00+09:00","valid_for_ms":60000,}

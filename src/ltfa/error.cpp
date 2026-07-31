@@ -70,6 +70,26 @@ std::string_view to_string(DiagnosticCode value) noexcept {
         return "E_LIMIT_LINE_BYTES";
     case DiagnosticCode::observation_invalid:
         return "E_OBSERVATION_INVALID";
+    case DiagnosticCode::observation_invalid_json:
+        return "E_OBSERVATION_INVALID_JSON";
+    case DiagnosticCode::observation_missing_field:
+        return "E_OBSERVATION_MISSING_FIELD";
+    case DiagnosticCode::observation_duplicate_field:
+        return "E_OBSERVATION_DUPLICATE_FIELD";
+    case DiagnosticCode::observation_unknown_field:
+        return "E_OBSERVATION_UNKNOWN_FIELD";
+    case DiagnosticCode::observation_invalid_field:
+        return "E_OBSERVATION_INVALID_FIELD";
+    case DiagnosticCode::observation_unsupported_schema:
+        return "E_OBSERVATION_UNSUPPORTED_SCHEMA";
+    case DiagnosticCode::limit_observation_input_bytes:
+        return "E_LIMIT_OBSERVATION_INPUT_BYTES";
+    case DiagnosticCode::limit_observation_line_bytes:
+        return "E_LIMIT_OBSERVATION_LINE_BYTES";
+    case DiagnosticCode::limit_observation_records:
+        return "E_LIMIT_OBSERVATION_RECORDS";
+    case DiagnosticCode::limit_observation_extensions:
+        return "E_LIMIT_OBSERVATION_EXTENSIONS";
     }
     return "E_UNKNOWN";
 }

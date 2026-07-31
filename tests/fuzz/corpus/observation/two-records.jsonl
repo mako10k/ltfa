@@ -1,0 +1,2 @@
+{"schema":"ltfa.observation/v1","probe_id":"probe:synthetic:metric","target":"endpoint:synthetic:sensor","vantage":"node:synthetic:monitor-a","kind":"metric","outcome":"pass","observed_at":"2026-07-31T12:00:00.125Z","valid_for_ms":30000,"value":12.5,"unit":"mA"}
+{"schema":"ltfa.observation/v1","probe_id":"probe:synthetic:state","target":"endpoint:synthetic:contact","vantage":"node:synthetic:monitor-b","kind":"discrete-state","outcome":"fail","observed_at":"2026-07-31T12:00:01Z","valid_for_ms":30000,"state":"open","x-sequence":2}

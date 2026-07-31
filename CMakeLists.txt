@@ -13,7 +13,7 @@ include(GNUInstallDirs)
 set(LTFA_SANITIZERS "" CACHE STRING
     "Semicolon-separated sanitizer list: address, undefined, or leak"
 )
-option(LTFA_BUILD_FUZZERS "Build parser fuzz targets" OFF)
+option(LTFA_BUILD_FUZZERS "Build parser and observation fuzz targets" OFF)
 set(LTFA_FUZZ_ENGINE "standalone" CACHE STRING
     "Fuzz engine: standalone or libfuzzer"
 )
@@ -86,6 +86,7 @@ set(LTFA_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/model.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/model_compiler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/model_output.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/observation.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/path_analysis.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/spof_analysis.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/version.cpp
@@ -101,7 +102,10 @@ target_include_directories(ltfa_core
         ${CMAKE_CURRENT_BINARY_DIR}/generated
 )
 target_compile_features(ltfa_core PUBLIC cxx_std_17)
-target_link_libraries(ltfa_core PUBLIC ltfa_sanitizers)
+target_link_libraries(ltfa_core
+    PUBLIC ltfa_sanitizers
+    PRIVATE ltfa::yyjson
+)
 set_target_properties(ltfa_core PROPERTIES CXX_EXTENSIONS OFF)
 ltfa_enable_warnings(ltfa_core)
 

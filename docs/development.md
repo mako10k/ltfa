@@ -15,7 +15,7 @@ Linux `strace` and Graphviz `dot` are optional. When present, the Release test
 suite uses them for runtime network-syscall and DOT-render validation.
 Clang is required only for libFuzzer builds.
 
-The source tree vendors yyjson 0.12.0 for the upcoming observation decoder.
+The source tree vendors yyjson 0.12.0 for the strict observation decoder.
 Its exact source, license, checksums, compile options, and warning boundary are
 recorded in [`third_party/README.md`](../third_party/README.md). Do not format
 or modify vendored source. Dependency updates require a new reviewed pin.
@@ -96,7 +96,8 @@ cmake --build --preset fuzz-seeds
 ctest --preset fuzz-seeds
 ```
 
-The fuzz-seed preset replays the deterministic parser corpus under ASan/UBSan.
+The fuzz-seed preset replays the deterministic parser and observation corpora
+under ASan/UBSan.
 Clang libFuzzer commands and corpus rules are documented in the
 [fuzzing guide](../tests/fuzz/README.md).
 
@@ -141,7 +142,7 @@ cmake/               Build and verification scripts
 include/ltfa/        Public core headers
 src/ltfa/            Core implementation
 tests/               Dependency-free CTest targets
-tests/fuzz/          Parser fuzz harness and synthetic seed corpus
+tests/fuzz/          Parser/observation fuzz harnesses and synthetic seed corpora
 tests/fixtures/      Synthetic offline acceptance inputs
 docs/acceptance/     Requirement traces and accepted boundaries
 docs/decisions/      Project-local architecture decisions
@@ -170,10 +171,12 @@ Repository-local decisions define the implemented boundary:
 - [semantic DOT views](decisions/0004-semantic-dot-views.md)
 - [links, aggregates, and protection domains](decisions/0005-link-aggregation-and-protection-domains.md)
 - [pinned yyjson observation-decoder dependency](decisions/0006-pin-yyjson.md)
+- [strict observation JSON Lines contract](decisions/0007-observation-json-lines-contract.md)
 
 Accepted implementation and release evidence is retained under
 `docs/acceptance/` and `docs/plans/`. In particular:
 
+- [M3 observation JSON Lines decoder](acceptance/m3-observation-decoder.md)
 - [integrated Slice 2 acceptance](acceptance/m2-offline-assurance-slice.md)
 - [v0.2 CLI implementation](acceptance/r020-cli-implementation.md)
 - [v0.2 release metadata](acceptance/r020-release-metadata.md)

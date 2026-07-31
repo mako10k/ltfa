@@ -72,6 +72,14 @@ void test_default_limits() {
            "relation limit must match the reviewed design");
     expect(ltfa::kDefaultModelLimits.max_observation_line_bytes == 64U * 1024U,
            "observation line limit must match the reviewed design");
+    expect(ltfa::kDefaultModelLimits.max_observation_input_bytes == 64U * 1024U * 1024U,
+           "observation input limit must remain explicit and bounded");
+    expect(ltfa::kDefaultModelLimits.max_observations == 100'000,
+           "observation record limit must match the prototype target");
+    expect(ltfa::kDefaultModelLimits.max_observation_extensions == 16,
+           "observation extension count must remain explicitly bounded");
+    expect(ltfa::kDefaultModelLimits.max_observation_string_bytes == 4U * 1024U,
+           "observation string size must remain explicitly bounded");
 }
 
 void test_model_enum_names() {
@@ -288,6 +296,26 @@ void test_diagnostic_codes() {
         std::pair{ltfa::DiagnosticCode::limit_line_bytes, std::string_view{"E_LIMIT_LINE_BYTES"}},
         std::pair{ltfa::DiagnosticCode::observation_invalid,
                   std::string_view{"E_OBSERVATION_INVALID"}},
+        std::pair{ltfa::DiagnosticCode::observation_invalid_json,
+                  std::string_view{"E_OBSERVATION_INVALID_JSON"}},
+        std::pair{ltfa::DiagnosticCode::observation_missing_field,
+                  std::string_view{"E_OBSERVATION_MISSING_FIELD"}},
+        std::pair{ltfa::DiagnosticCode::observation_duplicate_field,
+                  std::string_view{"E_OBSERVATION_DUPLICATE_FIELD"}},
+        std::pair{ltfa::DiagnosticCode::observation_unknown_field,
+                  std::string_view{"E_OBSERVATION_UNKNOWN_FIELD"}},
+        std::pair{ltfa::DiagnosticCode::observation_invalid_field,
+                  std::string_view{"E_OBSERVATION_INVALID_FIELD"}},
+        std::pair{ltfa::DiagnosticCode::observation_unsupported_schema,
+                  std::string_view{"E_OBSERVATION_UNSUPPORTED_SCHEMA"}},
+        std::pair{ltfa::DiagnosticCode::limit_observation_input_bytes,
+                  std::string_view{"E_LIMIT_OBSERVATION_INPUT_BYTES"}},
+        std::pair{ltfa::DiagnosticCode::limit_observation_line_bytes,
+                  std::string_view{"E_LIMIT_OBSERVATION_LINE_BYTES"}},
+        std::pair{ltfa::DiagnosticCode::limit_observation_records,
+                  std::string_view{"E_LIMIT_OBSERVATION_RECORDS"}},
+        std::pair{ltfa::DiagnosticCode::limit_observation_extensions,
+                  std::string_view{"E_LIMIT_OBSERVATION_EXTENSIONS"}},
     });
 }
 

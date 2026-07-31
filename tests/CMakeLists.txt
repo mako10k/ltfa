@@ -18,6 +18,16 @@ ltfa_enable_warnings(ltfa_yyjson_vendor_test)
 
 add_test(NAME ltfa.third-party.yyjson COMMAND ltfa_yyjson_vendor_test)
 
+add_executable(ltfa_observation_decoder_test
+    observation_decoder_test.cpp
+)
+target_link_libraries(ltfa_observation_decoder_test PRIVATE ltfa::core)
+target_compile_features(ltfa_observation_decoder_test PRIVATE cxx_std_17)
+set_target_properties(ltfa_observation_decoder_test PROPERTIES CXX_EXTENSIONS OFF)
+ltfa_enable_warnings(ltfa_observation_decoder_test)
+
+add_test(NAME ltfa.observation.decoder COMMAND ltfa_observation_decoder_test)
+
 add_executable(ltfa_model_contract_test
     model_contract_test.cpp
 )
@@ -234,6 +244,14 @@ if(NOT LTFA_SANITIZERS AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
                 -DLTFA_TRACE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-slice2-offline-runtime.trace
                 -P ${PROJECT_SOURCE_DIR}/cmake/verify_offline_runtime.cmake
         )
+        add_test(
+            NAME ltfa.boundary.observation-offline-runtime
+            COMMAND ${CMAKE_COMMAND}
+                -DLTFA_STRACE=${LTFA_STRACE_EXECUTABLE}
+                -DLTFA_PROGRAM=$<TARGET_FILE:ltfa_observation_decoder_test>
+                -DLTFA_TRACE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-observation-offline-runtime.trace
+                -P ${PROJECT_SOURCE_DIR}/cmake/verify_offline_runtime.cmake
+        )
     endif()
 endif()
 
@@ -291,6 +309,14 @@ if(LTFA_BUILD_FUZZERS)
     set_target_properties(ltfa_parser_fuzz PROPERTIES CXX_EXTENSIONS OFF)
     ltfa_enable_warnings(ltfa_parser_fuzz)
 
+    add_executable(ltfa_observation_fuzz
+        fuzz/observation_fuzz.cpp
+    )
+    target_include_directories(ltfa_observation_fuzz PRIVATE ${PROJECT_SOURCE_DIR}/include)
+    target_compile_features(ltfa_observation_fuzz PRIVATE cxx_std_17)
+    set_target_properties(ltfa_observation_fuzz PROPERTIES CXX_EXTENSIONS OFF)
+    ltfa_enable_warnings(ltfa_observation_fuzz)
+
     if(LTFA_FUZZ_ENGINE STREQUAL "libfuzzer")
         add_library(ltfa_fuzz_core STATIC ${LTFA_CORE_SOURCES})
         target_include_directories(ltfa_fuzz_core
@@ -298,7 +324,10 @@ if(LTFA_BUILD_FUZZERS)
             PRIVATE ${PROJECT_BINARY_DIR}/generated
         )
         target_compile_features(ltfa_fuzz_core PUBLIC cxx_std_17)
-        target_link_libraries(ltfa_fuzz_core PUBLIC ltfa_sanitizers)
+        target_link_libraries(ltfa_fuzz_core
+            PUBLIC ltfa_sanitizers
+            PRIVATE ltfa::yyjson
+        )
         target_compile_options(ltfa_fuzz_core PRIVATE -fsanitize=fuzzer-no-link)
         set_target_properties(ltfa_fuzz_core PROPERTIES CXX_EXTENSIONS OFF)
         ltfa_enable_warnings(ltfa_fuzz_core)
@@ -307,8 +336,14 @@ if(LTFA_BUILD_FUZZERS)
         target_compile_options(ltfa_parser_fuzz PRIVATE -fsanitize=fuzzer)
         target_link_options(ltfa_parser_fuzz PRIVATE -fsanitize=fuzzer)
         target_link_libraries(ltfa_parser_fuzz PRIVATE ltfa_fuzz_core)
+
+        target_compile_definitions(ltfa_observation_fuzz PRIVATE LTFA_LIBFUZZER=1)
+        target_compile_options(ltfa_observation_fuzz PRIVATE -fsanitize=fuzzer)
+        target_link_options(ltfa_observation_fuzz PRIVATE -fsanitize=fuzzer)
+        target_link_libraries(ltfa_observation_fuzz PRIVATE ltfa_fuzz_core)
     else()
         target_link_libraries(ltfa_parser_fuzz PRIVATE ltfa::core)
+        target_link_libraries(ltfa_observation_fuzz PRIVATE ltfa::core)
     endif()
 
     if(LTFA_FUZZ_ENGINE STREQUAL "standalone")
@@ -319,6 +354,14 @@ if(LTFA_BUILD_FUZZERS)
                 ${CMAKE_CURRENT_SOURCE_DIR}/fuzz/corpus/parser/unterminated-string.ltfa
                 ${CMAKE_CURRENT_SOURCE_DIR}/fuzz/corpus/parser/dependency-cycle.ltfa
                 ${CMAKE_CURRENT_SOURCE_DIR}/fuzz/corpus/parser/include-uri.ltfa
+        )
+        add_test(
+            NAME ltfa.fuzz.observation.seeds
+            COMMAND ltfa_observation_fuzz
+                ${CMAKE_CURRENT_SOURCE_DIR}/fuzz/corpus/observation/valid.jsonl
+                ${CMAKE_CURRENT_SOURCE_DIR}/fuzz/corpus/observation/two-records.jsonl
+                ${CMAKE_CURRENT_SOURCE_DIR}/fuzz/corpus/observation/trailing-comma.jsonl
+                ${CMAKE_CURRENT_SOURCE_DIR}/fuzz/corpus/observation/future-major.jsonl
         )
     endif()
 endif()

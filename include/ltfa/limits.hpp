@@ -14,7 +14,11 @@ struct ModelLimits {
     std::uint32_t max_relations{500'000};
     std::uint32_t max_attributes_per_object{64};
     std::size_t max_attribute_string_bytes{4U * 1024U};
+    std::uint64_t max_observation_input_bytes{64U * 1024U * 1024U};
     std::size_t max_observation_line_bytes{64U * 1024U};
+    std::uint32_t max_observations{100'000};
+    std::uint32_t max_observation_extensions{16};
+    std::size_t max_observation_string_bytes{4U * 1024U};
 };
 
 inline constexpr ModelLimits kDefaultModelLimits{};

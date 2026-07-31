@@ -20,6 +20,7 @@ dependencies beyond the C++ runtime. It does not access the network.
 - immediate and fixed-delay declared-failure propagation
 - articulation, bridge, and completeness-qualified SPOF analysis
 - deterministic human and `ltfa.assurance/v1` assurance output
+- strict bounded `ltfa.observation/v1` JSON Lines decoding through the core API
 
 ## Safety boundary
 
@@ -36,15 +37,18 @@ LTFA does not:
 - require a daemon, graph database, or runtime language interpreter
 - infer a live failure cause from observations
 
-Future observation producers remain separate processes connected through a
-versioned data contract. The complete offline boundary is recorded in the
-[bootstrap decision](docs/decisions/0001-bootstrap-boundary.md).
+Observation producers remain separate processes connected through a versioned
+data contract. The decoder does not run them, evaluate freshness, or infer a
+live cause. The complete offline boundary is recorded in the
+[bootstrap decision](docs/decisions/0001-bootstrap-boundary.md), and the
+[observation contract](docs/decisions/0007-observation-json-lines-contract.md)
+records the implemented decoder boundary.
 
 ## Build and install
 
 CMake 3.20 or later, a C99 compiler, and a C++17 compiler are required. The C
-compiler builds the pinned yyjson reader used by the upcoming observation
-decoder; the current CLI does not yet link that target.
+compiler builds the pinned yyjson reader used by the core observation decoder;
+the current CLI has no observation-input command.
 
 ```sh
 cmake --preset release
@@ -138,6 +142,7 @@ Invoking `ltfa` without a command is a usage error with status 2.
 
 - CLI Contract: 2
 - DSL: LTFA DSL v1
+- Observation input: `ltfa.observation/v1` JSON Lines core API
 - model JSON: `ltfa.model/v1`
 - raw model DOT: `ltfa.model.dot/v1`
 - semantic diagram DOT: `ltfa.diagram.dot/v1`
