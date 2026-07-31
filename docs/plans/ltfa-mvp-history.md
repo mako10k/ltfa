@@ -625,3 +625,42 @@ completed 100 mutation runs over a disposable corpus. Static and
 diagnosis-specific runtime checks confirmed the offline boundary, and the CLI
 exposes no observation or diagnosis surface. The pre-advance plan digest was
 `sha256:728f36b8383fb4cc1216c2a2ca3bdea77f098122895b3cebc469d6608eb5b2d6`.
+
+## 2026-07-31 — M3_REDACTED_AMI_FIXTURE
+
+Status: accepted
+
+The fourth Slice 3 task adds a synthetic, structure-derived historical fixture
+for end-to-end evidence and diagnosis acceptance. It preserves only the useful
+topology and observation shapes from the approved local source and carries no
+operational identifier, address, path, credential, or free-form source text.
+
+Delivered:
+
+- a synthetic partial and inferred topology with five collectors and three
+  converter-equivalence targets
+- preserved structural fan-outs of 11, 2, 11, 2, and 9 without source names
+- six synthetic observation records spanning site and remote vantage points
+- current, stale, same-probe, and cross-vantage conflict coverage
+- deterministic evidence-index and bounded-diagnosis acceptance assertions
+- explicit checks for forbidden field names, address-shaped strings, email
+  markers, and operational absolute paths in committed fixture payloads
+- a local exact-string collision check with zero matches across 106 eligible
+  source values
+- a dedicated offline runtime boundary check and documented review evidence
+
+Verification:
+
+```text
+cmake --preset release && cmake --build --preset release && ctest --preset release
+cmake --preset asan-ubsan && cmake --build --preset asan-ubsan && ctest --preset asan-ubsan
+cmake --preset lsan && cmake --build --preset lsan && ctest --preset lsan
+cmake --preset fuzz-seeds && cmake --build --preset fuzz-seeds && ctest --preset fuzz-seeds
+```
+
+The GNU 13.3.0 Release suite passed all 39 tests. ASan/UBSan and independent
+LSan passed all 32 applicable tests, and the fuzz-seed configuration passed all
+34. Clang 18 ASan/UBSan passed all 32 applicable tests and built the core,
+parser, and observation libFuzzer targets. Static and fixture-specific runtime
+checks confirmed the offline boundary. The pre-advance plan digest was
+`sha256:c3d9fb3f66e11c5b56dc9e2aaa64c7b3262a5d3c59e586905af9ac86e055e4cf`.
