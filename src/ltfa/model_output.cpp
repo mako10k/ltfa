@@ -1345,9 +1345,10 @@ void append_semantic_tree(std::ostringstream &output, const NormalizedModel &mod
     };
     for (auto &[scope_id, roots] : roots_by_scope) {
         std::sort(roots.begin(), roots.end(), object_less);
+        const auto &current_scope_id = scope_id;
         const auto scope =
             std::find_if(model.scopes.begin(), model.scopes.end(), [&](const auto &candidate) {
-                return model.string(candidate.external_id) == scope_id;
+                return model.string(candidate.external_id) == current_scope_id;
             });
         const auto label = scope != model.scopes.end() && scope->label.is_valid()
                                ? model.string(scope->label)
