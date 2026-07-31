@@ -664,3 +664,44 @@ LSan passed all 32 applicable tests, and the fuzz-seed configuration passed all
 parser, and observation libFuzzer targets. Static and fixture-specific runtime
 checks confirmed the offline boundary. The pre-advance plan digest was
 `sha256:c3d9fb3f66e11c5b56dc9e2aaa64c7b3262a5d3c59e586905af9ac86e055e4cf`.
+
+## 2026-07-31 — M3_ACCEPTANCE
+
+Status: accepted
+
+The final Slice 3 task integrates strict observations, explicit-time evidence,
+bounded deterministic diagnosis, the redacted historical fixture, and stable
+machine rendering. It accepts the offline core boundary without adding a CLI
+surface, live producer, automatic probe, persistent store, or release change.
+
+Delivered:
+
+- public `ltfa.diagnosis/v1` JSON and `ltfa.diagnosis.dot/v1` DOT renderers
+- explicit analysis time, sorted input identities, result status, evidence,
+  ordered findings, incomplete reasons, usage, and omission counts
+- selected-finding DOT with targets, affected and unknown objects, assessments,
+  and same-probe or cross-vantage conflicts
+- byte-identical output after reversing equivalent observation arrival order
+- explicit bounded-incomplete serialization with stable reason and usage
+- default restricted-identity omission and permanent raw observation-detail
+  omission under every output policy
+- syntactic JSON and external Graphviz validation
+- an integrated synthetic fixture acceptance executable and dedicated offline
+  runtime boundary test
+
+Verification:
+
+```text
+cmake --preset release && cmake --build --preset release && ctest --preset release
+cmake --preset asan-ubsan && cmake --build --preset asan-ubsan && ctest --preset asan-ubsan
+cmake --preset lsan && cmake --build --preset lsan && ctest --preset lsan
+cmake --preset fuzz-seeds && cmake --build --preset fuzz-seeds && ctest --preset fuzz-seeds
+```
+
+The GNU 13.3.0 Release suite passed all 42 tests. ASan/UBSan and independent
+LSan passed all 34 applicable tests, and the fuzz-seed configuration passed all
+36. Clang 18.1.3 ASan/UBSan passed all 34 applicable tests and built the core,
+parser, and observation libFuzzer targets. External Graphviz accepted the
+diagnosis view, and static plus Slice 3 runtime checks confirmed the offline
+boundary. The pre-advance plan digest was
+`sha256:647a992a17d34967a0881d68d5d674f3b1df9f5bb4f7159ffed6c46ce802b175`.

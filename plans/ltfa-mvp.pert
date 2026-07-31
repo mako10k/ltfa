@@ -93,6 +93,7 @@ task M3_ACCEPTANCE SLICE3_INTEGRATED -> SLICE3_ACCEPTED:
     optimistic 1d
     most_likely 2d
     pessimistic 3d
+  status done
   priority 100
   requires:
     CODEX 1
@@ -179,3 +180,16 @@ task MVP_BENCHMARK_ACCEPTANCE BENCHMARK_TARGETS_READY -> MVP_ACCEPTED:
   owner "codex"
   tags [prototype, acceptance, performance]
   source "requirements AC-001..010; basic design section 14; design review prototype approval conditions"
+
+work_event WE-19f093c9ed4fd4912952cafc2ee9304c9580e7643bf0a93da20036f5b3c30f59:
+  model 1
+  task M3_ACCEPTANCE
+  kind start
+  occurred_at 2026-07-31T21:04:01+09:00
+  planned_value 2d
+
+work_event WE-1d637b2795379e1ad7e45e995258b21f2e9be607ed708b5e11287b9940de1365:
+  model 1
+  task M3_ACCEPTANCE
+  kind finish
+  occurred_at 2026-07-31T21:16:41+09:00
