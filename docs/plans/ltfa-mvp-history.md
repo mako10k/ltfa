@@ -585,3 +585,43 @@ fuzzer completed a 100-run disposable-corpus smoke. Static and runtime checks
 confirmed the offline boundary, and the CLI exposes no observation surface. The
 pre-advance plan digest was
 `sha256:efbc2ebec5e68bc9f2a63e773a7bfae075e372c7c9eb79d1fbe7db0653d83fa2`.
+
+## 2026-07-31 — M3_DIAGNOSIS
+
+Status: accepted
+
+The third Slice 3 task adds bounded, deterministic diagnosis over the strict
+evidence index and normalized availability graph. It produces explicitly
+labeled single-failure hypotheses without adding a CLI surface, live probe,
+numeric probability, or confirmed target-state claim.
+
+Delivered:
+
+- public C++17 diagnosis result, finding, evidence-assessment, and budget APIs
+- stable reverse-dependency causal cones seeded only by failed or stale probes
+- declared failure-mode and generic object single-failure hypotheses
+- bounded deterministic propagation and current-evidence comparison
+- contradiction-first lexicographic ranking with stable dense ties
+- retained cross-vantage conflicts, affected objects, and remaining unknowns
+- scope completeness and evidence-quality qualification on every finding
+- explicit causal, hypothesis, simulation, comparison, and propagation limits
+- fail-closed validation for malformed model and evidence-index contracts
+- focused offline, repeatability, ranking, stale-evidence, and budget tests
+
+Verification:
+
+```text
+cmake --preset release && cmake --build --preset release && ctest --preset release
+cmake --preset asan-ubsan && cmake --build --preset asan-ubsan && ctest --preset asan-ubsan
+cmake --preset lsan && cmake --build --preset lsan && ctest --preset lsan
+cmake --preset fuzz-seeds && cmake --build --preset fuzz-seeds && ctest --preset fuzz-seeds
+```
+
+The GNU 13.3.0 Release suite passed all 37 tests. ASan/UBSan and independent
+LSan passed all 31 applicable tests, and the fuzz-seed configuration passed all
+33. Clang 18 ASan/UBSan passed all 31 applicable tests and built both libFuzzer
+targets with diagnosis in the isolated fuzz core. The observation fuzzer
+completed 100 mutation runs over a disposable corpus. Static and
+diagnosis-specific runtime checks confirmed the offline boundary, and the CLI
+exposes no observation or diagnosis surface. The pre-advance plan digest was
+`sha256:728f36b8383fb4cc1216c2a2ca3bdea77f098122895b3cebc469d6608eb5b2d6`.
