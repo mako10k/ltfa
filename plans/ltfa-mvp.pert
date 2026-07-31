@@ -39,12 +39,10 @@ milestone OBS_DECODER_READY:
   title "Observation decoder ready"
   state reached
 
-milestone EVIDENCE_READY:
-  title "Freshness and conflict evidence ready"
-  state reached
 
 milestone DIAGNOSIS_READY:
   title "Deterministic diagnosis ready"
+  state reached
 
 milestone AMI_FIXTURE_READY:
   title "Redacted Ami-A-derived fixture ready"
@@ -91,20 +89,6 @@ milestone MVP_ACCEPTED:
 
 
 
-task M3_DIAGNOSIS EVIDENCE_READY -> DIAGNOSIS_READY:
-  title "Implement bounded deterministic diagnosis"
-  description "Generate hypotheses only from causal cones, simulate single failures, rank by contradictions and explained evidence without invented probabilities, report ties, unknowns, and budget exhaustion."
-  estimate:
-    optimistic 3d
-    most_likely 5d
-    pessimistic 8d
-  status done
-  priority 90
-  requires:
-    CODEX 1
-  owner "codex"
-  tags [slice3, diagnosis]
-  source "requirements REQ-ANL-010..015; basic design section 10.7"
 
 task M3_REDACTED_AMI_FIXTURE OBS_DECODER_READY -> AMI_FIXTURE_READY:
   title "Create the redacted Ami-A-derived integration fixture"
@@ -220,16 +204,3 @@ task MVP_BENCHMARK_ACCEPTANCE BENCHMARK_TARGETS_READY -> MVP_ACCEPTED:
   owner "codex"
   tags [prototype, acceptance, performance]
   source "requirements AC-001..010; basic design section 14; design review prototype approval conditions"
-
-work_event WE-9326c75df0ce6b75ed11d0264d32b87dadb0d4223ca784dcac5c40da1f92f6be:
-  model 1
-  task M3_DIAGNOSIS
-  kind start
-  occurred_at 2026-07-31T20:17:03+09:00
-  planned_value 31/6d
-
-work_event WE-e581ae761b3692f3cd22ce2b72f3283febb5d91c420186dc6be115a12afce9b3:
-  model 1
-  task M3_DIAGNOSIS
-  kind finish
-  occurred_at 2026-07-31T20:37:22+09:00
