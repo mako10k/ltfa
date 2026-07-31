@@ -34,6 +34,7 @@ task R030A1_CANDIDATE_ACCEPTANCE R030A1_METADATA_READY -> R030A1_CANDIDATE_ACCEP
     optimistic 0.5d
     most_likely 1d
     pessimistic 1.5d
+  status done
   priority 100
   requires:
     CODEX 1
@@ -41,3 +42,16 @@ task R030A1_CANDIDATE_ACCEPTANCE R030A1_METADATA_READY -> R030A1_CANDIDATE_ACCEP
   owner "codex"
   tags [release, acceptance, prerelease, sanitizer, offline]
   source "v0.2.1 release workflow; M3 observation diagnosis acceptance"
+
+work_event WE-d8b95e63ce773e57c4409f34f0a398d9743a70005f20762cc1cc2f61ebd79d46:
+  model 1
+  task R030A1_CANDIDATE_ACCEPTANCE
+  kind start
+  occurred_at 2026-07-31T21:31:46+09:00
+  planned_value 1d
+
+work_event WE-b9326f97bca4cadc67582a7ebb4912baabd27d38d54b63ee454f9f795822e543:
+  model 1
+  task R030A1_CANDIDATE_ACCEPTANCE
+  kind finish
+  occurred_at 2026-07-31T21:36:01+09:00
