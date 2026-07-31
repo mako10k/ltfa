@@ -96,6 +96,7 @@ task M3_EVIDENCE_INDEX OBS_DECODER_READY -> EVIDENCE_READY:
     optimistic 2d
     most_likely 3d
     pessimistic 5d
+  status done
   priority 90
   requires:
     CODEX 1
@@ -231,3 +232,16 @@ task MVP_BENCHMARK_ACCEPTANCE BENCHMARK_TARGETS_READY -> MVP_ACCEPTED:
   owner "codex"
   tags [prototype, acceptance, performance]
   source "requirements AC-001..010; basic design section 14; design review prototype approval conditions"
+
+work_event WE-d5a86cbc00088f87c8a2775c4fc5a1c49c9e2d6daa9be682f3cc5f7a9824b6b9:
+  model 1
+  task M3_EVIDENCE_INDEX
+  kind start
+  occurred_at 2026-07-31T19:46:05+09:00
+  planned_value 19/6d
+
+work_event WE-097e60d5bef8ff04990ad738ae49b8b325422a6062c0f2c4c2b6b781ac62af96:
+  model 1
+  task M3_EVIDENCE_INDEX
+  kind finish
+  occurred_at 2026-07-31T20:07:49+09:00

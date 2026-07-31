@@ -545,3 +545,43 @@ LSan passed all 29 applicable tests, and the fuzz-seed configuration passed all
 a 100-run smoke. The dedicated decoder executable made no network syscall. The
 pre-advance plan digest was
 `sha256:b05033dd9254bd075c3ae2c64ccb7797dd3fc7d3c7c8eb7a266a0b96b62c91a5`.
+
+## 2026-07-31 — M3_EVIDENCE_INDEX
+
+Status: accepted
+
+The second Slice 3 task adds a deterministic, offline evidence index between
+strict observation decoding and later graph-aware diagnosis. It resolves every
+record against registered probe semantics and an explicit analysis reference
+time without adding a clock default, CLI surface, producer, or target-state
+inference.
+
+Delivered:
+
+- public C++17 evidence-index and strict timestamp parsing APIs
+- exact registered probe, target, vantage, kind, and validity validation
+- required `x-outcome-map` registration for custom-heartbeat probes
+- normalized RFC 3339 instant comparison and explicit future-record failure
+- exact-boundary current/stale classification with retained stale history
+- deterministic newest-record selection with all same-time records preserved
+- outcome, metric-value, and discrete-state conflict detection
+- fresh cross-vantage conflict preservation independent of arrival order
+- explicit ICMP `vantage-reachability` meaning without device-down inference
+- focused offline and malformed-contract tests plus a runtime `strace` gate
+
+Verification:
+
+```text
+cmake --preset release && cmake --build --preset release && ctest --preset release
+cmake --preset asan-ubsan && cmake --build --preset asan-ubsan && ctest --preset asan-ubsan
+cmake --preset lsan && cmake --build --preset lsan && ctest --preset lsan
+cmake --preset fuzz-seeds && cmake --build --preset fuzz-seeds && ctest --preset fuzz-seeds
+```
+
+The GNU 13.3.0 Release suite passed all 35 tests. ASan/UBSan and independent
+LSan passed all 30 applicable tests, and the fuzz-seed configuration passed all
+32. Clang 18 built the evidence test and both libFuzzer targets; the observation
+fuzzer completed a 100-run disposable-corpus smoke. Static and runtime checks
+confirmed the offline boundary, and the CLI exposes no observation surface. The
+pre-advance plan digest was
+`sha256:efbc2ebec5e68bc9f2a63e773a7bfae075e372c7c9eb79d1fbe7db0653d83fa2`.
