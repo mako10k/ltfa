@@ -1,0 +1,59 @@
+# Existing .pert plans should normally be maintained through perttool commands; direct DSL editing bypasses goal/DAG owner-confirmation checks.
+project LTFA_RELEASE_030_ALPHA1:
+  version 5
+  title "LTFA v0.3.0-alpha.1 release preparation"
+  description "Prepare and accept a v0.3.0-alpha.1 checkpoint containing semantic DOT, link aggregation and protection modeling, and the accepted offline observation-diagnosis core. The diagnosis API remains source-only and outside the CLI. The owner authorized annotated tag publication after candidate acceptance; GitHub Release creation and stable-version promotion remain separate operations."
+  as_of 2026-07-31
+  duration_unit day
+  finish R030A1_CANDIDATE_ACCEPTED
+  goal_owner user
+  dag_owner user
+  dag_delegates [codex]
+
+resource CODEX:
+  title "Release preparation capacity"
+  capacity 1
+
+resource REVIEW:
+  title "Release acceptance capacity"
+  capacity 1
+
+milestone SLICE3_ACCEPTED:
+  title "Observation diagnosis slice accepted"
+  state reached
+
+milestone R030A1_METADATA_READY:
+  title "v0.3.0-alpha.1 metadata ready"
+
+milestone R030A1_CANDIDATE_ACCEPTED:
+  title "v0.3.0-alpha.1 release candidate accepted"
+
+task R030A1_RELEASE_METADATA SLICE3_ACCEPTED -> R030A1_METADATA_READY:
+  title "Prepare v0.3.0-alpha.1 release metadata"
+  description "Add an explicit prerelease version component, preserve v0.2.1 notes as history, document the exact CLI and source-core boundary, update current-version surfaces, and verify installed version and documentation without exposing diagnosis through the CLI."
+  estimate:
+    optimistic 0.25d
+    most_likely 0.5d
+    pessimistic 1d
+  priority 100
+  requires:
+    CODEX 1
+    REVIEW 1
+  owner "codex"
+  tags [release, metadata, prerelease]
+  source "accepted Slice 3 boundary; owner recommendation approval on 2026-07-31"
+
+task R030A1_CANDIDATE_ACCEPTANCE R030A1_METADATA_READY -> R030A1_CANDIDATE_ACCEPTED:
+  title "Accept the v0.3.0-alpha.1 release candidate"
+  description "Run Release, ASan/UBSan, LeakSanitizer, fuzz-seed, Clang, install-tree, Graphviz, offline-boundary, version, tag-absence, and CI-state checks on the exact candidate and record the prerelease limitations."
+  estimate:
+    optimistic 0.5d
+    most_likely 1d
+    pessimistic 1.5d
+  priority 100
+  requires:
+    CODEX 1
+    REVIEW 1
+  owner "codex"
+  tags [release, acceptance, prerelease, sanitizer, offline]
+  source "v0.2.1 release workflow; M3 observation diagnosis acceptance"
