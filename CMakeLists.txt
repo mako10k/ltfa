@@ -4,7 +4,7 @@ project(
     ltfa
     VERSION 0.2.1
     DESCRIPTION "Lightweight multilayer topology and fault analyzer"
-    LANGUAGES CXX
+    LANGUAGES C CXX
 )
 
 include(CTest)
@@ -56,6 +56,25 @@ if(LTFA_SANITIZERS)
         "-fsanitize=${ltfa_sanitizer_csv}"
     )
 endif()
+
+add_library(ltfa_yyjson STATIC
+    third_party/yyjson/yyjson.c
+)
+add_library(ltfa::yyjson ALIAS ltfa_yyjson)
+target_include_directories(ltfa_yyjson
+    SYSTEM PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/third_party/yyjson>
+)
+target_compile_definitions(ltfa_yyjson
+    PUBLIC
+        YYJSON_DISABLE_WRITER=1
+        YYJSON_DISABLE_INCR_READER=1
+        YYJSON_DISABLE_UTILS=1
+        YYJSON_DISABLE_NON_STANDARD=1
+)
+target_compile_features(ltfa_yyjson PUBLIC c_std_99)
+target_link_libraries(ltfa_yyjson PUBLIC ltfa_sanitizers)
+set_target_properties(ltfa_yyjson PROPERTIES C_EXTENSIONS OFF)
 
 set(LTFA_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/availability.cpp

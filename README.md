@@ -42,7 +42,9 @@ versioned data contract. The complete offline boundary is recorded in the
 
 ## Build and install
 
-CMake 3.20 or later and a C++17 compiler are required.
+CMake 3.20 or later, a C99 compiler, and a C++17 compiler are required. The C
+compiler builds the pinned yyjson reader used by the upcoming observation
+decoder; the current CLI does not yet link that target.
 
 ```sh
 cmake --preset release

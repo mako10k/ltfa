@@ -15,6 +15,11 @@ Linux `strace` and Graphviz `dot` are optional. When present, the Release test
 suite uses them for runtime network-syscall and DOT-render validation.
 Clang is required only for libFuzzer builds.
 
+The source tree vendors yyjson 0.12.0 for the upcoming observation decoder.
+Its exact source, license, checksums, compile options, and warning boundary are
+recorded in [`third_party/README.md`](../third_party/README.md). Do not format
+or modify vendored source. Dependency updates require a new reviewed pin.
+
 ## Setup and verification
 
 Configure, build, and test the Release tree:
@@ -164,6 +169,7 @@ Repository-local decisions define the implemented boundary:
 - [v0.2 offline assurance CLI contract](decisions/0003-v0.2-assurance-cli.md)
 - [semantic DOT views](decisions/0004-semantic-dot-views.md)
 - [links, aggregates, and protection domains](decisions/0005-link-aggregation-and-protection-domains.md)
+- [pinned yyjson observation-decoder dependency](decisions/0006-pin-yyjson.md)
 
 Accepted implementation and release evidence is retained under
 `docs/acceptance/` and `docs/plans/`. In particular:

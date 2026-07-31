@@ -8,6 +8,16 @@ ltfa_enable_warnings(ltfa_smoke_test)
 
 add_test(NAME ltfa.smoke COMMAND ltfa_smoke_test)
 
+add_executable(ltfa_yyjson_vendor_test
+    yyjson_vendor_test.cpp
+)
+target_link_libraries(ltfa_yyjson_vendor_test PRIVATE ltfa::yyjson)
+target_compile_features(ltfa_yyjson_vendor_test PRIVATE cxx_std_17)
+set_target_properties(ltfa_yyjson_vendor_test PROPERTIES CXX_EXTENSIONS OFF)
+ltfa_enable_warnings(ltfa_yyjson_vendor_test)
+
+add_test(NAME ltfa.third-party.yyjson COMMAND ltfa_yyjson_vendor_test)
+
 add_executable(ltfa_model_contract_test
     model_contract_test.cpp
 )
