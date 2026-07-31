@@ -28,6 +28,16 @@ ltfa_enable_warnings(ltfa_observation_decoder_test)
 
 add_test(NAME ltfa.observation.decoder COMMAND ltfa_observation_decoder_test)
 
+add_executable(ltfa_evidence_index_test
+    evidence_index_test.cpp
+)
+target_link_libraries(ltfa_evidence_index_test PRIVATE ltfa::core)
+target_compile_features(ltfa_evidence_index_test PRIVATE cxx_std_17)
+set_target_properties(ltfa_evidence_index_test PROPERTIES CXX_EXTENSIONS OFF)
+ltfa_enable_warnings(ltfa_evidence_index_test)
+
+add_test(NAME ltfa.observation.evidence-index COMMAND ltfa_evidence_index_test)
+
 add_executable(ltfa_model_contract_test
     model_contract_test.cpp
 )
@@ -250,6 +260,14 @@ if(NOT LTFA_SANITIZERS AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
                 -DLTFA_STRACE=${LTFA_STRACE_EXECUTABLE}
                 -DLTFA_PROGRAM=$<TARGET_FILE:ltfa_observation_decoder_test>
                 -DLTFA_TRACE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-observation-offline-runtime.trace
+                -P ${PROJECT_SOURCE_DIR}/cmake/verify_offline_runtime.cmake
+        )
+        add_test(
+            NAME ltfa.boundary.evidence-index-offline-runtime
+            COMMAND ${CMAKE_COMMAND}
+                -DLTFA_STRACE=${LTFA_STRACE_EXECUTABLE}
+                -DLTFA_PROGRAM=$<TARGET_FILE:ltfa_evidence_index_test>
+                -DLTFA_TRACE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-evidence-index-offline-runtime.trace
                 -P ${PROJECT_SOURCE_DIR}/cmake/verify_offline_runtime.cmake
         )
     endif()

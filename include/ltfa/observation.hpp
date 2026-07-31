@@ -81,6 +81,16 @@ struct ObservationDecodeResult {
     [[nodiscard]] bool ok() const noexcept { return !error.has_value(); }
 };
 
+struct ObservationTimestampParseResult {
+    std::optional<ObservationTimestamp> timestamp;
+    std::optional<Diagnostic> error;
+
+    [[nodiscard]] bool ok() const noexcept { return timestamp.has_value() && !error.has_value(); }
+};
+
+[[nodiscard]] ObservationTimestampParseResult parse_observation_timestamp(std::string_view value,
+                                                                          SourceSpan source = {});
+
 [[nodiscard]] ObservationDecodeResult
 decode_observation_json_lines(std::string_view input, StringId file,
                               const ModelLimits &limits = kDefaultModelLimits);

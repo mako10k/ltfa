@@ -82,6 +82,14 @@ std::string_view to_string(DiagnosticCode value) noexcept {
         return "E_OBSERVATION_INVALID_FIELD";
     case DiagnosticCode::observation_unsupported_schema:
         return "E_OBSERVATION_UNSUPPORTED_SCHEMA";
+    case DiagnosticCode::observation_probe_unresolved:
+        return "E_OBSERVATION_PROBE_UNRESOLVED";
+    case DiagnosticCode::observation_contract_mismatch:
+        return "E_OBSERVATION_CONTRACT_MISMATCH";
+    case DiagnosticCode::observation_invalid_reference_time:
+        return "E_OBSERVATION_INVALID_REFERENCE_TIME";
+    case DiagnosticCode::observation_after_reference_time:
+        return "E_OBSERVATION_AFTER_REFERENCE_TIME";
     case DiagnosticCode::limit_observation_input_bytes:
         return "E_LIMIT_OBSERVATION_INPUT_BYTES";
     case DiagnosticCode::limit_observation_line_bytes:

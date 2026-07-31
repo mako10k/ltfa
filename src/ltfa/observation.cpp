@@ -265,11 +265,12 @@ read_extension(yyjson_val *value, std::string_view field, const ModelLimits &lim
 }
 
 [[nodiscard]] std::optional<ObservationTimestamp>
-parse_timestamp(std::string_view value, SourceSpan source, std::optional<Diagnostic> &error) {
+parse_timestamp(std::string_view value, std::string_view field, SourceSpan source,
+                std::optional<Diagnostic> &error) {
     const auto fail = [&]() -> std::optional<ObservationTimestamp> {
-        error = make_error(
-            DiagnosticCode::observation_invalid_field, source,
-            "observation field 'observed_at' must be an RFC 3339 timestamp with an offset");
+        error =
+            make_error(DiagnosticCode::observation_invalid_field, source,
+                       std::string{field} + " must be an RFC 3339 timestamp with a known offset");
         return std::nullopt;
     };
 
@@ -530,7 +531,8 @@ parse_timestamp(std::string_view value, SourceSpan source, std::optional<Diagnos
     if (!observed_at_text.has_value()) {
         return {std::nullopt, std::move(error)};
     }
-    auto observed_at = parse_timestamp(*observed_at_text, source, error);
+    auto observed_at =
+        parse_timestamp(*observed_at_text, "observation field 'observed_at'", source, error);
     if (!observed_at.has_value()) {
         return {std::nullopt, std::move(error)};
     }
@@ -625,6 +627,13 @@ parse_timestamp(std::string_view value, SourceSpan source, std::optional<Diagnos
 }
 
 } // namespace
+
+ObservationTimestampParseResult parse_observation_timestamp(std::string_view value,
+                                                            SourceSpan source) {
+    std::optional<Diagnostic> error;
+    auto timestamp = parse_timestamp(value, "timestamp", source, error);
+    return {std::move(timestamp), std::move(error)};
+}
 
 std::string_view to_string(ObservationKind value) noexcept {
     switch (value) {

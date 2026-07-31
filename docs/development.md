@@ -172,6 +172,7 @@ Repository-local decisions define the implemented boundary:
 - [links, aggregates, and protection domains](decisions/0005-link-aggregation-and-protection-domains.md)
 - [pinned yyjson observation-decoder dependency](decisions/0006-pin-yyjson.md)
 - [strict observation JSON Lines contract](decisions/0007-observation-json-lines-contract.md)
+- [observation evidence index](decisions/0008-observation-evidence-index.md)
 
 Accepted implementation and release evidence is retained under
 `docs/acceptance/` and `docs/plans/`. In particular:
