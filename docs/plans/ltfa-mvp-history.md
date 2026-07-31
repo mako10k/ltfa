@@ -508,3 +508,40 @@ LSan passed all 19 applicable tests, and the fuzz-seed configuration passed all
 20. Release includes a dedicated `strace` check for the Slice 2 integration
 executable. The pre-advance plan digest was
 `sha256:46217f47a88d7745fcdb46c0e341e06231392d85c5d502a9ad15e56fbd01479d`.
+
+## 2026-07-31 — M3_OBSERVATION_DECODER
+
+Status: accepted
+
+The first Slice 3 implementation task adds a strict, offline JSON Lines decoder
+for observation records. It establishes the ingestion boundary without adding a
+CLI surface, evidence reconciliation, diagnosis, or live collection.
+
+Delivered:
+
+- a public C++17 observation-record API and deterministic yyjson-backed decoder
+- one complete JSON value per non-empty line with exact line-number diagnostics
+- strict required-field, timestamp, enum, identifier, and scalar validation
+- preserved observation time, collector time, vantage, confidence, source, and
+  probe contract fields
+- bounded input, line, string, member, depth, and record limits
+- duplicate-key rejection and explicit rejection of unsupported nested values
+- focused malformed-input, boundary, repeatability, and resource-limit tests
+- a dedicated libFuzzer target with a checked-in seed corpus
+- an offline `strace` check and documented acceptance evidence
+
+Verification:
+
+```text
+cmake --preset release && cmake --build --preset release && ctest --preset release
+cmake --preset asan-ubsan && cmake --build --preset asan-ubsan && ctest --preset asan-ubsan
+cmake --preset lsan && cmake --build --preset lsan && ctest --preset lsan
+cmake --preset fuzz-seeds && cmake --build --preset fuzz-seeds && ctest --preset fuzz-seeds
+```
+
+The GNU 13.3.0 Release suite passed all 33 tests. ASan/UBSan and independent
+LSan passed all 29 applicable tests, and the fuzz-seed configuration passed all
+31. Clang 18 built both libFuzzer targets, and the observation decoder completed
+a 100-run smoke. The dedicated decoder executable made no network syscall. The
+pre-advance plan digest was
+`sha256:b05033dd9254bd075c3ae2c64ccb7797dd3fc7d3c7c8eb7a266a0b96b62c91a5`.
