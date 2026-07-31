@@ -33,12 +33,10 @@ resource REVIEW:
 
 
 
-milestone SLICE2_ACCEPTED:
-  title "Offline assurance slice accepted"
-  state reached
 
 milestone YYJSON_READY:
   title "Pinned yyjson source accepted"
+  state reached
 
 milestone OBS_DECODER_READY:
   title "Observation decoder ready"
@@ -91,21 +89,6 @@ milestone MVP_ACCEPTED:
 
 
 
-task M3_PIN_YYJSON SLICE2_ACCEPTED -> YYJSON_READY:
-  title "Pin and accept vendored yyjson"
-  description "Record exact release or commit, upstream URL, license, checksum, compile options, warning isolation, and local build/test evidence before introducing the observation decoder."
-  estimate:
-    optimistic 1d
-    most_likely 1d
-    pessimistic 2d
-  status done
-  priority 100
-  requires:
-    CODEX 1
-    REVIEW 1
-  owner "codex"
-  tags [slice3, dependency]
-  source "requirements REQ-NFR-004, REQ-QLT-006; ADR 0001; design review findings REV-011"
 
 task M3_OBSERVATION_DECODER YYJSON_READY -> OBS_DECODER_READY:
   title "Implement strict observation JSON Lines decoding"
@@ -263,16 +246,3 @@ task MVP_BENCHMARK_ACCEPTANCE BENCHMARK_TARGETS_READY -> MVP_ACCEPTED:
   owner "codex"
   tags [prototype, acceptance, performance]
   source "requirements AC-001..010; basic design section 14; design review prototype approval conditions"
-
-work_event WE-2a64cedc3a58cdf8c18b194733563440f542d5c40031013c40e6a4d28419e36d:
-  model 1
-  task M3_PIN_YYJSON
-  kind start
-  occurred_at 2026-07-31T15:13:35+09:00
-  planned_value 7/6d
-
-work_event WE-47678260eaef9288fb37acab47ac2dc2a756ff38dc4e15bb1d8b5879d5009daf:
-  model 1
-  task M3_PIN_YYJSON
-  kind finish
-  occurred_at 2026-07-31T19:04:54+09:00
