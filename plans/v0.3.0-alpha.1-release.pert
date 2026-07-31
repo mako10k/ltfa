@@ -18,31 +18,14 @@ resource REVIEW:
   title "Release acceptance capacity"
   capacity 1
 
-milestone SLICE3_ACCEPTED:
-  title "Observation diagnosis slice accepted"
-  state reached
 
 milestone R030A1_METADATA_READY:
   title "v0.3.0-alpha.1 metadata ready"
+  state reached
 
 milestone R030A1_CANDIDATE_ACCEPTED:
   title "v0.3.0-alpha.1 release candidate accepted"
 
-task R030A1_RELEASE_METADATA SLICE3_ACCEPTED -> R030A1_METADATA_READY:
-  title "Prepare v0.3.0-alpha.1 release metadata"
-  description "Add an explicit prerelease version component, preserve v0.2.1 notes as history, document the exact CLI and source-core boundary, update current-version surfaces, and verify installed version and documentation without exposing diagnosis through the CLI."
-  estimate:
-    optimistic 0.25d
-    most_likely 0.5d
-    pessimistic 1d
-  status done
-  priority 100
-  requires:
-    CODEX 1
-    REVIEW 1
-  owner "codex"
-  tags [release, metadata, prerelease]
-  source "accepted Slice 3 boundary; owner recommendation approval on 2026-07-31"
 
 task R030A1_CANDIDATE_ACCEPTANCE R030A1_METADATA_READY -> R030A1_CANDIDATE_ACCEPTED:
   title "Accept the v0.3.0-alpha.1 release candidate"
@@ -58,16 +41,3 @@ task R030A1_CANDIDATE_ACCEPTANCE R030A1_METADATA_READY -> R030A1_CANDIDATE_ACCEP
   owner "codex"
   tags [release, acceptance, prerelease, sanitizer, offline]
   source "v0.2.1 release workflow; M3 observation diagnosis acceptance"
-
-work_event WE-c6bf417d3e006b92676e652687752c12f7656cd1153b50ff8c424260b2ebd938:
-  model 1
-  task R030A1_RELEASE_METADATA
-  kind start
-  occurred_at 2026-07-31T21:27:47+09:00
-  planned_value 13/24d
-
-work_event WE-a73dce5441e391265eee7c1f1f75c0592ff512a68e0df96339a05fae01b3c886:
-  model 1
-  task R030A1_RELEASE_METADATA
-  kind finish
-  occurred_at 2026-07-31T21:30:31+09:00
