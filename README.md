@@ -21,6 +21,8 @@ dependencies beyond the C++ runtime. It does not access the network.
 - articulation, bridge, and completeness-qualified SPOF analysis
 - deterministic human and `ltfa.assurance/v1` assurance output
 - strict bounded `ltfa.observation/v1` JSON Lines decoding through the core API
+- explicit observation freshness and conflict indexing through the core API
+- bounded causal-cone single-failure hypothesis ranking through the core API
 
 ## Safety boundary
 
@@ -35,11 +37,13 @@ LTFA does not:
 - execute commands supplied by topology input
 - load binary monitoring plugins
 - require a daemon, graph database, or runtime language interpreter
-- infer a live failure cause from observations
+- assert a confirmed live failure cause from observations
 
 Observation producers remain separate processes connected through a versioned
-data contract. The decoder does not run them, evaluate freshness, or infer a
-live cause. The complete offline boundary is recorded in the
+data contract. The decoder, evidence index, and diagnosis engine do not run
+them. Diagnosis returns qualified, evidence-ranked hypotheses rather than a
+confirmed live cause. None of these observation APIs is exposed by the current
+CLI. The complete offline boundary is recorded in the
 [bootstrap decision](docs/decisions/0001-bootstrap-boundary.md), and the
 [observation contract](docs/decisions/0007-observation-json-lines-contract.md)
 records the implemented decoder boundary.
@@ -143,6 +147,7 @@ Invoking `ltfa` without a command is a usage error with status 2.
 - CLI Contract: 2
 - DSL: LTFA DSL v1
 - Observation input: `ltfa.observation/v1` JSON Lines core API
+- Observation analysis: C++17 evidence-index and bounded-diagnosis core APIs
 - model JSON: `ltfa.model/v1`
 - raw model DOT: `ltfa.model.dot/v1`
 - semantic diagram DOT: `ltfa.diagram.dot/v1`
