@@ -90,7 +90,9 @@ using direct counters and evidence indices. It does not claim that the first
 candidate is the actual fault, that omitted topology is healthy, or that a
 timeout proves target, link, or power loss.
 
-The API adds no CLI command or machine renderer in this task. Byte-stable JSON
-rendering, the redacted Ami-A-derived integration fixture, next-observation
-recommendations, bounded cut analysis, and live probe execution remain separate
-tasks and authority boundaries.
+This task added no CLI command or machine renderer. The redacted integration
+fixture and byte-stable JSON/DOT rendering were subsequently accepted as
+separate tasks in [ADR 0010](0010-redacted-historical-fixture.md) and
+[ADR 0011](0011-diagnosis-machine-output.md). Next-observation recommendations,
+bounded cut analysis, and live probe execution remain separate tasks and
+authority boundaries.

@@ -86,6 +86,6 @@ Source scalar collision check            0/106 collisions
 Release includes the fixture-specific runtime `strace`, static offline
 boundary, existing CLI/core runtime checks, installed-tree smoke, and all
 available Graphviz checks. The source snapshot is not a runtime or test
-dependency, and the CLI contract remains unchanged. PERT completion and
-advancement remain separate mutations after this implementation and evidence
-are committed.
+dependency, and the CLI contract remains unchanged. The later integrated Slice
+3 acceptance consumes this committed fixture for byte-stable JSON/DOT output
+without reopening its redaction boundary.

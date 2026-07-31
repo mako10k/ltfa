@@ -82,6 +82,7 @@ set(LTFA_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/dsl/lexer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/dsl/parser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/diagnosis.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/diagnosis_output.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/error.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/evidence.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/failure_propagation.cpp

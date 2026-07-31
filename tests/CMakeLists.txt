@@ -61,6 +61,19 @@ ltfa_enable_warnings(ltfa_redacted_history_acceptance_test)
 
 add_test(NAME ltfa.acceptance.redacted-history COMMAND ltfa_redacted_history_acceptance_test)
 
+add_executable(ltfa_slice3_acceptance_test
+    slice3_acceptance_test.cpp
+)
+target_link_libraries(ltfa_slice3_acceptance_test PRIVATE ltfa::core ltfa::yyjson)
+target_compile_features(ltfa_slice3_acceptance_test PRIVATE cxx_std_17)
+target_compile_definitions(ltfa_slice3_acceptance_test PRIVATE
+    LTFA_REDACTED_FIXTURE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/redacted-history"
+)
+set_target_properties(ltfa_slice3_acceptance_test PROPERTIES CXX_EXTENSIONS OFF)
+ltfa_enable_warnings(ltfa_slice3_acceptance_test)
+
+add_test(NAME ltfa.acceptance.slice3 COMMAND ltfa_slice3_acceptance_test)
+
 add_executable(ltfa_model_contract_test
     model_contract_test.cpp
 )
@@ -309,6 +322,14 @@ if(NOT LTFA_SANITIZERS AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
                 -DLTFA_TRACE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-redacted-history-offline-runtime.trace
                 -P ${PROJECT_SOURCE_DIR}/cmake/verify_offline_runtime.cmake
         )
+        add_test(
+            NAME ltfa.boundary.slice3-offline-runtime
+            COMMAND ${CMAKE_COMMAND}
+                -DLTFA_STRACE=${LTFA_STRACE_EXECUTABLE}
+                -DLTFA_PROGRAM=$<TARGET_FILE:ltfa_slice3_acceptance_test>
+                -DLTFA_TRACE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-slice3-offline-runtime.trace
+                -P ${PROJECT_SOURCE_DIR}/cmake/verify_offline_runtime.cmake
+        )
     endif()
 endif()
 
@@ -331,6 +352,16 @@ if(LTFA_DOT_EXECUTABLE)
             -DLTFA_DOT_PRODUCER_ARG=--emit-semantic-dot
             -DLTFA_DOT_FILE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-semantic-output.dot
             -DLTFA_SVG_FILE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-semantic-output.svg
+            -P ${PROJECT_SOURCE_DIR}/cmake/verify_dot_render.cmake
+    )
+    add_test(
+        NAME ltfa.analysis.diagnosis-output-graphviz
+        COMMAND ${CMAKE_COMMAND}
+            -DLTFA_DOT=${LTFA_DOT_EXECUTABLE}
+            -DLTFA_DOT_PRODUCER=$<TARGET_FILE:ltfa_slice3_acceptance_test>
+            -DLTFA_DOT_PRODUCER_ARG=--emit-dot
+            -DLTFA_DOT_FILE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-diagnosis-output.dot
+            -DLTFA_SVG_FILE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-diagnosis-output.svg
             -P ${PROJECT_SOURCE_DIR}/cmake/verify_dot_render.cmake
     )
     foreach(view logical protection power dependency overlay)

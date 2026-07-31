@@ -103,10 +103,10 @@ Clang libFuzzer commands and corpus rules are documented in the
 
 The suite statically rejects network, process-launch, plugin-loading, and
 environment-access symbols. On Linux with `strace`, it traces the parser,
-assurance core, and complete CLI. Graphviz validation renders compatible raw
-DOT and each semantic relation lens to SVG when `dot` is installed. Graphviz
-remains an external test/rendering tool and is never linked or invoked by
-LTFA.
+assurance core, observation/diagnosis core, and complete CLI. Graphviz
+validation renders compatible raw DOT, each semantic relation lens, and the
+selected diagnosis finding to SVG when `dot` is installed. Graphviz remains an
+external test/rendering tool and is never linked or invoked by LTFA.
 
 ## Install-tree verification
 
@@ -175,6 +175,7 @@ Repository-local decisions define the implemented boundary:
 - [observation evidence index](decisions/0008-observation-evidence-index.md)
 - [bounded deterministic diagnosis](decisions/0009-bounded-deterministic-diagnosis.md)
 - [redacted historical structure fixture](decisions/0010-redacted-historical-fixture.md)
+- [diagnosis machine output](decisions/0011-diagnosis-machine-output.md)
 
 Accepted implementation and release evidence is retained under
 `docs/acceptance/` and `docs/plans/`. In particular:
@@ -183,6 +184,7 @@ Accepted implementation and release evidence is retained under
 - [M3 observation evidence index](acceptance/m3-evidence-index.md)
 - [M3 bounded deterministic diagnosis](acceptance/m3-diagnosis.md)
 - [M3 redacted historical fixture](acceptance/m3-redacted-history-fixture.md)
+- [integrated M3 observation diagnosis acceptance](acceptance/m3-observation-diagnosis-slice.md)
 - [integrated Slice 2 acceptance](acceptance/m2-offline-assurance-slice.md)
 - [v0.2 CLI implementation](acceptance/r020-cli-implementation.md)
 - [v0.2 release metadata](acceptance/r020-release-metadata.md)

@@ -32,7 +32,7 @@ sides of the cross-vantage conflict remain attached to every finding.
 | `REQ-ANL-012` | Neither the public API nor its finding types contain probability or numeric confidence fields. |
 | `REQ-ANL-013` | Findings carry affected objects, assessed evidence, conflict indices, scope qualification, detection gaps, unknown objects, and unknown or unexplained evidence. |
 | `REQ-ANL-014` | The leading vantage hypothesis retains `partial` completeness and `inferred` evidence quality from its modeled scope. |
-| `REQ-ANL-015`, `AC-007` | Reversing observation arrival order produces the same candidate count, ordered stable IDs, ranks, ties, and score counters for identical semantic evidence and budgets. Machine rendering remains a later integration task. |
+| `REQ-ANL-015`, `AC-007` | Reversing observation arrival order produces the same candidate count, ordered stable IDs, ranks, ties, and score counters for identical semantic evidence and budgets. Machine rendering is integrated by the later `M3_ACCEPTANCE` task. |
 | `REQ-OBS-005`, `AC-005` | Timeout creates only labeled hypotheses; a current pass from another vantage contradicts target-down hypotheses, and no direct target-state field exists. |
 | `REQ-OBS-008`, `AC-006` | Both observations in the fresh cross-vantage conflict remain explicitly indexed in each finding. |
 | `REQ-SAF-001..002`, `AC-008` | The API receives owned values only. Static boundary checks plus diagnosis-specific runtime `strace` cover the offline core. |
@@ -75,5 +75,5 @@ observation smoke used a disposable copied corpus, reached 100 actual mutation
 runs without a crash or sanitizer finding, and removed the temporary corpus.
 
 The CLI contract remains unchanged and exposes no observation or diagnosis
-option. PERT completion and advancement remain separate mutations after this
-implementation and acceptance evidence are committed.
+option. The later integrated Slice 3 acceptance adds public core JSON/DOT
+renderers without changing that CLI boundary.

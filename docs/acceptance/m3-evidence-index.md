@@ -36,7 +36,7 @@ failure, link failure, or power loss. The exact rules are recorded in
 | `REQ-OBS-007` | Exact-boundary and boundary-plus-one-nanosecond tests distinguish current from stale while retaining stale history. |
 | `REQ-OBS-008`, `AC-006` | Same-time and cross-vantage conflicts retain all records; reversed arrival order produces the same semantic order and conflict. |
 | `REQ-OBS-013` | `analysis_at` is required, retained, strictly parsed, and never sourced from an implicit clock. Future observations fail explicitly. |
-| `REQ-ANL-015`, `AC-007` | UTC-offset normalization, deterministic sorting, and stable enum names establish the evidence ordering needed by later byte-stable output. Output rendering remains a later task. |
+| `REQ-ANL-015`, `AC-007` | UTC-offset normalization, deterministic sorting, and stable enum names establish the evidence ordering consumed by the later `M3_ACCEPTANCE` byte-stable renderers. |
 | `REQ-OBS-010..012`, `REQ-SAF-001..002` | The APIs receive values only. Static and runtime gates cover the offline boundary; no producer, network, process, plugin, or credential path exists. |
 
 ## Focused coverage
