@@ -85,6 +85,7 @@ set_target_properties(ltfa_yyjson PROPERTIES C_EXTENSIONS OFF)
 
 set(LTFA_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/availability.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/cut_analysis.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/dsl/include_resolver.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/dsl/lexer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/dsl/parser.cpp
