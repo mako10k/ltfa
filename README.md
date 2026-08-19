@@ -23,6 +23,8 @@ dependencies beyond the C++ runtime. It does not access the network.
 - strict bounded `ltfa.observation/v1` JSON Lines decoding through the core API
 - explicit observation freshness and conflict indexing through the core API
 - bounded causal-cone single-failure hypothesis ranking through the core API
+- bounded object, relation, and common-domain service-cut analysis through the core API
+- next-useful-observation recommendations for tied diagnoses through the core API
 
 ## Safety boundary
 
@@ -47,6 +49,10 @@ CLI. The complete offline boundary is recorded in the
 [bootstrap decision](docs/decisions/0001-bootstrap-boundary.md), and the
 [observation contract](docs/decisions/0007-observation-json-lines-contract.md)
 records the implemented decoder boundary.
+
+Service-cut and next-observation analysis are also source-tree core APIs. Cut analysis is limited
+to configured size and work budgets. Observation recommendations select only registered probes
+that lack current evidence; they never execute a probe or contact an observation producer.
 
 ## Build and install
 

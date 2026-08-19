@@ -124,6 +124,14 @@ ltfa_enable_warnings(ltfa_cut_analysis_test)
 
 add_test(NAME ltfa.analysis.service-cuts COMMAND ltfa_cut_analysis_test)
 
+add_test(
+    NAME ltfa.acceptance.slice4
+    COMMAND ${CMAKE_COMMAND}
+        -DLTFA_CUT_TEST=$<TARGET_FILE:ltfa_cut_analysis_test>
+        -DLTFA_RECOMMENDATION_TEST=$<TARGET_FILE:ltfa_observation_recommendation_test>
+        -P ${PROJECT_SOURCE_DIR}/cmake/verify_slice4_acceptance.cmake
+)
+
 add_executable(ltfa_failure_propagation_test
     failure_propagation_test.cpp
 )
@@ -348,6 +356,22 @@ if(NOT LTFA_SANITIZERS AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
                 -DLTFA_STRACE=${LTFA_STRACE_EXECUTABLE}
                 -DLTFA_PROGRAM=$<TARGET_FILE:ltfa_slice3_acceptance_test>
                 -DLTFA_TRACE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-slice3-offline-runtime.trace
+                -P ${PROJECT_SOURCE_DIR}/cmake/verify_offline_runtime.cmake
+        )
+        add_test(
+            NAME ltfa.boundary.service-cuts-offline-runtime
+            COMMAND ${CMAKE_COMMAND}
+                -DLTFA_STRACE=${LTFA_STRACE_EXECUTABLE}
+                -DLTFA_PROGRAM=$<TARGET_FILE:ltfa_cut_analysis_test>
+                -DLTFA_TRACE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-service-cuts-offline-runtime.trace
+                -P ${PROJECT_SOURCE_DIR}/cmake/verify_offline_runtime.cmake
+        )
+        add_test(
+            NAME ltfa.boundary.next-observation-offline-runtime
+            COMMAND ${CMAKE_COMMAND}
+                -DLTFA_STRACE=${LTFA_STRACE_EXECUTABLE}
+                -DLTFA_PROGRAM=$<TARGET_FILE:ltfa_observation_recommendation_test>
+                -DLTFA_TRACE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-next-observation-offline-runtime.trace
                 -P ${PROJECT_SOURCE_DIR}/cmake/verify_offline_runtime.cmake
         )
     endif()
