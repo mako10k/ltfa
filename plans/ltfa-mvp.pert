@@ -179,6 +179,7 @@ task M4_CLI_WIRING SLICE4_ACCEPTED -> CLI_WIRED:
     optimistic 3p
     most_likely 5p
     pessimistic 8p
+  status done
   priority 100
   requires:
     CODEX 1
@@ -207,3 +208,10 @@ work_event m4-acceptance-9d2db8f:
 
 milestone CLI_WIRED:
   title "Slice 4 CLI wiring accepted"
+  state reached
+
+work_event m4-cli-wiring-baf7001:
+  model 1
+  task M4_CLI_WIRING
+  kind finish
+  occurred_at 2026-08-19T03:00:00+09:00
