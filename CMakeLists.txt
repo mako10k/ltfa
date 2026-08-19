@@ -98,6 +98,7 @@ set(LTFA_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/model_compiler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/model_output.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/observation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/observation_recommendation.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/path_analysis.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/spof_analysis.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/version.cpp
