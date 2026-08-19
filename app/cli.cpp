@@ -1,5 +1,6 @@
 #include "cli.hpp"
 
+#include "advanced_output.hpp"
 #include "assurance_output.hpp"
 #include "cli_contract.hpp"
 
@@ -15,8 +16,10 @@
 #include <array>
 #include <charconv>
 #include <filesystem>
+#include <fstream>
 #include <optional>
 #include <ostream>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -85,6 +88,23 @@ struct AnalyzeOptions {
     OutputFormat format{OutputFormat::human};
     bool include_restricted{false};
     AssuranceBudgets budgets;
+};
+
+struct CutsOptions {
+    ModelOptions model;
+    std::string scope;
+    std::string source;
+    std::string target;
+    ServiceCutBudget budget;
+    std::size_t max_cut_size{2};
+};
+
+struct DiagnoseOptions {
+    ModelOptions model;
+    fs::path observations;
+    std::string analysis_at;
+    DiagnosisBudget diagnosis_budget;
+    ObservationRecommendationBudget recommendation_budget;
 };
 
 UsageError make_usage_error(std::string kind, std::string message, std::string token,
@@ -335,7 +355,8 @@ int emit_model_diagnostic(std::ostream &output, std::ostream &error, int exit_st
 int emit_analysis_diagnostic(std::ostream &output, std::ostream &error,
                              const CommandDescriptor &command, std::string message, bool json) {
     if (!json) {
-        error << "LTANL-001 error: " << message << '\n' << "  help: ltfa help analyze\n";
+        error << "LTANL-001 error: " << message << '\n'
+              << "  help: ltfa help " << command.name << '\n';
         return error ? kExitValidation : kExitOutput;
     }
     CliDiagnostic diagnostic;
@@ -348,6 +369,22 @@ int emit_analysis_diagnostic(std::ostream &output, std::ostream &error,
         return kExitOutput;
     }
     return kExitValidation;
+}
+
+int emit_operation_diagnostic(std::ostream &output, std::ostream &error,
+                              const CommandDescriptor &command, int exit_status, std::string code,
+                              std::string message, bool json) {
+    if (!json) {
+        error << code << " error: " << message << '\n'
+              << "  help: ltfa help " << command.name << '\n';
+        return error ? exit_status : kExitOutput;
+    }
+    CliDiagnostic diagnostic;
+    diagnostic.code = std::move(code);
+    diagnostic.severity = "error";
+    diagnostic.message = std::move(message);
+    print_cli_error_json(output, exit_status, command.operation, &command, nullptr, diagnostic);
+    return output ? exit_status : kExitOutput;
 }
 
 std::optional<OutputFormat> model_output_format(const ParsedArguments &parsed) {
@@ -427,6 +464,91 @@ bool parse_positive_count(const CommandDescriptor &command, const ParsedArgument
     }
     result = parsed_value;
     return true;
+}
+
+std::optional<CutsOptions> cuts_options(const CommandDescriptor &command,
+                                        const ParsedArguments &parsed, UsageError &usage) {
+    const auto common = model_options(command, parsed, usage);
+    if (!common.has_value()) {
+        return std::nullopt;
+    }
+    CutsOptions options;
+    options.model = *common;
+    options.scope = std::string{parsed.option_value("scope").value_or("")};
+    options.source = std::string{parsed.option_value("source").value_or("")};
+    options.target = std::string{parsed.option_value("target").value_or("")};
+    if (!parse_positive_count(command, parsed, "max-cut-size", 2, options.max_cut_size, usage) ||
+        !parse_positive_count(command, parsed, "max-candidate-sets",
+                              options.budget.max_candidate_sets, options.budget.max_candidate_sets,
+                              usage) ||
+        !parse_positive_count(command, parsed, "max-results", options.budget.max_results,
+                              options.budget.max_results, usage) ||
+        !parse_positive_count(command, parsed, "max-visited-objects",
+                              options.budget.max_total_visited_objects,
+                              options.budget.max_total_visited_objects, usage) ||
+        !parse_positive_count(command, parsed, "max-examined-relations",
+                              options.budget.max_total_examined_relations,
+                              options.budget.max_total_examined_relations, usage) ||
+        !parse_positive_count(command, parsed, "max-flow-transitions",
+                              options.budget.max_flow_transitions,
+                              options.budget.max_flow_transitions, usage)) {
+        return std::nullopt;
+    }
+    if (options.max_cut_size > 2) {
+        usage = make_usage_error("invalid_option_value", "option --max-cut-size must be 1 or 2",
+                                 std::to_string(options.max_cut_size), &command);
+        return std::nullopt;
+    }
+    return options;
+}
+
+std::optional<DiagnoseOptions> diagnose_options(const CommandDescriptor &command,
+                                                const ParsedArguments &parsed, UsageError &usage) {
+    const auto common = model_options(command, parsed, usage);
+    if (!common.has_value()) {
+        return std::nullopt;
+    }
+    DiagnoseOptions options;
+    options.model = *common;
+    const auto observations = parsed.option_value("observations").value_or("");
+    if (observations.empty()) {
+        usage = make_usage_error("invalid_option_value", "option --observations must not be empty",
+                                 "", &command);
+        return std::nullopt;
+    }
+    options.observations = fs::u8path(observations);
+    if (options.observations.is_absolute() || options.observations.has_root_name() ||
+        options.observations.has_root_directory()) {
+        usage = make_usage_error("invalid_option_value",
+                                 "option --observations must be relative to --model-root",
+                                 std::string{observations}, &command);
+        return std::nullopt;
+    }
+    options.analysis_at = std::string{parsed.option_value("analysis-at").value_or("")};
+    if (!parse_positive_count(command, parsed, "max-causal-objects",
+                              options.diagnosis_budget.max_causal_objects,
+                              options.diagnosis_budget.max_causal_objects, usage) ||
+        !parse_positive_count(command, parsed, "max-hypotheses",
+                              options.diagnosis_budget.max_hypotheses,
+                              options.diagnosis_budget.max_hypotheses, usage) ||
+        !parse_positive_count(command, parsed, "max-simulations",
+                              options.diagnosis_budget.max_simulations,
+                              options.diagnosis_budget.max_simulations, usage) ||
+        !parse_positive_count(command, parsed, "max-evidence-comparisons",
+                              options.diagnosis_budget.max_evidence_comparisons,
+                              options.diagnosis_budget.max_evidence_comparisons, usage) ||
+        !parse_positive_count(command, parsed, "max-candidate-probes",
+                              options.recommendation_budget.max_candidate_probes,
+                              options.recommendation_budget.max_candidate_probes, usage) ||
+        !parse_positive_count(command, parsed, "max-recommendation-comparisons",
+                              options.recommendation_budget.max_hypothesis_comparisons,
+                              options.recommendation_budget.max_hypothesis_comparisons, usage) ||
+        !parse_positive_count(command, parsed, "max-recommendations",
+                              options.recommendation_budget.max_recommendations,
+                              options.recommendation_budget.max_recommendations, usage)) {
+        return std::nullopt;
+    }
+    return options;
 }
 
 std::optional<AnalyzeOptions> analyze_options(const CommandDescriptor &command,
@@ -792,6 +914,212 @@ int run_analyze(const CommandDescriptor &command, const ParsedArguments &parsed,
     return kExitSuccess;
 }
 
+int run_cuts(const CommandDescriptor &command, const ParsedArguments &parsed, std::ostream &output,
+             std::ostream &error, bool json) {
+    UsageError usage;
+    const auto options = cuts_options(command, parsed, usage);
+    if (!options.has_value()) {
+        return emit_usage_error(output, error, usage, json);
+    }
+    std::error_code filesystem_error;
+    const auto canonical_root = fs::canonical(options->model.model_root, filesystem_error);
+    const auto loaded = dsl::load_document_tree(options->model.model_root, options->model.input,
+                                                kDefaultModelLimits);
+    if (!loaded.ok()) {
+        return loaded.error.has_value()
+                   ? emit_model_diagnostic(output, error, kExitInput, *loaded.error, loaded.sources,
+                                           filesystem_error ? fs::path{} : canonical_root, command,
+                                           json)
+                   : kExitInput;
+    }
+    const auto compiled = compile_model(*loaded.document, kDefaultModelLimits);
+    if (!compiled.ok()) {
+        return compiled.error.has_value()
+                   ? emit_model_diagnostic(output, error, kExitValidation, *compiled.error,
+                                           loaded.sources, loaded.document->canonical_model_root,
+                                           command, json)
+                   : kExitValidation;
+    }
+    const auto &model = *compiled.model;
+    const auto scope = find_scope(model, options->scope);
+    const auto source = find_object(model, options->source);
+    const auto target = find_object(model, options->target);
+    if (!scope.has_value()) {
+        return emit_analysis_diagnostic(output, error, command,
+                                        "scope not found: " + options->scope, json);
+    }
+    if (!source.has_value() || !target.has_value()) {
+        return emit_analysis_diagnostic(output, error, command,
+                                        "source or target object was not found", json);
+    }
+    if (*source == *target || object_scope(model, *source) != *scope ||
+        object_scope(model, *target) != *scope) {
+        return emit_analysis_diagnostic(
+            output, error, command,
+            "source and target must be distinct objects in scope " + options->scope, json);
+    }
+    if (!options->model.include_restricted && scope_contains_restricted(model, *scope)) {
+        return emit_analysis_diagnostic(
+            output, error, command,
+            "restricted model IDs require --include-restricted for this analysis", json);
+    }
+    GraphFilter view;
+    view.scope = *scope;
+    view.relation_kinds = {
+        RelationKind::network,       RelationKind::power,          RelationKind::serial,
+        RelationKind::contact,       RelationKind::analog_current, RelationKind::carried_by,
+        RelationKind::uses_underlay, RelationKind::terminates_on,  RelationKind::routes_via,
+        RelationKind::depends_on,    RelationKind::powered_by,
+    };
+    view.direction = TraversalDirection::undirected;
+    ServiceCutRequest request;
+    request.source = *source;
+    request.target = *target;
+    request.view = view;
+    request.max_cut_size = options->max_cut_size;
+    const auto result =
+        analyze_service_cuts(model, make_availability_snapshot(model), request, options->budget);
+    if (result.status == AnalysisStatus::invalid) {
+        return emit_analysis_diagnostic(output, error, command,
+                                        "service-cut analysis rejected the selected view", json);
+    }
+    output << (options->model.format == OutputFormat::json
+                   ? render_service_cuts_json(model, result)
+                   : render_service_cuts_human(model, result));
+    return finish_output(output, error, "service-cut");
+}
+
+std::optional<std::string> read_observation_file(const fs::path &root, const fs::path &relative,
+                                                 std::string &message) {
+    std::error_code error;
+    const auto canonical_root = fs::canonical(root, error);
+    if (error) {
+        message = "model root cannot be resolved";
+        return std::nullopt;
+    }
+    const auto canonical_input = fs::canonical(canonical_root / relative, error);
+    if (error) {
+        message = "observation input cannot be resolved";
+        return std::nullopt;
+    }
+    const auto within = canonical_input.lexically_relative(canonical_root);
+    if (within.empty() || within.is_absolute() || *within.begin() == "..") {
+        message = "observation input must remain below --model-root";
+        return std::nullopt;
+    }
+    const auto size = fs::file_size(canonical_input, error);
+    if (error || size > kDefaultModelLimits.max_observation_input_bytes) {
+        message = "observation input exceeds the configured byte limit or is not a file";
+        return std::nullopt;
+    }
+    std::ifstream input{canonical_input, std::ios::binary};
+    if (!input) {
+        message = "observation input cannot be opened";
+        return std::nullopt;
+    }
+    std::ostringstream content;
+    content << input.rdbuf();
+    if (!input.good() && !input.eof()) {
+        message = "observation input cannot be read completely";
+        return std::nullopt;
+    }
+    return content.str();
+}
+
+int run_diagnose(const CommandDescriptor &command, const ParsedArguments &parsed,
+                 std::ostream &output, std::ostream &error, bool json) {
+    UsageError usage;
+    const auto options = diagnose_options(command, parsed, usage);
+    if (!options.has_value()) {
+        return emit_usage_error(output, error, usage, json);
+    }
+    std::error_code filesystem_error;
+    const auto canonical_root = fs::canonical(options->model.model_root, filesystem_error);
+    const auto loaded = dsl::load_document_tree(options->model.model_root, options->model.input,
+                                                kDefaultModelLimits);
+    if (!loaded.ok()) {
+        return loaded.error.has_value()
+                   ? emit_model_diagnostic(output, error, kExitInput, *loaded.error, loaded.sources,
+                                           filesystem_error ? fs::path{} : canonical_root, command,
+                                           json)
+                   : kExitInput;
+    }
+    const auto compiled = compile_model(*loaded.document, kDefaultModelLimits);
+    if (!compiled.ok()) {
+        return compiled.error.has_value()
+                   ? emit_model_diagnostic(output, error, kExitValidation, *compiled.error,
+                                           loaded.sources, loaded.document->canonical_model_root,
+                                           command, json)
+                   : kExitValidation;
+    }
+    const auto &model = *compiled.model;
+    if (!options->model.include_restricted && model_contains_restricted(model)) {
+        return emit_analysis_diagnostic(
+            output, error, command,
+            "restricted model IDs require --include-restricted for diagnosis", json);
+    }
+    std::string input_error;
+    const auto observation_text =
+        read_observation_file(options->model.model_root, options->observations, input_error);
+    if (!observation_text.has_value()) {
+        return emit_operation_diagnostic(output, error, command, kExitInput, "LTOBS-001",
+                                         std::move(input_error), json);
+    }
+    const auto reference_time = parse_observation_timestamp(options->analysis_at);
+    if (!reference_time.ok()) {
+        return emit_operation_diagnostic(output, error, command, kExitValidation, "LTOBS-002",
+                                         "--analysis-at must be a valid RFC3339 timestamp", json);
+    }
+    const auto decoded = decode_observation_json_lines(
+        *observation_text, StringId{static_cast<std::uint32_t>(model.strings.size())},
+        kDefaultModelLimits);
+    if (!decoded.ok()) {
+        return emit_operation_diagnostic(output, error, command, kExitInput, "LTOBS-003",
+                                         decoded.error.has_value() ? decoded.error->message
+                                                                   : "observation decoding failed",
+                                         json);
+    }
+    auto indexed = build_evidence_index(model, decoded.observations, *reference_time.timestamp);
+    if (!indexed.ok()) {
+        return emit_operation_diagnostic(
+            output, error, command, kExitValidation, "LTOBS-004",
+            indexed.error.has_value() ? indexed.error->message : "evidence indexing failed", json);
+    }
+    const auto diagnosis = diagnose_observations(model, *indexed.index, options->diagnosis_budget);
+    if (diagnosis.status == DiagnosisStatus::invalid) {
+        return emit_analysis_diagnostic(output, error, command,
+                                        "diagnosis rejected the normalized evidence", json);
+    }
+    const auto recommendations = recommend_next_observations(model, *indexed.index, diagnosis,
+                                                             options->recommendation_budget);
+    if (recommendations.status == RecommendationStatus::invalid) {
+        return emit_analysis_diagnostic(output, error, command,
+                                        "recommendation rejected the diagnosis", json);
+    }
+    DiagnosisOutputContext context;
+    for (const auto &source : loaded.sources) {
+        context.model_inputs.push_back(
+            display_source(source.id, loaded.sources, loaded.document->canonical_model_root));
+    }
+    context.observation_inputs.push_back(options->observations.generic_string());
+    if (options->model.include_restricted) {
+        context.restricted_policy = RestrictedOutputPolicy::include_explicit;
+    }
+    switch (options->model.format) {
+    case OutputFormat::human:
+        output << render_diagnosis_cli_human(model, diagnosis, recommendations);
+        break;
+    case OutputFormat::json:
+        output << render_diagnosis_cli_json(model, *indexed.index, diagnosis, recommendations,
+                                            context);
+        break;
+    case OutputFormat::dot:
+        output << render_diagnosis_dot(model, *indexed.index, diagnosis, context);
+        break;
+    }
+    return finish_output(output, error, "diagnosis");
+}
+
 } // namespace
 
 int run_cli(int argc, char *argv[], std::ostream &output, std::ostream &error) {
@@ -837,8 +1165,17 @@ int run_cli(int argc, char *argv[], std::ostream &output, std::ostream &error) {
         return run_model(*command, parsed, output, error, json);
     case CommandHandler::analyze:
         return run_analyze(*command, parsed, output, error, json);
+    case CommandHandler::cuts:
+        return run_cuts(*command, parsed, output, error, json);
+    case CommandHandler::diagnose:
+        return run_diagnose(*command, parsed, output, error, json);
     }
     return kExitUsage;
 }
 
 } // namespace ltfa::app
+#include "ltfa/cut_analysis.hpp"
+#include "ltfa/diagnosis.hpp"
+#include "ltfa/diagnosis_output.hpp"
+#include "ltfa/observation.hpp"
+#include "ltfa/observation_recommendation.hpp"

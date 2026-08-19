@@ -23,8 +23,8 @@ dependencies beyond the C++ runtime. It does not access the network.
 - strict bounded `ltfa.observation/v1` JSON Lines decoding through the core API
 - explicit observation freshness and conflict indexing through the core API
 - bounded causal-cone single-failure hypothesis ranking through the core API
-- bounded object, relation, and common-domain service-cut analysis through the core API
-- next-useful-observation recommendations for tied diagnoses through the core API
+- bounded object, relation, and common-domain service-cut analysis through the core API and CLI
+- observation diagnosis and next-useful-observation recommendations through the core API and CLI
 
 ## Safety boundary
 
@@ -44,21 +44,21 @@ LTFA does not:
 Observation producers remain separate processes connected through a versioned
 data contract. The decoder, evidence index, and diagnosis engine do not run
 them. Diagnosis returns qualified, evidence-ranked hypotheses rather than a
-confirmed live cause. None of these observation APIs is exposed by the current
-CLI. The complete offline boundary is recorded in the
+confirmed live cause. The `diagnose` CLI connects these local APIs without connecting to an
+observation producer. The complete offline boundary is recorded in the
 [bootstrap decision](docs/decisions/0001-bootstrap-boundary.md), and the
 [observation contract](docs/decisions/0007-observation-json-lines-contract.md)
 records the implemented decoder boundary.
 
-Service-cut and next-observation analysis are also source-tree core APIs. Cut analysis is limited
-to configured size and work budgets. Observation recommendations select only registered probes
-that lack current evidence; they never execute a probe or contact an observation producer.
+Service-cut and next-observation analysis remain available as source-tree core APIs and are wired
+to the `cuts` and `diagnose` commands. Cut analysis is limited to configured size and work budgets.
+Observation recommendations select only registered probes that lack current evidence; they never
+execute a probe or contact an observation producer.
 
 ## Build and install
 
 CMake 3.20 or later, a C99 compiler, and a C++17 compiler are required. The C
-compiler builds the pinned yyjson reader used by the core observation decoder;
-the current CLI has no observation-input command.
+compiler builds the pinned yyjson reader used by the core and CLI observation decoder.
 
 ```sh
 cmake --preset release
@@ -85,6 +85,8 @@ ltfa --help
 ltfa help model
 ltfa help analyze
 ltfa help analyze --format json
+ltfa help cuts
+ltfa help diagnose
 ```
 
 Compile and render one local model:
@@ -148,6 +150,23 @@ An incomplete budget-bounded analysis and an unreachable target are structured
 successful results. Invalid model or analysis selections use status 4.
 Invoking `ltfa` without a command is a usage error with status 2.
 
+Find bounded service cuts for one scoped source and target:
+
+```sh
+ltfa cuts --model-root topology --input main.ltfa --scope site:a \
+    --source service:source --target service:target --format json
+```
+
+Diagnose a bounded local observation file and include next-useful-observation recommendations:
+
+```sh
+ltfa diagnose --model-root topology --input main.ltfa \
+    --observations observations.jsonl --analysis-at 2030-01-01T00:10:30Z --format json
+```
+
+The observation path must remain below the model root. `--analysis-at` is explicit: LTFA does not
+read a clock. Recommendations identify registered probes but never execute them.
+
 ## Public contracts
 
 - CLI Contract: 2
@@ -158,6 +177,8 @@ Invoking `ltfa` without a command is a usage error with status 2.
 - raw model DOT: `ltfa.model.dot/v1`
 - semantic diagram DOT: `ltfa.diagram.dot/v1`
 - assurance JSON: `ltfa.assurance/v1`
+- service cuts JSON: `ltfa.service-cuts/v1`
+- diagnosis CLI JSON: `ltfa.diagnosis-cli/v1`
 - command help JSON: `ltfa.command-help/v1`
 - CLI error JSON: `ltfa.cli-error/v1`
 - process statuses: 0 result, 2 usage, 3 input, 4 validation, 5 output

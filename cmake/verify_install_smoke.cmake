@@ -11,6 +11,10 @@ foreach(required
     endif()
 endforeach()
 
+if(NOT DEFINED LTFA_HISTORY_ROOT OR LTFA_HISTORY_ROOT STREQUAL "")
+    message(FATAL_ERROR "missing required setting LTFA_HISTORY_ROOT")
+endif()
+
 if(IS_ABSOLUTE "${LTFA_INSTALL_BINDIR}" OR IS_ABSOLUTE "${LTFA_INSTALL_DOCDIR}")
     message(FATAL_ERROR "install smoke test requires relative install directories")
 endif()
@@ -180,4 +184,26 @@ if(analyze_json_error OR
         "installed analyze output does not satisfy the release contract: "
         "${analyze_json_error}"
     )
+endif()
+
+execute_process(
+    COMMAND "${installed_cli}" cuts --model-root "${LTFA_SLICE2_ROOT}" --input main.ltfa
+        --scope site:verified --source device:path-source --target device:path-target --format json
+    RESULT_VARIABLE cuts_result OUTPUT_VARIABLE cuts_output ERROR_VARIABLE cuts_error
+)
+string(JSON cuts_schema ERROR_VARIABLE cuts_json_error GET "${cuts_output}" schema)
+if(NOT cuts_result EQUAL 0 OR NOT cuts_error STREQUAL "" OR cuts_json_error OR
+   NOT cuts_schema STREQUAL "ltfa.service-cuts/v1")
+    message(FATAL_ERROR "installed cuts check failed: ${cuts_error}${cuts_json_error}")
+endif()
+
+execute_process(
+    COMMAND "${installed_cli}" diagnose --model-root "${LTFA_HISTORY_ROOT}" --input main.ltfa
+        --observations observations.jsonl --analysis-at 2030-01-01T00:10:30Z --format json
+    RESULT_VARIABLE diagnosis_result OUTPUT_VARIABLE diagnosis_output ERROR_VARIABLE diagnosis_error
+)
+string(JSON diagnosis_schema ERROR_VARIABLE diagnosis_json_error GET "${diagnosis_output}" schema)
+if(NOT diagnosis_result EQUAL 0 OR NOT diagnosis_error STREQUAL "" OR diagnosis_json_error OR
+   NOT diagnosis_schema STREQUAL "ltfa.diagnosis-cli/v1")
+    message(FATAL_ERROR "installed diagnosis check failed: ${diagnosis_error}${diagnosis_json_error}")
 endif()

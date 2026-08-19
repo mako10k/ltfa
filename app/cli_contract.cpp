@@ -94,6 +94,69 @@ constexpr std::array<OptionDescriptor, 14> kAnalyzeOptions{{
      "300000", "", "", "", "Bound propagation state transitions."},
 }};
 
+constexpr std::array<OptionDescriptor, 14> kCutsOptions{{
+    {"help", "h", OptionKind::flag, "", "", false, false, "false", "", "all other arguments", "",
+     "Print detailed help for the cuts command."},
+    {"model-root", "", OptionKind::value, "directory", "local-directory", true, false, "", "", "",
+     "", "Select the explicit local model root."},
+    {"input", "", OptionKind::value, "file", "relative-file", true, false, "", "", "", "",
+     "Select the entry file relative to the model root."},
+    {"scope", "", OptionKind::value, "scope-id", "external-id", true, false, "", "", "", "",
+     "Select one declared scope as the cut-analysis boundary."},
+    {"source", "", OptionKind::value, "object-id", "external-id", true, false, "", "", "", "",
+     "Select the source object."},
+    {"target", "", OptionKind::value, "object-id", "external-id", true, false, "", "", "", "",
+     "Select a distinct target object."},
+    {"format", "", OptionKind::value, "format", "output-format", false, false, "human",
+     "human|json", "", "", "Select human or ltfa.service-cuts/v1 JSON output."},
+    {"include-restricted", "", OptionKind::flag, "", "", false, false, "false", "", "", "",
+     "Explicitly permit restricted stable IDs."},
+    {"max-cut-size", "", OptionKind::value, "count", "positive-integer", false, false, "2", "", "",
+     "", "Bound cut cardinality to one or two."},
+    {"max-candidate-sets", "", OptionKind::value, "count", "positive-integer", false, false,
+     "10000", "", "", "", "Bound evaluated candidate sets."},
+    {"max-results", "", OptionKind::value, "count", "positive-integer", false, false, "1024", "",
+     "", "", "Bound returned cut findings."},
+    {"max-visited-objects", "", OptionKind::value, "count", "positive-integer", false, false,
+     "2000000", "", "", "", "Bound cumulative object traversal work."},
+    {"max-examined-relations", "", OptionKind::value, "count", "positive-integer", false, false,
+     "10000000", "", "", "", "Bound cumulative relation traversal work."},
+    {"max-flow-transitions", "", OptionKind::value, "count", "positive-integer", false, false,
+     "10000000", "", "", "", "Bound max-flow transitions."},
+}};
+
+constexpr std::array<OptionDescriptor, 14> kDiagnoseOptions{{
+    {"help", "h", OptionKind::flag, "", "", false, false, "false", "", "all other arguments", "",
+     "Print detailed help for the diagnose command."},
+    {"model-root", "", OptionKind::value, "directory", "local-directory", true, false, "", "", "",
+     "", "Select the explicit local model root."},
+    {"input", "", OptionKind::value, "file", "relative-file", true, false, "", "", "", "",
+     "Select the model entry file."},
+    {"observations", "", OptionKind::value, "file", "relative-file", true, false, "", "", "", "",
+     "Read ltfa.observation/v1 JSON Lines below the model root."},
+    {"analysis-at", "", OptionKind::value, "timestamp", "RFC3339-timestamp", true, false, "", "",
+     "", "", "Set the explicit evidence reference time without reading a clock."},
+    {"format", "", OptionKind::value, "format", "output-format", false, false, "human",
+     "human|json|dot", "", "",
+     "Select human, ltfa.diagnosis-cli/v1 JSON, or diagnosis DOT output."},
+    {"include-restricted", "", OptionKind::flag, "", "", false, false, "false", "", "", "",
+     "Explicitly permit restricted stable IDs."},
+    {"max-causal-objects", "", OptionKind::value, "count", "positive-integer", false, false,
+     "100000", "", "", "", "Bound causal-cone objects."},
+    {"max-hypotheses", "", OptionKind::value, "count", "positive-integer", false, false, "10000",
+     "", "", "", "Bound generated hypotheses."},
+    {"max-simulations", "", OptionKind::value, "count", "positive-integer", false, false, "10000",
+     "", "", "", "Bound failure simulations."},
+    {"max-evidence-comparisons", "", OptionKind::value, "count", "positive-integer", false, false,
+     "1000000", "", "", "", "Bound diagnosis evidence comparisons."},
+    {"max-recommendation-comparisons", "", OptionKind::value, "count", "positive-integer", false,
+     false, "1000000", "", "", "", "Bound next-observation comparisons."},
+    {"max-candidate-probes", "", OptionKind::value, "count", "positive-integer", false, false,
+     "10000", "", "", "", "Bound registered absent probes considered for recommendations."},
+    {"max-recommendations", "", OptionKind::value, "count", "positive-integer", false, false,
+     "1024", "", "", "", "Bound next-observation recommendations."},
+}};
+
 constexpr std::array<ExampleDescriptor, 4> kHelpExamples{{
     {"root", "ltfa help", "List the implemented command contract."},
     {"model", "ltfa help model", "Show detailed model command help."},
@@ -128,7 +191,7 @@ constexpr std::array<ExampleDescriptor, 3> kAnalyzeExamples{{
      "Emit deterministic ltfa.assurance/v1 JSON."},
 }};
 
-constexpr std::array<CommandDescriptor, 3> kCommands{{
+constexpr std::array<CommandDescriptor, 5> kCommands{{
     {"model", "model", "Load, validate, normalize, and render one local topology model.",
      "ltfa model --model-root <directory> --input <file> "
      "[--format human|json|dot] "
@@ -150,6 +213,19 @@ constexpr std::array<CommandDescriptor, 3> kCommands{{
      "local-model-tree", "human|json", "assurance", "read", "ltfa.assurance/v1|ltfa.cli-error/v1",
      kAnalyzeExitStatuses.data(), kAnalyzeExitStatuses.size(), kAnalyzeExamples.data(),
      kAnalyzeExamples.size()},
+    {"cuts", "cuts", "Find bounded object, relation, and failure-domain service cuts.",
+     "ltfa cuts --model-root <directory> --input <file> --scope <scope-id> --source <object-id> "
+     "--target <object-id> [--format human|json] [--include-restricted] [work budgets]",
+     CommandHandler::cuts, nullptr, 0, kCutsOptions.data(), kCutsOptions.size(), "local-model-tree",
+     "human|json", "service-cuts", "read", "ltfa.service-cuts/v1|ltfa.cli-error/v1",
+     kAnalyzeExitStatuses.data(), kAnalyzeExitStatuses.size(), nullptr, 0},
+    {"diagnose", "diagnose", "Diagnose local observations and recommend the next useful probe.",
+     "ltfa diagnose --model-root <directory> --input <file> --observations <file> "
+     "--analysis-at <timestamp> [--format human|json|dot] [--include-restricted] [work budgets]",
+     CommandHandler::diagnose, nullptr, 0, kDiagnoseOptions.data(), kDiagnoseOptions.size(),
+     "local-model-tree+observation-jsonl", "human|json|dot", "diagnosis+recommendations", "read",
+     "ltfa.diagnosis-cli/v1|ltfa.diagnosis.dot/v1|ltfa.cli-error/v1", kAnalyzeExitStatuses.data(),
+     kAnalyzeExitStatuses.size(), nullptr, 0},
     {"help", "help", "Discover the implemented command contract.",
      "ltfa help [command] [--format text|json]", CommandHandler::help, kHelpOperands.data(),
      kHelpOperands.size(), kHelpOptions.data(), kHelpOptions.size(), "none", "text|json",

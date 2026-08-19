@@ -18,6 +18,8 @@ enum class CommandHandler {
     help,
     model,
     analyze,
+    cuts,
+    diagnose,
 };
 
 struct OperandDescriptor {

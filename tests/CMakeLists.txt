@@ -265,6 +265,15 @@ add_test(
 )
 
 add_test(
+    NAME ltfa.cli.slice4-acceptance
+    COMMAND ${CMAKE_COMMAND}
+        -DLTFA_CLI=$<TARGET_FILE:ltfa>
+        -DLTFA_SLICE2_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice2
+        -DLTFA_HISTORY_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/redacted-history
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cli_slice4_acceptance_test.cmake
+)
+
+add_test(
     NAME ltfa.install.smoke
     COMMAND ${CMAKE_COMMAND}
         -DLTFA_BUILD_DIR=${PROJECT_BINARY_DIR}
@@ -276,6 +285,7 @@ add_test(
         -DLTFA_EXPECTED_VERSION=${LTFA_VERSION_STRING}
         -DLTFA_MODEL_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice1
         -DLTFA_SLICE2_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice2
+        -DLTFA_HISTORY_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/redacted-history
         -P ${PROJECT_SOURCE_DIR}/cmake/verify_install_smoke.cmake
 )
 
@@ -373,6 +383,16 @@ if(NOT LTFA_SANITIZERS AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
                 -DLTFA_PROGRAM=$<TARGET_FILE:ltfa_observation_recommendation_test>
                 -DLTFA_TRACE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-next-observation-offline-runtime.trace
                 -P ${PROJECT_SOURCE_DIR}/cmake/verify_offline_runtime.cmake
+        )
+        add_test(
+            NAME ltfa.boundary.slice4-cli-offline-runtime
+            COMMAND ${CMAKE_COMMAND}
+                -DLTFA_STRACE=${LTFA_STRACE_EXECUTABLE}
+                -DLTFA_CLI=$<TARGET_FILE:ltfa>
+                -DLTFA_SLICE2_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slice2
+                -DLTFA_HISTORY_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/redacted-history
+                -DLTFA_TRACE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-slice4-cli-offline-runtime.trace
+                -P ${PROJECT_SOURCE_DIR}/cmake/verify_offline_slice4_cli_runtime.cmake
         )
     endif()
 endif()
