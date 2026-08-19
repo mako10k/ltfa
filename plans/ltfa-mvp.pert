@@ -59,6 +59,7 @@ milestone SLICE4_INTEGRATED:
 
 milestone SLICE4_ACCEPTED:
   title "Bounded advanced analysis slice accepted"
+  state reached
 
 milestone BENCHMARK_TARGETS_READY:
   title "Prototype benchmark targets pinned"
@@ -132,6 +133,7 @@ task M4_ACCEPTANCE SLICE4_INTEGRATED -> SLICE4_ACCEPTED:
     optimistic 1p
     most_likely 2p
     pessimistic 3p
+  status done
   priority 100
   requires:
     CODEX 1
@@ -181,3 +183,9 @@ work_event m4-next-observation-11dc71d:
   task M4_NEXT_OBSERVATION
   kind finish
   occurred_at 2026-08-19T01:00:00+09:00
+
+work_event m4-acceptance-9d2db8f:
+  model 1
+  task M4_ACCEPTANCE
+  kind finish
+  occurred_at 2026-08-19T02:00:00+09:00
