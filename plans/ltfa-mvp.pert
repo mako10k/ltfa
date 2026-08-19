@@ -51,9 +51,11 @@ milestone CUT_READY:
 
 milestone NEXT_OBSERVATION_READY:
   title "Next-observation recommendation ready"
+  state reached
 
 milestone SLICE4_INTEGRATED:
   title "Advanced analysis inputs integrated"
+  state reached
 
 milestone SLICE4_ACCEPTED:
   title "Bounded advanced analysis slice accepted"
@@ -109,6 +111,7 @@ task M4_NEXT_OBSERVATION SLICE3_ACCEPTED -> NEXT_OBSERVATION_READY:
     optimistic 2p
     most_likely 3p
     pessimistic 5p
+  status done
   priority 80
   requires:
     CODEX 1
@@ -172,3 +175,9 @@ work_event m4-bounded-cuts-a86a5e8:
   task M4_BOUNDED_CUTS
   kind finish
   occurred_at 2026-08-19T00:00:00+09:00
+
+work_event m4-next-observation-11dc71d:
+  model 1
+  task M4_NEXT_OBSERVATION
+  kind finish
+  occurred_at 2026-08-19T01:00:00+09:00
