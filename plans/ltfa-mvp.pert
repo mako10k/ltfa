@@ -47,6 +47,7 @@ milestone SLICE3_ACCEPTED:
 
 milestone CUT_READY:
   title "Bounded cut analysis ready"
+  state reached
 
 milestone NEXT_OBSERVATION_READY:
   title "Next-observation recommendation ready"
@@ -93,6 +94,7 @@ task M4_BOUNDED_CUTS SLICE3_ACCEPTED -> CUT_READY:
     optimistic 3p
     most_likely 5p
     pessimistic 8p
+  status done
   priority 90
   requires:
     CODEX 1
@@ -164,3 +166,9 @@ task MVP_BENCHMARK_ACCEPTANCE BENCHMARK_TARGETS_READY -> MVP_ACCEPTED:
   owner "codex"
   tags [prototype, acceptance, performance]
   source "requirements AC-001..010; basic design section 14; design review prototype approval conditions"
+
+work_event m4-bounded-cuts-a86a5e8:
+  model 1
+  task M4_BOUNDED_CUTS
+  kind finish
+  occurred_at 2026-08-19T00:00:00+09:00
