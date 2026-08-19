@@ -4,7 +4,8 @@ project LTFA_MVP:
   title "LTFA offline MVP prototype"
   description "Residual implementation plan derived from the reviewed LTFA requirements, basic design delivery slices, and design-review approval conditions. The existing C++17 bootstrap scaffold is the reached frontier. This plan covers the offline model compiler, assurance analyses, observation diagnosis, bounded advanced analysis, and prototype measurement; it excludes live probes, CMDB mutation, adapters, release publication, and performance claims without evidence."
   as_of 2026-07-28
-  duration_unit day
+  duration_unit point
+  velocity 1p/1d
   finish MVP_ACCEPTED
   goal_owner user
   dag_owner user
@@ -89,9 +90,9 @@ task M4_BOUNDED_CUTS SLICE3_ACCEPTED -> CUT_READY:
   title "Implement bounded service cuts and domain scenarios"
   description "Add node splitting and bounded max-flow for node and edge cuts of size one and two, result and work budgets, failure-domain scenario sets, and structured incomplete results."
   estimate:
-    optimistic 3d
-    most_likely 5d
-    pessimistic 8d
+    optimistic 3p
+    most_likely 5p
+    pessimistic 8p
   priority 90
   requires:
     CODEX 1
@@ -103,9 +104,9 @@ task M4_NEXT_OBSERVATION SLICE3_ACCEPTED -> NEXT_OBSERVATION_READY:
   title "Implement next-useful-observation recommendations"
   description "Compare registered but absent probes for tied hypotheses, select deterministic evidence-gathering suggestions, and state clearly that recommendations never execute a probe."
   estimate:
-    optimistic 2d
-    most_likely 3d
-    pessimistic 5d
+    optimistic 2p
+    most_likely 3p
+    pessimistic 5p
   priority 80
   requires:
     CODEX 1
@@ -123,9 +124,9 @@ task M4_ACCEPTANCE SLICE4_INTEGRATED -> SLICE4_ACCEPTED:
   title "Accept bounded advanced analysis"
   description "Verify cut-size and work bounds, common-domain scenarios, deterministic incomplete results, recommendation-only observation gaps, output stability, and offline safety."
   estimate:
-    optimistic 1d
-    most_likely 2d
-    pessimistic 3d
+    optimistic 1p
+    most_likely 2p
+    pessimistic 3p
   priority 100
   requires:
     CODEX 1
@@ -138,9 +139,9 @@ task MVP_PIN_BENCHMARK_TARGETS SLICE4_ACCEPTED -> BENCHMARK_TARGETS_READY:
   title "Pin prototype benchmark hosts and fixtures"
   description "Select and record reproducible x86_64 and aarch64 hosts, compilers, build profiles, 10k/50k graph fixture, 100k observation fixture, measurement commands, and acceptance caveats."
   estimate:
-    optimistic 1d
-    most_likely 2d
-    pessimistic 3d
+    optimistic 1p
+    most_likely 2p
+    pessimistic 3p
   priority 100
   requires:
     CODEX 1
@@ -153,9 +154,9 @@ task MVP_BENCHMARK_ACCEPTANCE BENCHMARK_TARGETS_READY -> MVP_ACCEPTED:
   title "Measure and accept the offline MVP prototype"
   description "Record binary size, elapsed time, peak RSS, portability, sanitizer and complete acceptance evidence on pinned hosts. Qualify unmet provisional targets instead of claiming success, and retain live probes and release work outside this plan."
   estimate:
-    optimistic 3d
-    most_likely 5d
-    pessimistic 8d
+    optimistic 3p
+    most_likely 5p
+    pessimistic 8p
   priority 100
   requires:
     CODEX 1
