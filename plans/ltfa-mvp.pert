@@ -147,3 +147,14 @@ work_event mvp-benchmark-acceptance-start-20260824:
   kind start
   occurred_at 2026-08-24T17:42:51+09:00
   planned_value 31/6p
+
+milestone_criterion_set MVP_ACCEPTED_R1:
+  milestone MVP_ACCEPTED
+  revision R1
+  commitment sha256:14be3fcb25e1f947a78253e9860b4e61d1ca0cc3c7bd17c9bb07cf673c43c2c1
+  criterion POLICY_ACCEPTED required owner "Owner accepts the ADR 0013 two-tier benchmark policy"
+  criterion REFERENCE_GATES_PASS required test "Pinned x86_64 sample and product CLI meet every ADR 0013 MVP ceiling"
+  criterion PORTABILITY_PASS required test "Pinned aarch64 sample has identical fixtures and semantics, Release 49/49, and no throttling"
+  criterion SANITIZERS_PASS required test "ASan/UBSan and LeakSanitizer suites each pass 38/38"
+  criterion EVIDENCE_COMMITTED required artifact "Optimization source, ADR, protocol, and repeat evidence are sealed in Git"
+  criterion MVP_OWNER_ACCEPTED required owner "Owner accepts the optimized offline MVP evidence and authorizes completion"
