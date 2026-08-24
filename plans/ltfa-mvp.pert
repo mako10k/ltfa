@@ -62,12 +62,10 @@ resource REVIEW:
 
 
 
-milestone BENCHMARK_TARGETS_READY:
-  title "Prototype benchmark targets pinned"
-  state reached
 
 milestone MVP_ACCEPTED:
   title "Offline MVP prototype accepted"
+  state reached
 
 
 
@@ -77,76 +75,6 @@ milestone MVP_ACCEPTED:
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-task MVP_BENCHMARK_ACCEPTANCE BENCHMARK_TARGETS_READY -> MVP_ACCEPTED:
-  title "Measure and accept the offline MVP prototype"
-  description "Record binary size, elapsed time, peak RSS, portability, sanitizer and complete acceptance evidence on pinned hosts. Qualify unmet provisional targets instead of claiming success, and retain live probes and release work outside this plan."
-  estimate:
-    optimistic 3p
-    most_likely 5p
-    pessimistic 8p
-  status done
-  priority 100
-  requires:
-    CODEX 1
-    REVIEW 1
-  owner "codex"
-  tags [prototype, acceptance, performance]
-  source "requirements AC-001..010; basic design section 14; design review prototype approval conditions"
-
-
-
-
-
-
-
-
-
-milestone_criterion_set BENCHMARK_TARGETS_READY_R1:
-  milestone BENCHMARK_TARGETS_READY
-  revision R1
-  commitment sha256:b89a2c6c56bfa47534b062d590838f315a331ab76f6aaaa5bebea3844a561d86
-  criterion OWNER_ACCEPTED required owner "Owner accepts the pinned x86_64 and aarch64 hosts, deterministic fixtures, measurement protocol, and caveats recorded in docs/acceptance/mvp-benchmark-targets.md"
-
-milestone_acceptance_receipt OWNER_ACCEPTED_20260824:
-  model 1
-  set BENCHMARK_TARGETS_READY_R1
-  set_commitment sha256:b89a2c6c56bfa47534b062d590838f315a331ab76f6aaaa5bebea3844a561d86
-  criterion OWNER_ACCEPTED
-  criterion_commitment sha256:a25a838fbff8bfabdc929e5c9e066fd36c6c4920d65ab3105ac408c2512f51aa
-  action verify
-  evidence_kind owner
-  evidence_reference "Owner approved the PERT benchmark-target transition in the current Codex task on 2026-08-24"
-  evidence_revision none
-  verifier user
-  occurred_at 2026-08-24T08:39:30Z
-
-work_event mvp-benchmark-acceptance-start-20260824:
-  model 1
-  task MVP_BENCHMARK_ACCEPTANCE
-  kind start
-  occurred_at 2026-08-24T17:42:51+09:00
-  planned_value 31/6p
 
 milestone_criterion_set MVP_ACCEPTED_R1:
   milestone MVP_ACCEPTED
@@ -237,8 +165,3 @@ milestone_acceptance_receipt RCPT_MVP_OWNER_ACCEPTED_20260824:
   verifier user
   occurred_at 2026-08-24T10:13:54Z
 
-work_event mvp-benchmark-acceptance-finish-20260824:
-  model 1
-  task MVP_BENCHMARK_ACCEPTANCE
-  kind finish
-  occurred_at 2026-08-24T19:13:54+09:00
