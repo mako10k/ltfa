@@ -158,3 +158,68 @@ milestone_criterion_set MVP_ACCEPTED_R1:
   criterion SANITIZERS_PASS required test "ASan/UBSan and LeakSanitizer suites each pass 38/38"
   criterion EVIDENCE_COMMITTED required artifact "Optimization source, ADR, protocol, and repeat evidence are sealed in Git"
   criterion MVP_OWNER_ACCEPTED required owner "Owner accepts the optimized offline MVP evidence and authorizes completion"
+
+milestone_acceptance_receipt RCPT_POLICY_ACCEPTED_20260824:
+  model 1
+  set MVP_ACCEPTED_R1
+  set_commitment sha256:14be3fcb25e1f947a78253e9860b4e61d1ca0cc3c7bd17c9bb07cf673c43c2c1
+  criterion POLICY_ACCEPTED
+  criterion_commitment sha256:88ff4c39552d6ac074eedbf77a86af1d24bf935d3ea6c84eb32efccd5df01b86
+  action verify
+  evidence_kind owner
+  evidence_reference "Owner approved relaxing the benchmark roles and optimizing remaining overages in the current Codex task on 2026-08-24"
+  evidence_revision none
+  verifier user
+  occurred_at 2026-08-24T09:59:56Z
+
+milestone_acceptance_receipt RCPT_REFERENCE_GATES_20260824:
+  model 1
+  set MVP_ACCEPTED_R1
+  set_commitment sha256:14be3fcb25e1f947a78253e9860b4e61d1ca0cc3c7bd17c9bb07cf673c43c2c1
+  criterion REFERENCE_GATES_PASS
+  criterion_commitment sha256:3e98a78962026c71f1d897962fa748f05e61316fa11e7cc53fabffe310bd21fa
+  action verify
+  evidence_kind test
+  evidence_reference "docs/acceptance/mvp-benchmark-acceptance.md E-BENCH-ACC-010 and E-BENCH-ACC-012"
+  evidence_revision c68d890b1e9031bb3f131365f08c142692dd7b32
+  verifier codex
+  occurred_at 2026-08-24T09:59:56Z
+
+milestone_acceptance_receipt RCPT_PORTABILITY_20260824:
+  model 1
+  set MVP_ACCEPTED_R1
+  set_commitment sha256:14be3fcb25e1f947a78253e9860b4e61d1ca0cc3c7bd17c9bb07cf673c43c2c1
+  criterion PORTABILITY_PASS
+  criterion_commitment sha256:a35fe3d6b353d3626c871dfc6d23bbe007c5867140230c91bdfb560a04552bab
+  action verify
+  evidence_kind test
+  evidence_reference "docs/acceptance/mvp-benchmark-acceptance.md E-BENCH-ACC-011 and E-BENCH-ACC-012"
+  evidence_revision c68d890b1e9031bb3f131365f08c142692dd7b32
+  verifier codex
+  occurred_at 2026-08-24T09:59:56Z
+
+milestone_acceptance_receipt RCPT_SANITIZERS_20260824:
+  model 1
+  set MVP_ACCEPTED_R1
+  set_commitment sha256:14be3fcb25e1f947a78253e9860b4e61d1ca0cc3c7bd17c9bb07cf673c43c2c1
+  criterion SANITIZERS_PASS
+  criterion_commitment sha256:92495b59dc29cad785117d36f233d2b988026abe8f22cd4a653b5573857a6caf
+  action verify
+  evidence_kind test
+  evidence_reference "docs/acceptance/mvp-benchmark-acceptance.md E-BENCH-ACC-013"
+  evidence_revision c68d890b1e9031bb3f131365f08c142692dd7b32
+  verifier codex
+  occurred_at 2026-08-24T09:59:56Z
+
+milestone_acceptance_receipt RCPT_EVIDENCE_COMMITTED_20260824:
+  model 1
+  set MVP_ACCEPTED_R1
+  set_commitment sha256:14be3fcb25e1f947a78253e9860b4e61d1ca0cc3c7bd17c9bb07cf673c43c2c1
+  criterion EVIDENCE_COMMITTED
+  criterion_commitment sha256:50da0db714c424a2f7c8f9e7b2d3785a531bffccaaef92388aa5b1fac4622342
+  action verify
+  evidence_kind artifact
+  evidence_reference "Git commit c68d890b1e9031bb3f131365f08c142692dd7b32 seals optimization source, ADR 0013, protocol, and repeat evidence"
+  evidence_revision c68d890b1e9031bb3f131365f08c142692dd7b32
+  verifier codex
+  occurred_at 2026-08-24T09:59:56Z
