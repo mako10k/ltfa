@@ -1,0 +1,5 @@
+ltfa 1
+scope site:example kind=site completeness=verified evidence-quality=confirmed
+entity service:app kind=service plane=service layer=application scope=site:example
+entity process:worker kind=process plane=service layer=application scope=site:example
+relate service:app -> process:worker kind=depends_on

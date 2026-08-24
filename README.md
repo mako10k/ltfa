@@ -25,6 +25,8 @@ dependencies beyond the C++ runtime. It does not access the network.
 - bounded causal-cone single-failure hypothesis ranking through the core API
 - bounded object, relation, and common-domain service-cut analysis through the core API and CLI
 - observation diagnosis and next-useful-observation recommendations through the core API and CLI
+- descriptor-backed text and JSON help with deterministic error recovery actions
+- descriptor-backed bash completion for commands, options, enums, and local path modes
 
 ## Safety boundary
 
@@ -73,8 +75,11 @@ cmake --install build/release --prefix /path/to/ltfa
 /path/to/ltfa/bin/ltfa --version
 ```
 
-The executable is installed under `bin`. License, README, release notes, and
-the development guide are installed under `share/doc/ltfa`.
+The executable is installed under `bin`. License, README, release notes, the
+[LTFA DSL v1 reference](docs/language/ltfa-dsl-v1.md), development guide, and
+normative samples are installed under `share/doc/ltfa`. Bash completion is installed under
+`share/bash-completion/completions/ltfa`; a configured `bash-completion` installation loads it
+automatically.
 
 ## Use
 
@@ -87,7 +92,45 @@ ltfa help analyze
 ltfa help analyze --format json
 ltfa help cuts
 ltfa help diagnose
+ltfa help diagnose --format json
+ltfa help guide
 ```
+
+Learn the LTFA DSL v1 language and offline workflows through the bundled Guide:
+
+```sh
+ltfa guide
+ltfa guide syntax
+ltfa guide statements relations --level detail
+ltfa guide samples minimal
+ltfa guide errors dsl --format json
+```
+
+`help` describes command contracts. `guide` provides topic/subtopic language guidance with
+`index`, `quick`, and `detail` levels and stable `ltfa.language-guide/v1` JSON. Both are generated
+from immutable descriptors.
+
+Human errors provide bounded next-action navigation without applying a fix or
+automatically retrying an operation:
+
+```text
+LTCLI-001 error: unknown option --formt
+  token: --formt
+  suggestion: --format
+  next: Replace --formt with --format, then rerun ltfa model.
+  help: ltfa help model
+```
+
+For source-tree development, enable bash completion with:
+
+```bash
+export LTFA_COMPLETION_BIN="$PWD/build/release/ltfa"
+source completions/ltfa.bash
+```
+
+Completion candidates come from the same command descriptors as help and parsing, and Guide topics
+come from the same language catalog as Guide output. LTFA does not load a model or enumerate
+topology IDs during completion.
 
 Compile and render one local model:
 
@@ -122,7 +165,7 @@ and keeps registered non-forwarding segments as dashed context. `--dot-view`
 is valid only with `--format dot`. LTFA emits DOT text and does not invoke
 Graphviz.
 
-The synthetic [resilience fixture](tests/fixtures/resilience/main.ltfa)
+The normative [resilience sample](examples/resilience/main.ltfa)
 demonstrates first-class physical links, a two-member LACP aggregate with a
 one-member threshold, and an RSTP baseline. `normal-state` is registered design
 state, not a live observation. The complete modeling decision and fail-closed
@@ -169,7 +212,7 @@ read a clock. Recommendations identify registered probes but never execute them.
 
 ## Public contracts
 
-- CLI Contract: 2
+- CLI Contract: 4
 - DSL: LTFA DSL v1
 - Observation input: `ltfa.observation/v1` JSON Lines core API
 - Observation analysis: C++17 evidence-index and bounded-diagnosis core APIs
@@ -180,6 +223,7 @@ read a clock. Recommendations identify registered probes but never execute them.
 - service cuts JSON: `ltfa.service-cuts/v1`
 - diagnosis CLI JSON: `ltfa.diagnosis-cli/v1`
 - command help JSON: `ltfa.command-help/v1`
+- language guide JSON: `ltfa.language-guide/v1`
 - CLI error JSON: `ltfa.cli-error/v1`
 - process statuses: 0 result, 2 usage, 3 input, 4 validation, 5 output
 

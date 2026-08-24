@@ -2,6 +2,7 @@ foreach(required
         LTFA_BUILD_DIR
         LTFA_INSTALL_PREFIX
         LTFA_INSTALL_BINDIR
+        LTFA_INSTALL_DATADIR
         LTFA_INSTALL_DOCDIR
         LTFA_EXPECTED_VERSION
         LTFA_MODEL_ROOT
@@ -15,7 +16,8 @@ if(NOT DEFINED LTFA_HISTORY_ROOT OR LTFA_HISTORY_ROOT STREQUAL "")
     message(FATAL_ERROR "missing required setting LTFA_HISTORY_ROOT")
 endif()
 
-if(IS_ABSOLUTE "${LTFA_INSTALL_BINDIR}" OR IS_ABSOLUTE "${LTFA_INSTALL_DOCDIR}")
+if(IS_ABSOLUTE "${LTFA_INSTALL_BINDIR}" OR IS_ABSOLUTE "${LTFA_INSTALL_DATADIR}" OR
+   IS_ABSOLUTE "${LTFA_INSTALL_DOCDIR}")
     message(FATAL_ERROR "install smoke test requires relative install directories")
 endif()
 
@@ -67,6 +69,31 @@ if(NOT EXISTS "${installed_development}")
     )
 endif()
 
+set(installed_language_reference
+    "${LTFA_INSTALL_PREFIX}/${LTFA_INSTALL_DOCDIR}/docs/language/ltfa-dsl-v1.md"
+)
+if(NOT EXISTS "${installed_language_reference}")
+    message(FATAL_ERROR
+        "installed language reference not found: ${installed_language_reference}"
+    )
+endif()
+
+foreach(sample minimal resilience)
+    set(installed_sample
+        "${LTFA_INSTALL_PREFIX}/${LTFA_INSTALL_DOCDIR}/examples/${sample}/main.ltfa"
+    )
+    if(NOT EXISTS "${installed_sample}")
+        message(FATAL_ERROR "installed normative sample not found: ${installed_sample}")
+    endif()
+endforeach()
+
+set(installed_completion
+    "${LTFA_INSTALL_PREFIX}/${LTFA_INSTALL_DATADIR}/bash-completion/completions/ltfa"
+)
+if(NOT EXISTS "${installed_completion}")
+    message(FATAL_ERROR "installed bash completion not found: ${installed_completion}")
+endif()
+
 execute_process(
     COMMAND "${installed_cli}" --version
     RESULT_VARIABLE version_result
@@ -90,12 +117,78 @@ execute_process(
 )
 if(NOT help_result EQUAL 0 OR
    NOT help_output MATCHES "ltfa model --model-root" OR
+   NOT help_output MATCHES "Language guide:" OR
+   NOT help_output MATCHES "ltfa guide syntax" OR
+   NOT help_output MATCHES "standard bash-completion directory" OR
    NOT help_error STREQUAL "")
     message(FATAL_ERROR
         "installed help check failed: status=${help_result}\n"
         "stdout=${help_output}\nstderr=${help_error}"
     )
 endif()
+
+execute_process(
+    COMMAND "${installed_cli}" guide samples minimal --format json
+    RESULT_VARIABLE guide_result
+    OUTPUT_VARIABLE guide_output
+    ERROR_VARIABLE guide_error
+)
+string(JSON guide_schema ERROR_VARIABLE guide_json_error GET "${guide_output}" schema)
+string(JSON guide_sample ERROR_VARIABLE guide_sample_error GET "${guide_output}" query subtopic)
+if(NOT guide_result EQUAL 0 OR NOT guide_error STREQUAL "" OR guide_json_error OR
+   guide_sample_error OR NOT guide_schema STREQUAL "ltfa.language-guide/v1" OR
+   NOT guide_sample STREQUAL "minimal")
+    message(FATAL_ERROR
+        "installed language guide check failed: status=${guide_result}\n"
+        "stdout=${guide_output}\nstderr=${guide_error}${guide_json_error}${guide_sample_error}"
+    )
+endif()
+
+execute_process(
+    COMMAND "${installed_cli}" __completion --bash model --f
+    RESULT_VARIABLE completion_result
+    OUTPUT_VARIABLE completion_output
+    ERROR_VARIABLE completion_error
+)
+if(NOT completion_result EQUAL 0 OR NOT completion_error STREQUAL "" OR
+   NOT completion_output STREQUAL "__ltfa_completion_mode=plain\n--format\n")
+    message(FATAL_ERROR
+        "installed completion query failed: status=${completion_result}\n"
+        "stdout=${completion_output}\nstderr=${completion_error}"
+    )
+endif()
+
+execute_process(
+    COMMAND "${installed_cli}" __completion --bash guide statements r
+    RESULT_VARIABLE guide_completion_result
+    OUTPUT_VARIABLE guide_completion_output
+    ERROR_VARIABLE guide_completion_error
+)
+if(NOT guide_completion_result EQUAL 0 OR NOT guide_completion_error STREQUAL "" OR
+   NOT guide_completion_output STREQUAL "__ltfa_completion_mode=plain\nrelations\n")
+    message(FATAL_ERROR
+        "installed guide completion failed: status=${guide_completion_result}\n"
+        "stdout=${guide_completion_output}\nstderr=${guide_completion_error}"
+    )
+endif()
+
+foreach(sample minimal resilience)
+    execute_process(
+        COMMAND "${installed_cli}" model
+            --model-root "${LTFA_INSTALL_PREFIX}/${LTFA_INSTALL_DOCDIR}/examples/${sample}"
+            --input main.ltfa
+        RESULT_VARIABLE sample_result
+        OUTPUT_VARIABLE sample_output
+        ERROR_VARIABLE sample_error
+    )
+    if(NOT sample_result EQUAL 0 OR NOT sample_error STREQUAL "" OR
+       NOT sample_output MATCHES "schema: ltfa.model/v1")
+        message(FATAL_ERROR
+            "installed ${sample} sample failed: status=${sample_result}\n"
+            "stdout=${sample_output}\nstderr=${sample_error}"
+        )
+    endif()
+endforeach()
 
 execute_process(
     COMMAND

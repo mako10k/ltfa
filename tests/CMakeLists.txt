@@ -257,6 +257,33 @@ add_test(
 )
 
 add_test(
+    NAME ltfa.cli.completion
+    COMMAND ${CMAKE_COMMAND}
+        -DLTFA_CLI=$<TARGET_FILE:ltfa>
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cli_completion_test.cmake
+)
+
+add_test(
+    NAME ltfa.cli.guide
+    COMMAND ${CMAKE_COMMAND}
+        -DLTFA_CLI=$<TARGET_FILE:ltfa>
+        -DLTFA_EXAMPLE_ROOT=${PROJECT_SOURCE_DIR}/examples
+        -DLTFA_EXPECTED_VERSION=${LTFA_VERSION_STRING}
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cli_guide_test.cmake
+)
+
+find_program(LTFA_BASH_EXECUTABLE bash)
+if(LTFA_BASH_EXECUTABLE)
+    add_test(
+        NAME ltfa.cli.bash-completion
+        COMMAND ${LTFA_BASH_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/bash_completion_regression.sh
+            $<TARGET_FILE:ltfa>
+            ${PROJECT_SOURCE_DIR}/completions/ltfa.bash
+    )
+endif()
+
+add_test(
     NAME ltfa.cli.analyze.budget-acceptance
     COMMAND ${CMAKE_COMMAND}
         -DLTFA_CLI=$<TARGET_FILE:ltfa>
@@ -287,6 +314,7 @@ add_test(
         -DLTFA_BUILD_DIR=${PROJECT_BINARY_DIR}
         -DLTFA_INSTALL_PREFIX=${PROJECT_BINARY_DIR}/install-smoke
         -DLTFA_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}
+        -DLTFA_INSTALL_DATADIR=${CMAKE_INSTALL_DATADIR}
         -DLTFA_INSTALL_DOCDIR=${CMAKE_INSTALL_DOCDIR}
         -DLTFA_EXECUTABLE_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}
         -DLTFA_INSTALL_CONFIG=$<CONFIG>

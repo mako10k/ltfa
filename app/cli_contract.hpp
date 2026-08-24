@@ -16,6 +16,7 @@ enum class OptionKind {
 
 enum class CommandHandler {
     help,
+    guide,
     model,
     analyze,
     cuts,
@@ -87,6 +88,7 @@ struct UsageError {
     std::string operation;
     std::string token;
     std::string suggestion;
+    std::string guide_target;
     const CommandDescriptor *help_target{nullptr};
 };
 
@@ -110,6 +112,7 @@ struct CliDiagnostic {
 };
 
 [[nodiscard]] CommandCatalog command_catalog();
+[[nodiscard]] int cli_contract_version() noexcept;
 [[nodiscard]] const CommandDescriptor *find_command(std::string_view name);
 [[nodiscard]] const OptionDescriptor *find_option(const CommandDescriptor &command,
                                                   std::string_view name, bool short_name = false);
@@ -123,8 +126,11 @@ void print_root_help(std::ostream &output);
 void print_command_help(std::ostream &output, const CommandDescriptor &command);
 void print_help_json(std::ostream &output, const CommandDescriptor *command);
 void print_usage_error(std::ostream &error, const UsageError &usage);
+void print_error_navigation(std::ostream &error, const CommandDescriptor *help_target,
+                            const UsageError *usage, const CliDiagnostic &diagnostic);
 void print_cli_error_json(std::ostream &output, int exit_status, std::string_view operation,
                           const CommandDescriptor *help_target, const UsageError *usage,
                           const CliDiagnostic &diagnostic);
+void print_bash_completion_query(std::ostream &output, int argc, char *argv[], int begin);
 
 } // namespace ltfa::app

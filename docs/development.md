@@ -53,6 +53,11 @@ Exercise the built CLI directly:
 ```sh
 ./build/release/ltfa --help
 ./build/release/ltfa --version
+./build/release/ltfa help diagnose --format json
+./build/release/ltfa guide
+./build/release/ltfa guide syntax
+./build/release/ltfa guide statements relations --level detail
+./build/release/ltfa guide samples minimal --format json
 ./build/release/ltfa model \
     --model-root tests/fixtures/slice1 \
     --input main.ltfa \
@@ -76,6 +81,17 @@ Exercise the built CLI directly:
     --failure failure:breaker \
     --format json
 ```
+
+Exercise the source-tree bash completion wrapper with:
+
+```bash
+export LTFA_COMPLETION_BIN="$PWD/build/release/ltfa"
+source completions/ltfa.bash
+```
+
+The private `__completion --bash` transport is covered by CTest. Keep command, option, enum,
+Guide-topic, and Guide-subtopic candidates descriptor-backed; do not add a parallel table to the
+bash script or semantic completion that loads model inputs.
 
 Tests are dependency-free executables registered with CTest. Name test sources
 descriptively and CTest cases with the `ltfa.<area>[.<behavior>]` pattern. Add
@@ -114,10 +130,10 @@ external test/rendering tool and is never linked or invoked by LTFA.
 
 ## Install-tree verification
 
-`ltfa.install.smoke` owns only the build-local `install-smoke` prefix. It
-recreates that prefix, installs the candidate, checks the executable and
-distribution documents, and exercises installed version, help, JSON model,
-semantic DOT model, and assurance operations.
+`ltfa.install.smoke` owns only the build-local `install-smoke` prefix. It recreates that prefix,
+installs the candidate, checks the executable, distribution documents, language reference,
+normative samples, and bash completion, and exercises installed version, help, Guide, completion
+discovery, both samples, JSON model, semantic DOT model, and assurance operations.
 
 Do not use this test with a user or system installation prefix.
 
@@ -143,6 +159,7 @@ selection rules are in [AGENTS.md](../AGENTS.md).
 ```text
 app/                 CLI entry point and output adapters
 cmake/               Build and verification scripts
+examples/            Installed normative LTFA DSL v1 sample trees
 include/ltfa/        Public core headers
 src/ltfa/            Core implementation
 tests/               Dependency-free CTest targets
@@ -150,6 +167,7 @@ tests/fuzz/          Parser/observation fuzz harnesses and synthetic seed corpor
 tests/fixtures/      Synthetic offline acceptance inputs
 docs/acceptance/     Requirement traces and accepted boundaries
 docs/decisions/      Project-local architecture decisions
+docs/language/       Installed user-facing language reference
 docs/plans/          Completed PERT task evidence
 docs/releases/       Historical release notes
 plans/               Residual perttool plans
@@ -180,6 +198,10 @@ Repository-local decisions define the implemented boundary:
 - [bounded deterministic diagnosis](decisions/0009-bounded-deterministic-diagnosis.md)
 - [redacted historical structure fixture](decisions/0010-redacted-historical-fixture.md)
 - [diagnosis machine output](decisions/0011-diagnosis-machine-output.md)
+- [Slice 4 CLI wiring](decisions/0012-slice4-cli-wiring.md)
+- [two-tier benchmark acceptance](decisions/0013-two-tier-mvp-benchmark-acceptance.md)
+- [CLI action navigation and bash completion](decisions/0014-cli-action-navigation-and-bash-completion.md)
+- [bundled LTFA language guide](decisions/0015-bundled-language-guide.md)
 
 Accepted implementation and release evidence is retained under
 `docs/acceptance/` and `docs/plans/`. In particular:

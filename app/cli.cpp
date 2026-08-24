@@ -3,6 +3,7 @@
 #include "advanced_output.hpp"
 #include "assurance_output.hpp"
 #include "cli_contract.hpp"
+#include "language_guide.hpp"
 
 #include "ltfa/dsl/include_resolver.hpp"
 #include "ltfa/error.hpp"
@@ -339,11 +340,12 @@ int emit_model_diagnostic(std::ostream &output, std::ostream &error, int exit_st
                           const std::vector<dsl::LoadedSource> &sources,
                           const fs::path &canonical_root, const CommandDescriptor &command,
                           bool json) {
+    const auto cli_diagnostic = make_cli_diagnostic(diagnostic, sources, canonical_root);
     if (!json) {
         print_diagnostic(error, diagnostic, sources, canonical_root);
+        print_error_navigation(error, &command, nullptr, cli_diagnostic);
         return error ? exit_status : kExitOutput;
     }
-    const auto cli_diagnostic = make_cli_diagnostic(diagnostic, sources, canonical_root);
     print_cli_error_json(output, exit_status, command.operation, &command, nullptr, cli_diagnostic);
     if (!output) {
         error << "ltfa: failed to write error output\n";
@@ -354,15 +356,15 @@ int emit_model_diagnostic(std::ostream &output, std::ostream &error, int exit_st
 
 int emit_analysis_diagnostic(std::ostream &output, std::ostream &error,
                              const CommandDescriptor &command, std::string message, bool json) {
-    if (!json) {
-        error << "LTANL-001 error: " << message << '\n'
-              << "  help: ltfa help " << command.name << '\n';
-        return error ? kExitValidation : kExitOutput;
-    }
     CliDiagnostic diagnostic;
     diagnostic.code = "LTANL-001";
     diagnostic.severity = "error";
-    diagnostic.message = std::move(message);
+    diagnostic.message = message;
+    if (!json) {
+        error << "LTANL-001 error: " << message << '\n';
+        print_error_navigation(error, &command, nullptr, diagnostic);
+        return error ? kExitValidation : kExitOutput;
+    }
     print_cli_error_json(output, kExitValidation, command.operation, &command, nullptr, diagnostic);
     if (!output) {
         error << "ltfa: failed to write error output\n";
@@ -374,15 +376,15 @@ int emit_analysis_diagnostic(std::ostream &output, std::ostream &error,
 int emit_operation_diagnostic(std::ostream &output, std::ostream &error,
                               const CommandDescriptor &command, int exit_status, std::string code,
                               std::string message, bool json) {
+    CliDiagnostic diagnostic;
+    diagnostic.code = code;
+    diagnostic.severity = "error";
+    diagnostic.message = message;
     if (!json) {
-        error << code << " error: " << message << '\n'
-              << "  help: ltfa help " << command.name << '\n';
+        error << code << " error: " << message << '\n';
+        print_error_navigation(error, &command, nullptr, diagnostic);
         return error ? exit_status : kExitOutput;
     }
-    CliDiagnostic diagnostic;
-    diagnostic.code = std::move(code);
-    diagnostic.severity = "error";
-    diagnostic.message = std::move(message);
     print_cli_error_json(output, exit_status, command.operation, &command, nullptr, diagnostic);
     return output ? exit_status : kExitOutput;
 }
@@ -708,6 +710,55 @@ int run_help(const ParsedArguments &parsed, std::ostream &output, std::ostream &
         return kExitOutput;
     }
     return kExitSuccess;
+}
+
+int run_guide(const CommandDescriptor &command, const ParsedArguments &parsed, std::ostream &output,
+              std::ostream &error, bool json) {
+    std::string_view topic;
+    std::string_view subtopic;
+    if (!parsed.operands.empty()) {
+        topic = parsed.operands[0];
+    }
+    if (parsed.operands.size() > 1) {
+        subtopic = parsed.operands[1];
+    }
+
+    const GuidePageDescriptor *page = nullptr;
+    if (!topic.empty()) {
+        page = find_guide_page(topic, subtopic);
+        if (page == nullptr) {
+            UsageError usage;
+            if (find_guide_page(topic) == nullptr) {
+                usage = make_usage_error("unknown_guide_topic",
+                                         "unknown guide topic " + std::string{topic},
+                                         std::string{topic}, &command, suggest_guide_topic(topic));
+                usage.guide_target = "ltfa guide";
+            } else {
+                usage = make_usage_error(
+                    "unknown_guide_subtopic", "unknown guide subtopic " + std::string{subtopic},
+                    std::string{subtopic}, &command, suggest_guide_subtopic(topic, subtopic));
+                usage.guide_target = "ltfa guide " + std::string{topic};
+            }
+            return emit_usage_error(output, error, usage, json);
+        }
+    }
+
+    auto level = default_guide_level(topic, subtopic);
+    if (const auto requested = parsed.option_value("level"); requested.has_value()) {
+        if (*requested == "index") {
+            level = GuideLevel::index;
+        } else if (*requested == "quick") {
+            level = GuideLevel::quick;
+        } else {
+            level = GuideLevel::detail;
+        }
+    }
+    if (json) {
+        print_language_guide_json(output, page, level);
+    } else {
+        print_language_guide_text(output, page, level);
+    }
+    return finish_output(output, error, "language guide");
 }
 
 int run_model(const CommandDescriptor &command, const ParsedArguments &parsed, std::ostream &output,
@@ -1125,6 +1176,11 @@ int run_diagnose(const CommandDescriptor &command, const ParsedArguments &parsed
 } // namespace
 
 int run_cli(int argc, char *argv[], std::ostream &output, std::ostream &error) {
+    if (argc >= 3 && std::string_view{argv[1]} == "__completion" &&
+        std::string_view{argv[2]} == "--bash") {
+        print_bash_completion_query(output, argc, argv, 3);
+        return finish_output(output, error, "completion");
+    }
     const bool json = json_requested(argc, argv);
     if (argc == 1) {
         const auto usage = make_usage_error("missing_command", "expected a command", "", nullptr);
@@ -1163,6 +1219,8 @@ int run_cli(int argc, char *argv[], std::ostream &output, std::ostream &error) {
     switch (command->handler) {
     case CommandHandler::help:
         return run_help(parsed, output, error, json);
+    case CommandHandler::guide:
+        return run_guide(*command, parsed, output, error, json);
     case CommandHandler::model:
         return run_model(*command, parsed, output, error, json);
     case CommandHandler::analyze:

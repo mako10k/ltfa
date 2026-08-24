@@ -126,6 +126,7 @@ add_executable(ltfa
     app/assurance_output.cpp
     app/cli.cpp
     app/cli_contract.cpp
+    app/language_guide.cpp
     app/main.cpp
 )
 target_link_libraries(ltfa PRIVATE ltfa::core)
@@ -145,6 +146,20 @@ install(FILES
 install(FILES
     docs/development.md
     DESTINATION ${CMAKE_INSTALL_DOCDIR}/docs
+)
+install(FILES
+    docs/language/ltfa-dsl-v1.md
+    DESTINATION ${CMAKE_INSTALL_DOCDIR}/docs/language
+)
+install(DIRECTORY
+    examples/minimal
+    examples/resilience
+    DESTINATION ${CMAKE_INSTALL_DOCDIR}/examples
+)
+install(FILES
+    completions/ltfa.bash
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/bash-completion/completions
+    RENAME ltfa
 )
 
 if(BUILD_TESTING)

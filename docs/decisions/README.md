@@ -17,3 +17,5 @@ evidence.
 - [0011 — Diagnosis Machine Output](0011-diagnosis-machine-output.md)
 - [0012 — Slice 4 CLI wiring](0012-slice4-cli-wiring.md)
 - [0013 — Two-tier MVP benchmark acceptance](0013-two-tier-mvp-benchmark-acceptance.md)
+- [0014 — CLI Action Navigation And Bash Completion](0014-cli-action-navigation-and-bash-completion.md)
+- [0015 — Bundled LTFA Language Guide](0015-bundled-language-guide.md)

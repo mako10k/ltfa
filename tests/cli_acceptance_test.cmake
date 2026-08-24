@@ -24,7 +24,9 @@ endfunction()
 run_cli(no_arguments)
 if(NOT no_arguments_result EQUAL 2 OR NOT no_arguments_output STREQUAL "" OR
    NOT no_arguments_error MATCHES
-       "^LTCLI-001 error: expected a command\n  help: ltfa help\n$")
+       "^LTCLI-001 error: expected a command\n"
+       OR NOT no_arguments_error MATCHES
+       "  next: Choose a command, then rerun ltfa[.]\n  help: ltfa help\n$")
     message(FATAL_ERROR "no-argument invocation must be a stable usage failure")
 endif()
 
@@ -41,7 +43,11 @@ if(NOT root_help_error STREQUAL "" OR NOT root_help_short_error STREQUAL "" OR
 endif()
 if(NOT root_help_output STREQUAL root_help_short_output OR
    NOT root_help_output STREQUAL root_help_command_output OR
-   NOT root_help_output MATCHES "The current core is offline")
+   NOT root_help_output MATCHES "The current core is offline" OR
+   NOT root_help_output MATCHES "Bash completion:" OR
+   NOT root_help_output MATCHES "Language guide:" OR
+   NOT root_help_output MATCHES "ltfa guide syntax" OR
+   NOT root_help_output MATCHES "ltfa help <command> --format json")
     message(FATAL_ERROR "root help routes must be equivalent and state the offline boundary")
 endif()
 
@@ -64,7 +70,9 @@ endif()
 if(NOT model_help_output STREQUAL model_help_short_output OR
    NOT model_help_output STREQUAL model_help_command_output OR
    NOT model_help_output MATCHES "^Command: ltfa model" OR
-   NOT model_help_output MATCHES "Exit statuses:")
+   NOT model_help_output MATCHES "Exit statuses:" OR
+   NOT model_help_output MATCHES
+       "Navigation:\n  help: ltfa help model\n  json-help: ltfa help model --format json")
     message(FATAL_ERROR "model help routes must expose one detailed contract")
 endif()
 if(NOT analyze_help_output STREQUAL analyze_help_short_output OR
@@ -89,9 +97,9 @@ string(JSON help_contract GET "${help_json_first_output}" cli_contract_version)
 string(JSON help_tool_version GET "${help_json_first_output}" tool_version)
 string(JSON help_operation GET "${help_json_first_output}" operation)
 string(JSON help_command_count LENGTH "${help_json_first_output}" commands)
-if(NOT help_schema STREQUAL "ltfa.command-help/v1" OR NOT help_contract EQUAL 2 OR
+if(NOT help_schema STREQUAL "ltfa.command-help/v1" OR NOT help_contract EQUAL 4 OR
    NOT help_tool_version STREQUAL "${LTFA_EXPECTED_VERSION}" OR
-   NOT help_operation STREQUAL "help" OR NOT help_command_count EQUAL 5)
+   NOT help_operation STREQUAL "help" OR NOT help_command_count EQUAL 6)
     message(FATAL_ERROR "structured root help contract is incorrect")
 endif()
 
@@ -123,6 +131,18 @@ string(JSON analyze_help_exit_count
     LENGTH "${analyze_help_json_first_output}" commands 0 exit_statuses
 )
 string(JSON analyze_help_usage GET "${analyze_help_json_first_output}" commands 0 usage)
+string(JSON analyze_help_navigation GET
+    "${analyze_help_json_first_output}" commands 0 navigation help
+)
+string(JSON root_help_navigation GET
+    "${analyze_help_json_first_output}" navigation root_help
+)
+string(JSON bash_completion_location GET
+    "${analyze_help_json_first_output}" navigation bash_completion installed_location
+)
+string(JSON language_guide_navigation GET
+    "${analyze_help_json_first_output}" commands 0 navigation language_guide
+)
 string(CONCAT expected_analyze_usage
     "ltfa analyze --model-root <directory> --input <file> --scope <scope-id> "
     "--source <object-id> --target <object-id> [--failure <failure-id>] "
@@ -136,7 +156,11 @@ if(NOT analyze_help_query STREQUAL "analyze" OR NOT analyze_help_count EQUAL 1 O
    NOT analyze_help_payload STREQUAL "assurance" OR
    NOT analyze_help_option_count EQUAL 14 OR
    NOT analyze_help_schema_count EQUAL 2 OR NOT analyze_help_exit_count EQUAL 5 OR
-   NOT analyze_help_usage STREQUAL expected_analyze_usage)
+   NOT analyze_help_usage STREQUAL expected_analyze_usage OR
+   NOT analyze_help_navigation STREQUAL "ltfa help analyze" OR
+   NOT root_help_navigation STREQUAL "ltfa help" OR
+   NOT language_guide_navigation STREQUAL "ltfa guide workflows analyze" OR
+   NOT bash_completion_location STREQUAL "share/bash-completion/completions/ltfa")
     message(FATAL_ERROR "structured analyze help is incomplete")
 endif()
 
@@ -296,8 +320,13 @@ if(NOT analyze_unknown_scope_result EQUAL 4 OR NOT analyze_unknown_scope_error S
 endif()
 string(JSON selection_schema GET "${analyze_unknown_scope_output}" schema)
 string(JSON selection_code GET "${analyze_unknown_scope_output}" diagnostics 0 code)
+string(JSON selection_next GET "${analyze_unknown_scope_output}" actions 0 description)
+string(JSON selection_help GET "${analyze_unknown_scope_output}" actions 1 invocation)
 if(NOT selection_schema STREQUAL "ltfa.cli-error/v1" OR
-   NOT selection_code STREQUAL "LTANL-001")
+   NOT selection_code STREQUAL "LTANL-001" OR
+   NOT selection_next STREQUAL
+       "Correct the reported selection, then rerun ltfa analyze." OR
+   NOT selection_help STREQUAL "ltfa help analyze")
     message(FATAL_ERROR "analysis selection diagnostic contract is incorrect")
 endif()
 
@@ -542,9 +571,18 @@ string(JSON malformed_status GET "${malformed_json_output}" exit_status)
 string(JSON malformed_code GET "${malformed_json_output}" diagnostics 0 code)
 string(JSON malformed_file GET "${malformed_json_output}" diagnostics 0 source file)
 string(JSON malformed_line GET "${malformed_json_output}" diagnostics 0 source line)
+string(JSON malformed_next GET "${malformed_json_output}" actions 0 description)
+string(JSON malformed_guide GET "${malformed_json_output}" actions 1 invocation)
+string(JSON malformed_help GET "${malformed_json_output}" actions 2 invocation)
+string(JSON malformed_action_count LENGTH "${malformed_json_output}" actions)
 if(NOT malformed_schema STREQUAL "ltfa.cli-error/v1" OR NOT malformed_status EQUAL 3 OR
    NOT malformed_code STREQUAL "E_DSL_UNKNOWN_STATEMENT" OR
-   NOT malformed_file STREQUAL "malformed.ltfa" OR NOT malformed_line EQUAL 2)
+   NOT malformed_file STREQUAL "malformed.ltfa" OR NOT malformed_line EQUAL 2 OR
+   NOT malformed_next STREQUAL
+       "Correct the reported local input, then rerun ltfa model." OR
+   NOT malformed_action_count EQUAL 3 OR
+   NOT malformed_guide STREQUAL "ltfa guide errors dsl" OR
+   NOT malformed_help STREQUAL "ltfa help model")
     message(FATAL_ERROR "malformed JSON-mode diagnostic contract is incorrect")
 endif()
 
@@ -553,7 +591,11 @@ run_cli(malformed_human
 )
 if(NOT malformed_human_result EQUAL 3 OR NOT malformed_human_output STREQUAL "" OR
    NOT malformed_human_error MATCHES
-       "^malformed.ltfa:2:1: error E_DSL_UNKNOWN_STATEMENT: unknown DSL statement")
+       "^malformed.ltfa:2:1: error E_DSL_UNKNOWN_STATEMENT: unknown DSL statement" OR
+   NOT malformed_human_error MATCHES
+       "  next: Correct the reported local input, then rerun ltfa model[.]\n"
+       OR NOT malformed_human_error MATCHES "  guide: ltfa guide errors dsl\n"
+       OR NOT malformed_human_error MATCHES "  help: ltfa help model\n$")
     message(FATAL_ERROR "human malformed input must retain its stable source diagnostic")
 endif()
 
@@ -618,9 +660,17 @@ string(JSON usage_kind GET "${unknown_option_json_output}" usage kind)
 string(JSON usage_token GET "${unknown_option_json_output}" usage token)
 string(JSON usage_suggestion GET "${unknown_option_json_output}" usage suggestion)
 string(JSON usage_code GET "${unknown_option_json_output}" diagnostics 0 code)
+string(JSON usage_action_count LENGTH "${unknown_option_json_output}" actions)
+string(JSON usage_retry_id GET "${unknown_option_json_output}" actions 0 id)
+string(JSON usage_retry_description GET "${unknown_option_json_output}" actions 0 description)
+string(JSON usage_help_invocation GET "${unknown_option_json_output}" actions 1 invocation)
 if(NOT usage_schema STREQUAL "ltfa.cli-error/v1" OR NOT usage_status EQUAL 2 OR
    NOT usage_kind STREQUAL "unknown_option" OR NOT usage_token STREQUAL "--formt" OR
-   NOT usage_suggestion STREQUAL "--format" OR NOT usage_code STREQUAL "LTCLI-001")
+   NOT usage_suggestion STREQUAL "--format" OR NOT usage_code STREQUAL "LTCLI-001" OR
+   NOT usage_action_count EQUAL 2 OR NOT usage_retry_id STREQUAL "correct-and-retry" OR
+   NOT usage_retry_description STREQUAL
+       "Replace --formt with --format, then rerun ltfa model." OR
+   NOT usage_help_invocation STREQUAL "ltfa help model")
     message(FATAL_ERROR "JSON-mode usage diagnostic contract is incorrect")
 endif()
 
