@@ -1,6 +1,6 @@
 # Existing .pert plans should normally be maintained through perttool commands; direct DSL editing bypasses goal/DAG owner-confirmation checks.
 project LTFA_MVP:
-  version 5
+  version 7
   title "LTFA offline MVP prototype"
   description "Residual implementation plan derived from the reviewed LTFA requirements, basic design delivery slices, and design-review approval conditions. The existing C++17 bootstrap scaffold is the reached frontier. This plan covers the offline model compiler, assurance analyses, observation diagnosis, bounded advanced analysis, and prototype measurement; it excludes live probes, CMDB mutation, adapters, release publication, and performance claims without evidence."
   as_of 2026-07-28
@@ -11,6 +11,22 @@ project LTFA_MVP:
   dag_owner user
 
 
+
+milestone_acceptance_migration GRAMMAR_7_BASELINE:
+  model 1
+  repository git:sha1:640c2d133e013180cb90c3960345cbc5e1df80a7:index:656705b4ae2f193d952709d70e7522671cdd741a
+  path "plans/ltfa-mvp.pert"
+  object_format sha1
+  head 640c2d133e013180cb90c3960345cbc5e1df80a7
+  blob 656705b4ae2f193d952709d70e7522671cdd741a
+  source_digest sha256:3efc65b7e3b36eb06a04ad9bdcda22e830e8934521888d8550dec1bd7cb370e2
+  candidate_digest sha256:d4b45c54d180a6355a7f4c13db2808b6067eccbf52be20f7a3a2907b9fc8b56f
+  grandfathered CLI_WIRED
+  grandfathered CUT_READY
+  grandfathered NEXT_OBSERVATION_READY
+  grandfathered SLICE3_ACCEPTED
+  grandfathered SLICE4_ACCEPTED
+  grandfathered SLICE4_INTEGRATED
 resource CODEX:
   title "LTFA implementation capacity"
   description "Serialize implementation work in this checkout"
@@ -149,6 +165,7 @@ task MVP_PIN_BENCHMARK_TARGETS CLI_WIRED -> BENCHMARK_TARGETS_READY:
     optimistic 1p
     most_likely 2p
     pessimistic 3p
+  status done
   priority 100
   requires:
     CODEX 1
@@ -164,6 +181,7 @@ task MVP_BENCHMARK_ACCEPTANCE BENCHMARK_TARGETS_READY -> MVP_ACCEPTED:
     optimistic 3p
     most_likely 5p
     pessimistic 8p
+  status active
   priority 100
   requires:
     CODEX 1
@@ -215,3 +233,42 @@ work_event m4-cli-wiring-baf7001:
   task M4_CLI_WIRING
   kind finish
   occurred_at 2026-08-19T03:00:00+09:00
+
+work_event mvp-benchmark-targets-start-20260824:
+  model 1
+  task MVP_PIN_BENCHMARK_TARGETS
+  kind start
+  occurred_at 2026-08-24T17:34:40+09:00
+  planned_value 2p
+
+work_event mvp-benchmark-targets-finish-20260824:
+  model 1
+  task MVP_PIN_BENCHMARK_TARGETS
+  kind finish
+  occurred_at 2026-08-24T17:35:02+09:00
+
+milestone_criterion_set BENCHMARK_TARGETS_READY_R1:
+  milestone BENCHMARK_TARGETS_READY
+  revision R1
+  commitment sha256:b89a2c6c56bfa47534b062d590838f315a331ab76f6aaaa5bebea3844a561d86
+  criterion OWNER_ACCEPTED required owner "Owner accepts the pinned x86_64 and aarch64 hosts, deterministic fixtures, measurement protocol, and caveats recorded in docs/acceptance/mvp-benchmark-targets.md"
+
+milestone_acceptance_receipt OWNER_ACCEPTED_20260824:
+  model 1
+  set BENCHMARK_TARGETS_READY_R1
+  set_commitment sha256:b89a2c6c56bfa47534b062d590838f315a331ab76f6aaaa5bebea3844a561d86
+  criterion OWNER_ACCEPTED
+  criterion_commitment sha256:a25a838fbff8bfabdc929e5c9e066fd36c6c4920d65ab3105ac408c2512f51aa
+  action verify
+  evidence_kind owner
+  evidence_reference "Owner approved the PERT benchmark-target transition in the current Codex task on 2026-08-24"
+  evidence_revision none
+  verifier user
+  occurred_at 2026-08-24T08:39:30Z
+
+work_event mvp-benchmark-acceptance-start-20260824:
+  model 1
+  task MVP_BENCHMARK_ACCEPTANCE
+  kind start
+  occurred_at 2026-08-24T17:42:51+09:00
+  planned_value 31/6p

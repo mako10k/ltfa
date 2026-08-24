@@ -20,6 +20,10 @@ Its exact source, license, checksums, compile options, and warning boundary are
 recorded in [`third_party/README.md`](../third_party/README.md). Do not format
 or modify vendored source. Dependency updates require a new reviewed pin.
 
+The generated MVP performance profile and non-installed measurement driver are documented in the
+[benchmark guide](../tests/benchmark/README.md). Generated benchmark inputs belong below `build/`
+and must not be committed.
+
 ## Setup and verification
 
 Configure, build, and test the Release tree:

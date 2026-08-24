@@ -8,6 +8,14 @@ ltfa_enable_warnings(ltfa_smoke_test)
 
 add_test(NAME ltfa.smoke COMMAND ltfa_smoke_test)
 
+add_executable(ltfa_benchmark_driver EXCLUDE_FROM_ALL
+    benchmark/benchmark_driver.cpp
+)
+target_link_libraries(ltfa_benchmark_driver PRIVATE ltfa::core)
+target_compile_features(ltfa_benchmark_driver PRIVATE cxx_std_17)
+set_target_properties(ltfa_benchmark_driver PROPERTIES CXX_EXTENSIONS OFF)
+ltfa_enable_warnings(ltfa_benchmark_driver)
+
 add_executable(ltfa_yyjson_vendor_test
     yyjson_vendor_test.cpp
 )
