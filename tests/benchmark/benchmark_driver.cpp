@@ -121,6 +121,7 @@ int benchmark_observations(const std::filesystem::path &model_root,
         }
         return 1;
     }
+    payload.reset();
     auto evidence = ltfa::build_evidence_index(*model, std::move(decoded.observations),
                                                std::move(*analysis_at.timestamp));
     const auto finish = Clock::now();

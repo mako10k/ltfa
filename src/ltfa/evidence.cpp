@@ -336,6 +336,10 @@ EvidenceIndexResult build_evidence_index(const NormalizedModel &model,
         resolved.push_back({std::move(observation), probe.id, *observed_instant});
     }
 
+    // The observations now live in resolved. Release the moved-from backing array before
+    // allocating the indexed representation.
+    std::vector<Observation>{}.swap(observations);
+
     std::sort(resolved.begin(), resolved.end(), resolved_less);
 
     EvidenceIndex index;

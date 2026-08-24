@@ -5,7 +5,7 @@ Date: 2026-08-24
 Task: `MVP_PIN_BENCHMARK_TARGETS`
 
 Status: implemented, cross-architecture verified, accepted by the owner, committed, and advanced;
-the formal benchmark measurement remains active
+the formal benchmark measurement remains active under accepted ADR 0013
 
 ## Claim
 
@@ -75,6 +75,17 @@ The validation runs indicate a likely RSS target miss on both hosts and likely t
 aarch64. `MVP_BENCHMARK_ACCEPTANCE` must repeat the pinned protocol, report every run, and profile
 misses rather than weakening safety checks.
 
+## Accepted target disposition
+
+ADR 0013 retains the original 64/96-MiB RSS values as non-blocking stretch targets and establishes
+96/256-MiB x86_64 MVP ceilings. The 1/2-second x86_64 elapsed-time ceilings and 8-MiB stripped
+binary ceiling remain unchanged. The aarch64 host remains mandatory for byte-identical fixtures,
+semantic parity, the complete Release suite, and no thermal throttling; its numeric performance is
+recorded and qualified rather than used as a second hardware gate.
+
+This disposition does not change fixture size, run count, measurement boundaries, resource limits,
+validation, sanitizers, or the offline core boundary.
+
 ## Actions
 
 - `A-BENCH-001` 🚀 [implemented] — Added the deterministic generator and non-installed measurement
@@ -85,6 +96,8 @@ misses rather than weakening safety checks.
   history in `823dc9926b09ac70bd7b9817094415ef3fb825c4`, and advanced
   `MVP_PIN_BENCHMARK_TARGETS` with the repository-history and acceptance guards passing. References
   `C-BENCH-001`.
+- `A-BENCH-004` 🚀 [executed] — Recorded the owner-approved two-tier disposition in ADR 0013 while
+  preserving the original provisional results. References `C-BENCH-001`.
 
 Formal five-run results are recorded in `docs/acceptance/mvp-benchmark-acceptance.md`.
 

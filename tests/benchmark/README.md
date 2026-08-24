@@ -1,8 +1,8 @@
 # LTFA MVP benchmark profile
 
 This directory contains the non-installed fixture generator and measurement driver for the
-provisional MVP performance targets. They are not part of the normal CTest suite and do not change
-the one-shot offline product boundary.
+governed MVP and stretch performance targets. They are not part of the normal CTest suite and do
+not change the one-shot offline product boundary.
 
 ## Pinned profile
 
@@ -90,7 +90,12 @@ strip --strip-all build/benchmark-artifacts/ltfa.stripped
 stat -c 'stripped_binary_bytes=%s' build/benchmark-artifacts/ltfa.stripped
 ```
 
-The targets remain provisional: model time at most 1 second, model peak RSS at most 64 MiB,
-observation time at most 2 seconds, total peak RSS at most 96 MiB, and stripped binary size at most
-8 MiB. A miss is recorded and investigated; it never authorizes removal of validation or resource
-limits.
+ADR 0013 governs the accepted two-tier targets. On the x86_64 reference host, the MVP ceilings are
+model time at most 1 second, model peak RSS at most 96 MiB, observation time at most 2 seconds,
+total peak RSS at most 256 MiB, and stripped binary size at most 8 MiB. The original 64-MiB model
+and 96-MiB total RSS values remain recorded as non-blocking stretch targets.
+
+The aarch64 host is a required portability gate: fixture hashes and semantic counts must match,
+the Release suite must pass, and the accepted sample must not be thermally throttled. Its numeric
+performance is recorded and qualified but is not compared to the x86_64 ceilings. A miss never
+authorizes removal of validation or resource limits.

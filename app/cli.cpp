@@ -1059,7 +1059,7 @@ int run_diagnose(const CommandDescriptor &command, const ParsedArguments &parsed
             "restricted model IDs require --include-restricted for diagnosis", json);
     }
     std::string input_error;
-    const auto observation_text =
+    auto observation_text =
         read_observation_file(options->model.model_root, options->observations, input_error);
     if (!observation_text.has_value()) {
         return emit_operation_diagnostic(output, error, command, kExitInput, "LTOBS-001",
@@ -1070,7 +1070,7 @@ int run_diagnose(const CommandDescriptor &command, const ParsedArguments &parsed
         return emit_operation_diagnostic(output, error, command, kExitValidation, "LTOBS-002",
                                          "--analysis-at must be a valid RFC3339 timestamp", json);
     }
-    const auto decoded = decode_observation_json_lines(
+    auto decoded = decode_observation_json_lines(
         *observation_text, StringId{static_cast<std::uint32_t>(model.strings.size())},
         kDefaultModelLimits);
     if (!decoded.ok()) {
@@ -1079,7 +1079,9 @@ int run_diagnose(const CommandDescriptor &command, const ParsedArguments &parsed
                                                                    : "observation decoding failed",
                                          json);
     }
-    auto indexed = build_evidence_index(model, decoded.observations, *reference_time.timestamp);
+    observation_text.reset();
+    auto indexed =
+        build_evidence_index(model, std::move(decoded.observations), *reference_time.timestamp);
     if (!indexed.ok()) {
         return emit_operation_diagnostic(
             output, error, command, kExitValidation, "LTOBS-004",
