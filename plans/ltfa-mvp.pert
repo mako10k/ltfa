@@ -57,28 +57,14 @@ resource REVIEW:
 
 
 
-milestone SLICE3_ACCEPTED:
-  title "Observation diagnosis slice accepted"
-  state reached
 
-milestone CUT_READY:
-  title "Bounded cut analysis ready"
-  state reached
 
-milestone NEXT_OBSERVATION_READY:
-  title "Next-observation recommendation ready"
-  state reached
 
-milestone SLICE4_INTEGRATED:
-  title "Advanced analysis inputs integrated"
-  state reached
 
-milestone SLICE4_ACCEPTED:
-  title "Bounded advanced analysis slice accepted"
-  state reached
 
 milestone BENCHMARK_TARGETS_READY:
   title "Prototype benchmark targets pinned"
+  state reached
 
 milestone MVP_ACCEPTED:
   title "Offline MVP prototype accepted"
@@ -106,73 +92,11 @@ milestone MVP_ACCEPTED:
 
 
 
-task M4_BOUNDED_CUTS SLICE3_ACCEPTED -> CUT_READY:
-  title "Implement bounded service cuts and domain scenarios"
-  description "Add node splitting and bounded max-flow for node and edge cuts of size one and two, result and work budgets, failure-domain scenario sets, and structured incomplete results."
-  estimate:
-    optimistic 3p
-    most_likely 5p
-    pessimistic 8p
-  status done
-  priority 90
-  requires:
-    CODEX 1
-  owner "codex"
-  tags [slice4, analysis]
-  source "requirements REQ-ANL-004..006, REQ-PERF-006; basic design section 10.3"
 
-task M4_NEXT_OBSERVATION SLICE3_ACCEPTED -> NEXT_OBSERVATION_READY:
-  title "Implement next-useful-observation recommendations"
-  description "Compare registered but absent probes for tied hypotheses, select deterministic evidence-gathering suggestions, and state clearly that recommendations never execute a probe."
-  estimate:
-    optimistic 2p
-    most_likely 3p
-    pessimistic 5p
-  status done
-  priority 80
-  requires:
-    CODEX 1
-  owner "codex"
-  tags [slice4, diagnosis]
-  source "requirements MVP-2; basic design section 10.8"
 
-gate M4_CUT_GATE CUT_READY -> SLICE4_INTEGRATED:
-  reason "Slice 4 acceptance requires bounded cut analysis"
 
-gate M4_OBSERVATION_GATE NEXT_OBSERVATION_READY -> SLICE4_INTEGRATED:
-  reason "Slice 4 acceptance requires non-executing observation recommendations"
 
-task M4_ACCEPTANCE SLICE4_INTEGRATED -> SLICE4_ACCEPTED:
-  title "Accept bounded advanced analysis"
-  description "Verify cut-size and work bounds, common-domain scenarios, deterministic incomplete results, recommendation-only observation gaps, output stability, and offline safety."
-  estimate:
-    optimistic 1p
-    most_likely 2p
-    pessimistic 3p
-  status done
-  priority 100
-  requires:
-    CODEX 1
-    REVIEW 1
-  owner "codex"
-  tags [slice4, acceptance]
-  source "basic design slice 4; requirements REQ-ANL-004..006, REQ-PERF-006"
 
-task MVP_PIN_BENCHMARK_TARGETS CLI_WIRED -> BENCHMARK_TARGETS_READY:
-  title "Pin prototype benchmark hosts and fixtures"
-  description "Select and record reproducible x86_64 and aarch64 hosts, compilers, build profiles, 10k/50k graph fixture, 100k observation fixture, measurement commands, and acceptance caveats."
-  estimate:
-    optimistic 1p
-    most_likely 2p
-    pessimistic 3p
-  status done
-  priority 100
-  requires:
-    CODEX 1
-    REVIEW 1
-  owner "codex"
-  tags [prototype, performance]
-  source "requirements REQ-PERF-001..006, AC-010; design review finding REV-012"
 
 task MVP_BENCHMARK_ACCEPTANCE BENCHMARK_TARGETS_READY -> MVP_ACCEPTED:
   title "Measure and accept the offline MVP prototype"
@@ -190,62 +114,13 @@ task MVP_BENCHMARK_ACCEPTANCE BENCHMARK_TARGETS_READY -> MVP_ACCEPTED:
   tags [prototype, acceptance, performance]
   source "requirements AC-001..010; basic design section 14; design review prototype approval conditions"
 
-task M4_CLI_WIRING SLICE4_ACCEPTED -> CLI_WIRED:
-  title "Wire Slice 4 analyses into the CLI"
-  description "Define and implement offline CLI commands for bounded cuts and observation diagnosis with next-observation recommendations, including deterministic human and JSON output, bounded input, exit statuses, help, acceptance, install, and offline safety."
-  estimate:
-    optimistic 3p
-    most_likely 5p
-    pessimistic 8p
-  status done
-  priority 100
-  requires:
-    CODEX 1
-    REVIEW 1
-  owner "codex"
-  tags [slice4, cli, acceptance]
-  source "user request 2026-08-19; CLI Contract 2 compatibility boundary"
 
-work_event m4-bounded-cuts-a86a5e8:
-  model 1
-  task M4_BOUNDED_CUTS
-  kind finish
-  occurred_at 2026-08-19T00:00:00+09:00
 
-work_event m4-next-observation-11dc71d:
-  model 1
-  task M4_NEXT_OBSERVATION
-  kind finish
-  occurred_at 2026-08-19T01:00:00+09:00
 
-work_event m4-acceptance-9d2db8f:
-  model 1
-  task M4_ACCEPTANCE
-  kind finish
-  occurred_at 2026-08-19T02:00:00+09:00
 
-milestone CLI_WIRED:
-  title "Slice 4 CLI wiring accepted"
-  state reached
 
-work_event m4-cli-wiring-baf7001:
-  model 1
-  task M4_CLI_WIRING
-  kind finish
-  occurred_at 2026-08-19T03:00:00+09:00
 
-work_event mvp-benchmark-targets-start-20260824:
-  model 1
-  task MVP_PIN_BENCHMARK_TARGETS
-  kind start
-  occurred_at 2026-08-24T17:34:40+09:00
-  planned_value 2p
 
-work_event mvp-benchmark-targets-finish-20260824:
-  model 1
-  task MVP_PIN_BENCHMARK_TARGETS
-  kind finish
-  occurred_at 2026-08-24T17:35:02+09:00
 
 milestone_criterion_set BENCHMARK_TARGETS_READY_R1:
   milestone BENCHMARK_TARGETS_READY

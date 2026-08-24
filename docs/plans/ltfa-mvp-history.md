@@ -763,5 +763,10 @@ claims, evidence, host inventory, hashes, commands, and boundaries are recorded 
 The owner explicitly approved the PERT transition on 2026-08-24. The post-completion,
 pre-migration digest was
 `sha256:3efc65b7e3b36eb06a04ad9bdcda22e830e8934521888d8550dec1bd7cb370e2`; after the
-Grammar 7 migration and owner-acceptance receipt, the pre-advance digest was
-`sha256:7abd1353a96379a6eb26efae0640cf9e29817821a16d03f24a722789f0f26a30`.
+Grammar 7 migration and owner-acceptance receipt, the digest was
+`sha256:7abd1353a96379a6eb26efae0640cf9e29817821a16d03f24a722789f0f26a30`. Starting the
+successor task produced the actual pre-advance digest
+`sha256:1e7314eee0bd250e67ac72017d274e1bdef0df8f804bb1ab4b5fb70af304094f`. The
+repository-history proof matched commit `823dc9926b09ac70bd7b9817094415ef3fb825c4`, and guarded
+advancement produced digest
+`sha256:7b816abff2bdf70eb0c90c00e2aa71bac10863e39bcac01b30e6eedbf4499bdd`.

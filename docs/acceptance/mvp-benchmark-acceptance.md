@@ -4,7 +4,8 @@ Date: 2026-08-24
 
 Task: `MVP_BENCHMARK_ACCEPTANCE`
 
-Status: measurement complete; qualified target misses and source-snapshot acceptance remain open
+Status: measurement complete and source snapshot sealed; qualified target disposition and final
+owner acceptance remain open
 
 ## Claim
 
@@ -25,8 +26,8 @@ RSS targets. These results do not yet justify `MVP_ACCEPTED`.
 - `E-BENCH-ACC-003` — Release CTest passed 49/49 on both hosts after measurement.
 - `E-BENCH-ACC-004` — The Raspberry Pi reported `schedutil`, 66.7°C before and 67.6°C after the
   sample, with `get_throttled=0x0` both before and after.
-- `E-BENCH-ACC-005` — The source basis is commit
-  `640c2d133e013180cb90c3960345cbc5e1df80a7` plus the current uncommitted benchmark and documentation
+- `E-BENCH-ACC-005` — At measurement time, the source basis was commit
+  `640c2d133e013180cb90c3960345cbc5e1df80a7` plus the then-uncommitted benchmark and documentation
   changes. The copied aarch64 tree has no Git metadata, so its correspondence is established by the
   copied source tree, identical fixtures, build output, and semantic readback rather than a remote
   Git revision readback.
@@ -38,6 +39,8 @@ RSS targets. These results do not yet justify `MVP_ACCEPTED`.
   allocator-overhead bytes. The decoded observation vector (67,108,864 bytes), resolved-observation
   workspace (53,600,000 bytes), indexed-observation vector (52,800,000 bytes), and retained input
   payload (23,588,891 bytes) account for 86.0% of the useful peak.
+- `E-BENCH-ACC-008` — Commit `823dc9926b09ac70bd7b9817094415ef3fb825c4` seals the generator,
+  benchmark driver, protocol, result report, raw-evidence hashes, and pre-advance PERT/history state.
 
 ## Five-run results
 
@@ -103,8 +106,9 @@ needed before treating the dedicated driver's RSS as a product-path upper bound.
 - `R-BENCH-ACC-002` 🧠 — Referencing the target table, passing time and binary targets cannot
   compensate for two failed RSS targets. The result is qualified evidence, not an unqualified MVP
   acceptance.
-- `R-BENCH-ACC-003` 🧠 — Referencing `E-BENCH-ACC-005`, final acceptance also needs a sealed source
-  snapshot so the measured binaries can be reproduced from a reviewable revision.
+- `R-BENCH-ACC-003` 🧠 — Referencing `E-BENCH-ACC-005` and `E-BENCH-ACC-008`, the measured source
+  basis is now reviewable from a sealed repository snapshot; final acceptance still depends on the
+  governed disposition of the measured target misses.
 - `R-BENCH-ACC-004` 🧠 — Referencing `E-BENCH-ACC-006..007`, both RSS misses have identified
   structural high-water causes. Meeting the existing limits requires lifecycle/streaming changes or
   an explicitly governed target revision; measurement noise cannot justify promotion.
@@ -117,11 +121,14 @@ needed before treating the dedicated driver's RSS as a product-path upper bound.
   sizes and Pi thermal/throttle state. References `C-BENCH-ACC-001`.
 - `A-BENCH-ACC-003` 🧪 [executed] — Collected allocation-level evidence for both RSS misses without
   changing the measured build. References `C-BENCH-ACC-001`.
-- `A-BENCH-ACC-004` ⛔ [pending] — Seal a reviewable source snapshot and obtain explicit owner
-  acceptance before finishing the PERT task or reaching `MVP_ACCEPTED`. References
-  `C-BENCH-ACC-001`.
+- `A-BENCH-ACC-004` ⛔ [pending] — Obtain explicit owner acceptance after the target misses are
+  optimized or formally qualified; do not finish the PERT task or reach `MVP_ACCEPTED` first.
+  References `C-BENCH-ACC-001`.
 - `A-BENCH-ACC-005` ⛔ [pending] — Review an optimization design for parser high-water memory,
   observation representation lifetimes, and the CLI copy before implementation or target revision.
+  References `C-BENCH-ACC-001`.
+- `A-BENCH-ACC-006` 🚀 [executed] — Sealed the reproducible harness, evidence report, and
+  pre-advance PERT/history state in commit `823dc9926b09ac70bd7b9817094415ef3fb825c4`.
   References `C-BENCH-ACC-001`.
 
 ## Raw evidence

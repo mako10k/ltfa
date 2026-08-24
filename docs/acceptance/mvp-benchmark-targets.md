@@ -4,8 +4,8 @@ Date: 2026-08-24
 
 Task: `MVP_PIN_BENCHMARK_TARGETS`
 
-Status: implemented, cross-architecture verified, and accepted by the owner; the formal benchmark
-measurement is active, while historical PERT pruning remains pending repository correspondence
+Status: implemented, cross-architecture verified, accepted by the owner, committed, and advanced;
+the formal benchmark measurement remains active
 
 ## Claim
 
@@ -81,9 +81,10 @@ misses rather than weakening safety checks.
   driver. References `C-BENCH-001`.
 - `A-BENCH-002` 🧪 [executed] — Generated and processed the exact profile on both architectures and
   compared hashes and semantic counts. References `C-BENCH-001`.
-- `A-BENCH-003` 🚀 [executing] — Record the explicit owner acceptance and advance
-  `MVP_PIN_BENCHMARK_TARGETS`. Closure and acceptance are recorded; destructive historical pruning
-  remains blocked by its repository-correspondence guard. References `C-BENCH-001`.
+- `A-BENCH-003` 🚀 [executed] — Recorded explicit owner acceptance, committed the corresponding
+  history in `823dc9926b09ac70bd7b9817094415ef3fb825c4`, and advanced
+  `MVP_PIN_BENCHMARK_TARGETS` with the repository-history and acceptance guards passing. References
+  `C-BENCH-001`.
 
 Formal five-run results are recorded in `docs/acceptance/mvp-benchmark-acceptance.md`.
 
