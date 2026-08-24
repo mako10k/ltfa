@@ -223,3 +223,16 @@ milestone_acceptance_receipt RCPT_EVIDENCE_COMMITTED_20260824:
   evidence_revision c68d890b1e9031bb3f131365f08c142692dd7b32
   verifier codex
   occurred_at 2026-08-24T09:59:56Z
+
+milestone_acceptance_receipt RCPT_MVP_OWNER_ACCEPTED_20260824:
+  model 1
+  set MVP_ACCEPTED_R1
+  set_commitment sha256:14be3fcb25e1f947a78253e9860b4e61d1ca0cc3c7bd17c9bb07cf673c43c2c1
+  criterion MVP_OWNER_ACCEPTED
+  criterion_commitment sha256:1bbc28fda34739a5a5ba73ab5006b565893c1053e6fc72752a4329000d19bfb1
+  action verify
+  evidence_kind owner
+  evidence_reference "Owner accepts the optimized offline MVP evidence sealed through Git commit 882b58518a98653a50baf19795001a32acfad9d9 and authorizes completion"
+  evidence_revision 882b58518a98653a50baf19795001a32acfad9d9
+  verifier user
+  occurred_at 2026-08-24T10:13:54Z
