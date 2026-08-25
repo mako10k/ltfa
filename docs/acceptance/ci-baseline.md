@@ -4,8 +4,7 @@ Date: 2026-08-25
 
 Task: `ESTABLISH_CI_BASELINE`
 
-Status: local and GitHub-hosted validation passed; CI task and milestone acceptance complete;
-history commit and PERT advance pending
+Status: local and GitHub-hosted validation passed; CI task and milestone accepted and advanced
 
 ## Claims
 
@@ -58,7 +57,7 @@ the same candidate passed both local and hosted validation.
 - `A-CI-004` [executed] — Obtain owner acceptance of the exact Grammar 7 milestone criteria,
   declare those criteria, and finish `ESTABLISH_CI_BASELINE`.
 - `A-CI-005` [executed] — Persist the six exact evidence receipts after owner confirmation.
-- `A-CI-006` [pending] — Commit the task history and then advance the accepted milestones without
+- `A-CI-006` [executed] — Commit the task history and advance the accepted milestones without
   bypassing the history-loss guard.
 
 ## Local validation results

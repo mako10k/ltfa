@@ -12,19 +12,6 @@ project LTFA_V030A2_ONBOARDING:
   dag_delegates [codex]
 
 
-milestone_acceptance_migration GRAMMAR_7_BASELINE:
-  model 1
-  repository git:sha1:7e730257a07417530e426285a8ee2859c058e8e6:index:39378e2ae1c04b187caf4c304ecf04b73ad6db77
-  path "plans/v0.3.0-alpha.2-onboarding.pert"
-  object_format sha1
-  head 7e730257a07417530e426285a8ee2859c058e8e6
-  blob 39378e2ae1c04b187caf4c304ecf04b73ad6db77
-  source_digest sha256:ec00e98c518d35e4a5c181ffec4408dda571b30f18fccc362dbe42cdd8e2c5ee
-  candidate_digest sha256:c031a61282dd2e257eaa4a87f2453578f6b32c5bb6f706f27536cd58a340eb77
-  grandfathered ISSUE_REGISTERED
-milestone ISSUE_REGISTERED:
-  title "Issue #2 registered"
-  state reached
 
 resource CODEX:
   title "LTFA implementation capacity"
@@ -36,13 +23,11 @@ resource REVIEW:
   description "Serialize ADR, security, and outcome review"
   capacity 1
 
-milestone EVIDENCE_RECONCILED:
-  title "Accepted MVP evidence reconciled"
-  description "Current summaries reflect final owner acceptance and PERT closure without rewriting historical measurements or hashes."
 
 milestone CI_BASELINE_READY:
   title "Continuous validation baseline ready"
   description "Pinned least-privilege CI covers supported Release and safety gates without secrets or live endpoints."
+  state reached
 
 milestone GUIDE_CONTRACT_REVIEWED:
   title "Observation Guide contract reviewed"
@@ -64,37 +49,7 @@ milestone V030A2_CANDIDATE_ACCEPTED:
   title "v0.3.0-alpha.2 candidate accepted"
   description "The owner accepts the bounded candidate evidence; tag and Release publication remain separate."
 
-task RECONCILE_ACCEPTANCE_STATUS ISSUE_REGISTERED -> EVIDENCE_RECONCILED:
-  title "Reconcile accepted MVP status"
-  description "Add traceable post-acceptance dispositions to stale ADR and acceptance summaries while preserving historical measurements, hashes, and evidence claims."
-  estimate:
-    optimistic 1p
-    most_likely 2p
-    pessimistic 3p
-  status done
-  priority 100
-  requires:
-    CODEX 1
-    REVIEW 1
-  owner "codex"
-  tags [documentation, evidence]
-  source "GitHub Issue #2 https://github.com/mako10k/ltfa/issues/2"
 
-task ESTABLISH_CI_BASELINE EVIDENCE_RECONCILED -> CI_BASELINE_READY:
-  title "Establish pinned continuous validation"
-  description "Add least-privilege GitHub Actions for supported GCC and Clang Release, sanitizer, fuzz-seed, install-smoke, and offline-boundary gates with actions pinned by immutable SHA."
-  estimate:
-    optimistic 2p
-    most_likely 3p
-    pessimistic 5p
-  status done
-  priority 90
-  requires:
-    CODEX 1
-    REVIEW 1
-  owner "codex"
-  tags [ci, testing, security]
-  source "GitHub Issue #2 https://github.com/mako10k/ltfa/issues/2"
 
 task DESIGN_OBSERVATION_GUIDE CI_BASELINE_READY -> GUIDE_CONTRACT_REVIEWED:
   title "Design the observation Guide contract"
@@ -103,7 +58,7 @@ task DESIGN_OBSERVATION_GUIDE CI_BASELINE_READY -> GUIDE_CONTRACT_REVIEWED:
     optimistic 1p
     most_likely 2p
     pessimistic 3p
-  status planned
+  status done
   priority 80
   requires:
     CODEX 1
@@ -148,33 +103,6 @@ task VERIFY_V030A2_CANDIDATE DIAGNOSIS_ONBOARDING_READY -> CANDIDATE_EVIDENCE_RE
 
 gate OWNER_CANDIDATE_APPROVAL CANDIDATE_EVIDENCE_READY -> V030A2_CANDIDATE_ACCEPTED:
   reason "The user must accept the exact candidate evidence; this gate does not authorize a tag, GitHub Release, stable promotion, or publication."
-
-work_event reconcile-acceptance-status-start-20260825:
-  model 1
-  task RECONCILE_ACCEPTANCE_STATUS
-  kind start
-  occurred_at 2026-08-25T10:27:21+09:00
-  planned_value 2p
-
-work_event reconcile-acceptance-status-finish-20260825:
-  model 1
-  task RECONCILE_ACCEPTANCE_STATUS
-  kind finish
-  occurred_at 2026-08-25T10:33:24+09:00
-
-work_event establish-ci-baseline-start-20260825:
-  model 1
-  task ESTABLISH_CI_BASELINE
-  kind start
-  occurred_at 2026-08-25T10:35:41+09:00
-  planned_value 19/6p
-
-milestone_criterion_set EVIDENCE_RECONCILED_R1:
-  milestone EVIDENCE_RECONCILED
-  revision R1
-  commitment sha256:ace28594e7e1d53249fd280a03171e5e9fca07c8b13ad18c599c74c7907466d5
-  criterion MVP_STATUS_CURRENT required test "Current MVP PERT reports MVP_ACCEPTED with no blocking criterion"
-  criterion HISTORY_RECONCILED required artifact "Post-acceptance ADR and acceptance dispositions are committed without rewriting historical evidence"
 
 milestone_criterion_set CI_BASELINE_READY_R1:
   milestone CI_BASELINE_READY
@@ -222,37 +150,6 @@ milestone_criterion_set V030A2_CANDIDATE_ACCEPTED_R1:
   commitment sha256:17b58f1e3cbcebfcd83e74dba02c8697296436ab7340cd6081951f220a7efcf5
   criterion CANDIDATE_OWNER_ACCEPTED required owner "Owner accepts the exact bounded candidate evidence"
 
-work_event establish-ci-baseline-finish-20260825:
-  model 1
-  task ESTABLISH_CI_BASELINE
-  kind finish
-  occurred_at 2026-08-25T11:15:20+09:00
-
-milestone_acceptance_receipt RCPT_MVP_STATUS_CURRENT_20260825:
-  model 1
-  set EVIDENCE_RECONCILED_R1
-  set_commitment sha256:ace28594e7e1d53249fd280a03171e5e9fca07c8b13ad18c599c74c7907466d5
-  criterion MVP_STATUS_CURRENT
-  criterion_commitment sha256:7f0039b01b7eca0a90351af56b44194bf8c8a4c51571901954d0073f9205439d
-  action verify
-  evidence_kind test
-  evidence_reference "perttool dag next plans/ltfa-mvp.pert reports MVP_ACCEPTED accepted with no blocking required criteria; source digest sha256:27dc24627077cdb8f30310e3aeca88c5e6717383c6a29be7a156cdfada439858"
-  evidence_revision 6a286b105b9536c191db45552c35513e537ae347
-  verifier codex
-  occurred_at 2026-08-25T02:20:00Z
-
-milestone_acceptance_receipt RCPT_HISTORY_RECONCILED_20260825:
-  model 1
-  set EVIDENCE_RECONCILED_R1
-  set_commitment sha256:ace28594e7e1d53249fd280a03171e5e9fca07c8b13ad18c599c74c7907466d5
-  criterion HISTORY_RECONCILED
-  criterion_commitment sha256:b8b6908609ef1242687efe94e97e445bff582013c715a1fa92b99bbf9ed613f5
-  action verify
-  evidence_kind artifact
-  evidence_reference "Git commit 7e730257a07417530e426285a8ee2859c058e8e6 appends final MVP dispositions to acceptance records, ADRs 0012 and 0013, and plan history while preserving historical measurements and hashes"
-  evidence_revision 7e730257a07417530e426285a8ee2859c058e8e6
-  verifier codex
-  occurred_at 2026-08-25T02:20:00Z
 
 milestone_acceptance_receipt RCPT_PINNED_LEAST_PRIVILEGE_20260825:
   model 1
@@ -305,3 +202,16 @@ milestone_acceptance_receipt RCPT_CI_EVIDENCE_COMMITTED_20260825:
   evidence_revision da30e85085172756a816b7c66bdffd1daa6523e4
   verifier codex
   occurred_at 2026-08-25T02:20:00Z
+
+work_event design-observation-guide-start-20260825:
+  model 1
+  task DESIGN_OBSERVATION_GUIDE
+  kind start
+  occurred_at 2026-08-25T11:22:39+09:00
+  planned_value 2p
+
+work_event design-observation-guide-finish-20260825:
+  model 1
+  task DESIGN_OBSERVATION_GUIDE
+  kind finish
+  occurred_at 2026-08-25T11:27:30+09:00
