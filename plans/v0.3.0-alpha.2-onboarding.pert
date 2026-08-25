@@ -1,0 +1,139 @@
+# Existing .pert plans should normally be maintained through perttool commands; direct DSL editing bypasses goal/DAG owner-confirmation checks.
+project LTFA_V030A2_ONBOARDING:
+  version 6
+  title "LTFA v0.3.0-alpha.2 onboarding and validation"
+  description "Implement GitHub Issue #2 in governed sequence: reconcile accepted-MVP evidence, add reproducible CI, review the observation-guide contract, implement installed diagnosis onboarding, and record candidate evidence. Excludes tags, GitHub Release publication, stable promotion, active probes, SDK installation, and parser streaming."
+  as_of 2026-08-25
+  duration_unit point
+  velocity 1p/1d
+  finish V030A2_CANDIDATE_ACCEPTED
+  goal_owner user
+  dag_owner user
+  dag_delegates [codex]
+
+milestone ISSUE_REGISTERED:
+  title "Issue #2 registered"
+  state reached
+
+resource CODEX:
+  title "LTFA implementation capacity"
+  description "Serialize implementation and validation work in this checkout"
+  capacity 1
+
+resource REVIEW:
+  title "Contract and acceptance review capacity"
+  description "Serialize ADR, security, and outcome review"
+  capacity 1
+
+milestone EVIDENCE_RECONCILED:
+  title "Accepted MVP evidence reconciled"
+  description "Current summaries reflect final owner acceptance and PERT closure without rewriting historical measurements or hashes."
+
+milestone CI_BASELINE_READY:
+  title "Continuous validation baseline ready"
+  description "Pinned least-privilege CI covers supported Release and safety gates without secrets or live endpoints."
+
+milestone GUIDE_CONTRACT_REVIEWED:
+  title "Observation Guide contract reviewed"
+  description "A proposed ADR defines domain separation, public routes, schemas, error navigation, completion, and compatibility."
+
+milestone GUIDE_CONTRACT_ACCEPTED:
+  title "Observation Guide contract accepted"
+  description "The owner accepts the exact proposed ADR before public Guide implementation begins."
+
+milestone DIAGNOSIS_ONBOARDING_READY:
+  title "Installed diagnosis onboarding ready"
+  description "Observation guidance, Action Navigation, completion, and the installed synthetic diagnosis example pass focused tests."
+
+milestone CANDIDATE_EVIDENCE_READY:
+  title "Candidate evidence ready"
+  description "Complete local, CI, install, offline, sanitizer, fuzz, and qualified aarch64 evidence is recorded."
+
+milestone V030A2_CANDIDATE_ACCEPTED:
+  title "v0.3.0-alpha.2 candidate accepted"
+  description "The owner accepts the bounded candidate evidence; tag and Release publication remain separate."
+
+task RECONCILE_ACCEPTANCE_STATUS ISSUE_REGISTERED -> EVIDENCE_RECONCILED:
+  title "Reconcile accepted MVP status"
+  description "Add traceable post-acceptance dispositions to stale ADR and acceptance summaries while preserving historical measurements, hashes, and evidence claims."
+  estimate:
+    optimistic 1p
+    most_likely 2p
+    pessimistic 3p
+  status planned
+  priority 100
+  requires:
+    CODEX 1
+    REVIEW 1
+  owner "codex"
+  tags [documentation, evidence]
+  source "GitHub Issue #2 https://github.com/mako10k/ltfa/issues/2"
+
+task ESTABLISH_CI_BASELINE EVIDENCE_RECONCILED -> CI_BASELINE_READY:
+  title "Establish pinned continuous validation"
+  description "Add least-privilege GitHub Actions for supported GCC and Clang Release, sanitizer, fuzz-seed, install-smoke, and offline-boundary gates with actions pinned by immutable SHA."
+  estimate:
+    optimistic 2p
+    most_likely 3p
+    pessimistic 5p
+  status planned
+  priority 90
+  requires:
+    CODEX 1
+    REVIEW 1
+  owner "codex"
+  tags [ci, testing, security]
+  source "GitHub Issue #2 https://github.com/mako10k/ltfa/issues/2"
+
+task DESIGN_OBSERVATION_GUIDE CI_BASELINE_READY -> GUIDE_CONTRACT_REVIEWED:
+  title "Design the observation Guide contract"
+  description "Create and audit a proposed ADR against ADRs 0007, 0012, and 0015, covering public routes, structured output, error navigation, completion, compatibility, and offline boundaries."
+  estimate:
+    optimistic 1p
+    most_likely 2p
+    pessimistic 3p
+  status planned
+  priority 80
+  requires:
+    CODEX 1
+    REVIEW 1
+  owner "codex"
+  tags [design, adr, guide]
+  source "GitHub Issue #2 https://github.com/mako10k/ltfa/issues/2"
+
+gate OWNER_GUIDE_APPROVAL GUIDE_CONTRACT_REVIEWED -> GUIDE_CONTRACT_ACCEPTED:
+  reason "The user must accept the exact observation Guide ADR before implementation; planning approval alone does not accept the public contract."
+
+task IMPLEMENT_DIAGNOSIS_ONBOARDING GUIDE_CONTRACT_ACCEPTED -> DIAGNOSIS_ONBOARDING_READY:
+  title "Implement installed diagnosis onboarding"
+  description "Implement descriptor-backed observation guidance, help and error navigation, bash completion, a synthetic installed diagnosis example, and focused success and failure tests under the accepted ADR."
+  estimate:
+    optimistic 3p
+    most_likely 5p
+    pessimistic 8p
+  status planned
+  priority 70
+  requires:
+    CODEX 1
+  owner "codex"
+  tags [feature, guide, examples, testing]
+  source "GitHub Issue #2 https://github.com/mako10k/ltfa/issues/2"
+
+task VERIFY_V030A2_CANDIDATE DIAGNOSIS_ONBOARDING_READY -> CANDIDATE_EVIDENCE_READY:
+  title "Verify and record the bounded candidate"
+  description "Run complete GCC and Clang Release, sanitizers, fuzz seeds, install readback, offline gates, CI readback, and qualified aarch64 portability; record traceable candidate evidence and residual risks."
+  estimate:
+    optimistic 2p
+    most_likely 3p
+    pessimistic 5p
+  status planned
+  priority 60
+  requires:
+    CODEX 1
+    REVIEW 1
+  owner "codex"
+  tags [acceptance, portability, release-candidate]
+  source "GitHub Issue #2 https://github.com/mako10k/ltfa/issues/2"
+
+gate OWNER_CANDIDATE_APPROVAL CANDIDATE_EVIDENCE_READY -> V030A2_CANDIDATE_ACCEPTED:
+  reason "The user must accept the exact candidate evidence; this gate does not authorize a tag, GitHub Release, stable promotion, or publication."
