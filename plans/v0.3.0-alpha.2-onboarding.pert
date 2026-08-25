@@ -1,6 +1,6 @@
 # Existing .pert plans should normally be maintained through perttool commands; direct DSL editing bypasses goal/DAG owner-confirmation checks.
 project LTFA_V030A2_ONBOARDING:
-  version 6
+  version 7
   title "LTFA v0.3.0-alpha.2 onboarding and validation"
   description "Implement GitHub Issue #2 in governed sequence: reconcile accepted-MVP evidence, add reproducible CI, review the observation-guide contract, implement installed diagnosis onboarding, and record candidate evidence. Excludes tags, GitHub Release publication, stable promotion, active probes, SDK installation, and parser streaming."
   as_of 2026-08-25
@@ -11,6 +11,17 @@ project LTFA_V030A2_ONBOARDING:
   dag_owner user
   dag_delegates [codex]
 
+
+milestone_acceptance_migration GRAMMAR_7_BASELINE:
+  model 1
+  repository git:sha1:7e730257a07417530e426285a8ee2859c058e8e6:index:39378e2ae1c04b187caf4c304ecf04b73ad6db77
+  path "plans/v0.3.0-alpha.2-onboarding.pert"
+  object_format sha1
+  head 7e730257a07417530e426285a8ee2859c058e8e6
+  blob 39378e2ae1c04b187caf4c304ecf04b73ad6db77
+  source_digest sha256:ec00e98c518d35e4a5c181ffec4408dda571b30f18fccc362dbe42cdd8e2c5ee
+  candidate_digest sha256:c031a61282dd2e257eaa4a87f2453578f6b32c5bb6f706f27536cd58a340eb77
+  grandfathered ISSUE_REGISTERED
 milestone ISSUE_REGISTERED:
   title "Issue #2 registered"
   state reached
