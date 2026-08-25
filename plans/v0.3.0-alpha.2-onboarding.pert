@@ -197,3 +197,55 @@ work_event verify-v030a2-candidate-start-20260825:
   kind start
   occurred_at 2026-08-25T11:59:14+09:00
   planned_value 19/6p
+
+milestone_acceptance_receipt RCPT_REFERENCE_MATRIX_PASS_20260825:
+  model 1
+  set CANDIDATE_EVIDENCE_READY_R1
+  set_commitment sha256:7a4f29750cb30df5f5cd302895134a0bf7da929a4401c5b171edd2e15a0895fe
+  criterion REFERENCE_MATRIX_PASS
+  criterion_commitment sha256:027d7643cc3df9d69f5c90ec627f5c3aa218014d9065b138a890fb0d39e55aab
+  action verify
+  evidence_kind test
+  evidence_reference "Candidate 8a4468b1a4f20b513b983ddcd7e8ac1b3ee5e3db passed fresh GCC and Clang Release 55/55, GCC ASan/UBSan 43/43, GCC LSan 43/43, and Clang fuzz-seeds 45/45 including install, offline, and Graphviz gates; recorded in docs/acceptance/v0.3.0-alpha.2-candidate.md at 6df84455c7ff61fc41406105589920b8a1d1bbd6"
+  evidence_revision 8a4468b1a4f20b513b983ddcd7e8ac1b3ee5e3db
+  verifier codex
+  occurred_at 2026-08-25T10:12:36Z
+
+milestone_acceptance_receipt RCPT_HOSTED_CI_PASS_20260825:
+  model 1
+  set CANDIDATE_EVIDENCE_READY_R1
+  set_commitment sha256:7a4f29750cb30df5f5cd302895134a0bf7da929a4401c5b171edd2e15a0895fe
+  criterion HOSTED_CI_PASS
+  criterion_commitment sha256:e7c8a5a6d3282980bf08567dcb0138900fd958eeb1701079d90bad7ce847701e
+  action verify
+  evidence_kind test
+  evidence_reference "GitHub Actions run 32835542522 completed success for exact candidate 8a4468b1a4f20b513b983ddcd7e8ac1b3ee5e3db; per-job API readback confirmed the same head_sha and success for gcc-release, clang-release, gcc-asan-ubsan, gcc-lsan, and clang-fuzz-seeds, and authenticated remote main readback matched"
+  evidence_revision 8a4468b1a4f20b513b983ddcd7e8ac1b3ee5e3db
+  verifier codex
+  occurred_at 2026-08-25T10:12:36Z
+
+milestone_acceptance_receipt RCPT_AARCH64_PASS_20260825:
+  model 1
+  set CANDIDATE_EVIDENCE_READY_R1
+  set_commitment sha256:7a4f29750cb30df5f5cd302895134a0bf7da929a4401c5b171edd2e15a0895fe
+  criterion AARCH64_PASS
+  criterion_commitment sha256:c9a896d85b04966f7b4cc23a9cc4bb910df7db79a564f55fd6da583ad7a422d1
+  action verify
+  evidence_kind test
+  evidence_reference "Exact Git archive 1f9178b3d6f92cb3e110751f2842241d32c7240eb0cd55bf9c7483078f5092c8 of candidate 8a4468b1a4f20b513b983ddcd7e8ac1b3ee5e3db passed fresh Raspberry Pi 4 aarch64 Release 55/55, installed onboarding and semantic fixture checks, with get_throttled=0x0 at all recorded checkpoints"
+  evidence_revision 8a4468b1a4f20b513b983ddcd7e8ac1b3ee5e3db
+  verifier codex
+  occurred_at 2026-08-25T10:12:36Z
+
+milestone_acceptance_receipt RCPT_CANDIDATE_EVIDENCE_COMMITTED_20260825:
+  model 1
+  set CANDIDATE_EVIDENCE_READY_R1
+  set_commitment sha256:7a4f29750cb30df5f5cd302895134a0bf7da929a4401c5b171edd2e15a0895fe
+  criterion CANDIDATE_EVIDENCE_COMMITTED
+  criterion_commitment sha256:aaf361da67f4e09852b284c71e89715c77d7f4c1d2a5a3a74f470933726ce287
+  action verify
+  evidence_kind artifact
+  evidence_reference "Git commit 6df84455c7ff61fc41406105589920b8a1d1bbd6 records the active PERT verification event and docs/acceptance/v0.3.0-alpha.2-candidate.md with local, hosted, aarch64, external-write, and residual-risk evidence for validation revision 8a4468b1a4f20b513b983ddcd7e8ac1b3ee5e3db"
+  evidence_revision 6df84455c7ff61fc41406105589920b8a1d1bbd6
+  verifier codex
+  occurred_at 2026-08-25T10:12:36Z
