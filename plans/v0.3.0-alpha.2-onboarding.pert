@@ -24,18 +24,12 @@ resource REVIEW:
   capacity 1
 
 
-milestone CI_BASELINE_READY:
-  title "Continuous validation baseline ready"
-  description "Pinned least-privilege CI covers supported Release and safety gates without secrets or live endpoints."
-  state reached
 
-milestone GUIDE_CONTRACT_REVIEWED:
-  title "Observation Guide contract reviewed"
-  description "A proposed ADR defines domain separation, public routes, schemas, error navigation, completion, and compatibility."
 
 milestone GUIDE_CONTRACT_ACCEPTED:
   title "Observation Guide contract accepted"
   description "The owner accepts the exact proposed ADR before public Guide implementation begins."
+  state reached
 
 milestone DIAGNOSIS_ONBOARDING_READY:
   title "Installed diagnosis onboarding ready"
@@ -51,24 +45,7 @@ milestone V030A2_CANDIDATE_ACCEPTED:
 
 
 
-task DESIGN_OBSERVATION_GUIDE CI_BASELINE_READY -> GUIDE_CONTRACT_REVIEWED:
-  title "Design the observation Guide contract"
-  description "Create and audit a proposed ADR against ADRs 0007, 0012, and 0015, covering public routes, structured output, error navigation, completion, compatibility, and offline boundaries."
-  estimate:
-    optimistic 1p
-    most_likely 2p
-    pessimistic 3p
-  status done
-  priority 80
-  requires:
-    CODEX 1
-    REVIEW 1
-  owner "codex"
-  tags [design, adr, guide]
-  source "GitHub Issue #2 https://github.com/mako10k/ltfa/issues/2"
 
-gate OWNER_GUIDE_APPROVAL GUIDE_CONTRACT_REVIEWED -> GUIDE_CONTRACT_ACCEPTED:
-  reason "The user must accept the exact observation Guide ADR before implementation; planning approval alone does not accept the public contract."
 
 task IMPLEMENT_DIAGNOSIS_ONBOARDING GUIDE_CONTRACT_ACCEPTED -> DIAGNOSIS_ONBOARDING_READY:
   title "Implement installed diagnosis onboarding"
@@ -77,7 +54,7 @@ task IMPLEMENT_DIAGNOSIS_ONBOARDING GUIDE_CONTRACT_ACCEPTED -> DIAGNOSIS_ONBOARD
     optimistic 3p
     most_likely 5p
     pessimistic 8p
-  status planned
+  status active
   priority 70
   requires:
     CODEX 1
@@ -103,22 +80,6 @@ task VERIFY_V030A2_CANDIDATE DIAGNOSIS_ONBOARDING_READY -> CANDIDATE_EVIDENCE_RE
 
 gate OWNER_CANDIDATE_APPROVAL CANDIDATE_EVIDENCE_READY -> V030A2_CANDIDATE_ACCEPTED:
   reason "The user must accept the exact candidate evidence; this gate does not authorize a tag, GitHub Release, stable promotion, or publication."
-
-milestone_criterion_set CI_BASELINE_READY_R1:
-  milestone CI_BASELINE_READY
-  revision R1
-  commitment sha256:4e98a1f65c001b0eed6ef5e07529da270d8033342b7e8386ae159a4bd32c2691
-  criterion PINNED_LEAST_PRIVILEGE required artifact "Workflow uses a full checkout SHA, contents read, no secrets, no pull_request_target, and non-persisted credentials"
-  criterion LOCAL_MATRIX_PASS required test "GCC and Clang Release, ASan UBSan, LSan, and fuzz-seed local suites pass"
-  criterion HOSTED_MATRIX_PASS required test "GitHub Actions five-job matrix passes for the exact remote main SHA"
-  criterion CI_EVIDENCE_COMMITTED required artifact "Local and hosted CI evidence is committed"
-
-milestone_criterion_set GUIDE_CONTRACT_REVIEWED_R1:
-  milestone GUIDE_CONTRACT_REVIEWED
-  revision R1
-  commitment sha256:62801e4f09ce13992e80c5ee2cd61f18087e3715ddd2f2513342342a03eb751e
-  criterion GUIDE_ADR_AUDITED required artifact "Proposed ADR covers domain separation, public routes, schemas, error navigation, completion, compatibility, and offline boundaries"
-  criterion GUIDE_TEST_PLAN_REVIEWED required artifact "Focused success, failure, install, and offline tests are specified before implementation"
 
 milestone_criterion_set GUIDE_CONTRACT_ACCEPTED_R1:
   milestone GUIDE_CONTRACT_ACCEPTED
@@ -151,96 +112,6 @@ milestone_criterion_set V030A2_CANDIDATE_ACCEPTED_R1:
   criterion CANDIDATE_OWNER_ACCEPTED required owner "Owner accepts the exact bounded candidate evidence"
 
 
-milestone_acceptance_receipt RCPT_PINNED_LEAST_PRIVILEGE_20260825:
-  model 1
-  set CI_BASELINE_READY_R1
-  set_commitment sha256:4e98a1f65c001b0eed6ef5e07529da270d8033342b7e8386ae159a4bd32c2691
-  criterion PINNED_LEAST_PRIVILEGE
-  criterion_commitment sha256:3b221f267e8cbf39b0060dcd7e1a6e36baf05933f945ec14e191df756decbba4
-  action verify
-  evidence_kind artifact
-  evidence_reference ".github/workflows/ci.yml and tests/ci_contract_test.cmake pin checkout to 3d3c42e5aac5ba805825da76410c181273ba90b1, grant contents read, disable persisted credentials, and reject secrets and pull_request_target"
-  evidence_revision b74ee0173649358b9fccc23e42f161753c618df5
-  verifier codex
-  occurred_at 2026-08-25T02:20:00Z
-
-milestone_acceptance_receipt RCPT_LOCAL_MATRIX_PASS_20260825:
-  model 1
-  set CI_BASELINE_READY_R1
-  set_commitment sha256:4e98a1f65c001b0eed6ef5e07529da270d8033342b7e8386ae159a4bd32c2691
-  criterion LOCAL_MATRIX_PASS
-  criterion_commitment sha256:edd43807b05df10c06ef74cd279d4746de0ded46da71d85ebd95997f01fe389c
-  action verify
-  evidence_kind test
-  evidence_reference "docs/acceptance/ci-baseline.md records GCC Release 53/53, Clang Release 53/53, GCC ASan UBSan 42/42, GCC LSan 42/42, and Clang fuzz seeds 44/44"
-  evidence_revision b74ee0173649358b9fccc23e42f161753c618df5
-  verifier codex
-  occurred_at 2026-08-25T02:20:00Z
-
-milestone_acceptance_receipt RCPT_HOSTED_MATRIX_PASS_20260825:
-  model 1
-  set CI_BASELINE_READY_R1
-  set_commitment sha256:4e98a1f65c001b0eed6ef5e07529da270d8033342b7e8386ae159a4bd32c2691
-  criterion HOSTED_MATRIX_PASS
-  criterion_commitment sha256:dcdd75b3816bd2beab6ecb932faea84230451a3003ce0c657f580f9c47a11832
-  action verify
-  evidence_kind test
-  evidence_reference "GitHub Actions run 32799735043 completed success for b74ee0173649358b9fccc23e42f161753c618df5 with all five jobs successful"
-  evidence_revision b74ee0173649358b9fccc23e42f161753c618df5
-  verifier codex
-  occurred_at 2026-08-25T02:20:00Z
-
-milestone_acceptance_receipt RCPT_CI_EVIDENCE_COMMITTED_20260825:
-  model 1
-  set CI_BASELINE_READY_R1
-  set_commitment sha256:4e98a1f65c001b0eed6ef5e07529da270d8033342b7e8386ae159a4bd32c2691
-  criterion CI_EVIDENCE_COMMITTED
-  criterion_commitment sha256:88c00cc10dceed8c879ef9fad15e796c93d8f10856d68bd2e80c57d7f5ab92f3
-  action verify
-  evidence_kind artifact
-  evidence_reference "Git commit da30e85085172756a816b7c66bdffd1daa6523e4 records local and GitHub-hosted CI evidence in docs/acceptance/ci-baseline.md"
-  evidence_revision da30e85085172756a816b7c66bdffd1daa6523e4
-  verifier codex
-  occurred_at 2026-08-25T02:20:00Z
-
-work_event design-observation-guide-start-20260825:
-  model 1
-  task DESIGN_OBSERVATION_GUIDE
-  kind start
-  occurred_at 2026-08-25T11:22:39+09:00
-  planned_value 2p
-
-work_event design-observation-guide-finish-20260825:
-  model 1
-  task DESIGN_OBSERVATION_GUIDE
-  kind finish
-  occurred_at 2026-08-25T11:27:30+09:00
-
-milestone_acceptance_receipt RCPT_GUIDE_ADR_AUDITED_20260825:
-  model 1
-  set GUIDE_CONTRACT_REVIEWED_R1
-  set_commitment sha256:62801e4f09ce13992e80c5ee2cd61f18087e3715ddd2f2513342342a03eb751e
-  criterion GUIDE_ADR_AUDITED
-  criterion_commitment sha256:9690190482c270dbbc999fe14099bb5f7fb7d0869733a39d5c9f6d39314f4519
-  action verify
-  evidence_kind artifact
-  evidence_reference "docs/decisions/0016-observation-diagnosis-onboarding.md at a154d23215d656d15e1780802446992959880dbf covers domain separation, public routes, structured schemas, error navigation, completion, synchronization, compatibility, and offline boundaries"
-  evidence_revision a154d23215d656d15e1780802446992959880dbf
-  verifier codex
-  occurred_at 2026-08-25T02:29:37Z
-
-milestone_acceptance_receipt RCPT_GUIDE_TEST_PLAN_REVIEWED_20260825:
-  model 1
-  set GUIDE_CONTRACT_REVIEWED_R1
-  set_commitment sha256:62801e4f09ce13992e80c5ee2cd61f18087e3715ddd2f2513342342a03eb751e
-  criterion GUIDE_TEST_PLAN_REVIEWED
-  criterion_commitment sha256:eab35b49b70867b177b623d7cf504a03919b18569796923677370ef994f330d5
-  action verify
-  evidence_kind artifact
-  evidence_reference "ADR 0016 Pre-implementation Test Plan and docs/acceptance/observation-diagnosis-onboarding-contract.md at a154d23215d656d15e1780802446992959880dbf specify success, failure, parity, synchronization, completion, example, install, offline, and regression tests"
-  evidence_revision a154d23215d656d15e1780802446992959880dbf
-  verifier codex
-  occurred_at 2026-08-25T02:29:37Z
 
 milestone_acceptance_receipt RCPT_GUIDE_OWNER_ACCEPTED_20260825:
   model 1
@@ -254,3 +125,10 @@ milestone_acceptance_receipt RCPT_GUIDE_OWNER_ACCEPTED_20260825:
   evidence_revision a154d23215d656d15e1780802446992959880dbf
   verifier user
   occurred_at 2026-08-25T02:31:33Z
+
+work_event implement-diagnosis-onboarding-start-20260825:
+  model 1
+  task IMPLEMENT_DIAGNOSIS_ONBOARDING
+  kind start
+  occurred_at 2026-08-25T11:33:06+09:00
+  planned_value 31/6p

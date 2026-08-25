@@ -14,7 +14,7 @@
 namespace ltfa::app {
 namespace {
 
-constexpr int kCliContractVersion = 4;
+constexpr int kCliContractVersion = 5;
 
 struct NavigationAction {
     std::string_view id;
@@ -189,13 +189,16 @@ constexpr std::array<ExampleDescriptor, 5> kHelpExamples{{
     {"guide", "ltfa guide syntax", "Open quick LTFA DSL v1 syntax guidance."},
 }};
 
-constexpr std::array<ExampleDescriptor, 4> kGuideExamples{{
-    {"index", "ltfa guide", "List bundled LTFA DSL v1 and workflow topics."},
+constexpr std::array<ExampleDescriptor, 6> kGuideExamples{{
+    {"index", "ltfa guide", "List bundled model-language, observation-data, and workflow topics."},
     {"syntax", "ltfa guide syntax", "Show quick document and lexical syntax."},
+    {"observations", "ltfa guide observations", "Show quick observation JSON Lines guidance."},
     {"statement-detail", "ltfa guide statements relations --level detail",
      "Show detailed connection and relation syntax."},
     {"json", "ltfa guide samples minimal --format json",
      "Discover the installed minimal sample through ltfa.language-guide/v1."},
+    {"diagnosis-sample", "ltfa guide samples diagnosis",
+     "Discover the installed synthetic diagnosis example."},
 }};
 
 constexpr std::array<ExampleDescriptor, 4> kModelExamples{{
@@ -288,7 +291,7 @@ constexpr std::array<CommandDescriptor, 6> kCommands{{
      kHelpOperands.size(), kHelpOptions.data(), kHelpOptions.size(), "none", "text|json",
      "command-help", "read", "ltfa.command-help/v1|ltfa.cli-error/v1", kHelpExitStatuses.data(),
      kHelpExitStatuses.size(), kHelpExamples.data(), kHelpExamples.size()},
-    {"guide", "guide", "Learn LTFA DSL v1 syntax and offline workflows.",
+    {"guide", "guide", "Learn LTFA DSL v1, observation JSON Lines, and offline workflows.",
      "ltfa guide [topic] [subtopic] [--level index|quick|detail] [--format text|json]",
      CommandHandler::guide, kGuideOperands.data(), kGuideOperands.size(), kGuideOptions.data(),
      kGuideOptions.size(), "none", "text|json", "language-guide", "read",
@@ -486,6 +489,15 @@ void print_command_json(std::ostream &output, const CommandDescriptor &command) 
     print_json_string(output, help_invocation(&command) + " --format json");
     output << ",\"language_guide\":";
     print_json_string(output, guide_invocation(command));
+    if (command.handler == CommandHandler::diagnose) {
+        const auto &observation = observation_guide_descriptor();
+        output << ",\"observation_guide\":";
+        print_json_string(output, observation.guide_invocation);
+        output << ",\"observation_manual\":";
+        print_json_string(output, observation.reference_path);
+        output << ",\"diagnosis_sample\":";
+        print_json_string(output, observation.sample_path);
+    }
     output << "}}";
 }
 
@@ -566,6 +578,9 @@ std::string diagnostic_guide_invocation(const UsageError *usage, const CliDiagno
     if (diagnostic.code.rfind("E_INCLUDE_", 0) == 0) {
         return "ltfa guide errors include";
     }
+    if (diagnostic.code.rfind("LTOBS-", 0) == 0) {
+        return std::string{observation_guide_descriptor().error_guide_invocation};
+    }
     if (diagnostic.code.rfind("E_", 0) == 0) {
         return "ltfa guide errors validation";
     }
@@ -584,7 +599,7 @@ std::vector<NavigationAction> action_navigation(const CommandDescriptor *help_ta
                       retry + ".";
     } else if (usage != nullptr) {
         description = "Correct the reported command usage, then rerun " + retry + ".";
-    } else if (diagnostic.code.rfind("E_", 0) == 0) {
+    } else if (diagnostic.code.rfind("E_", 0) == 0 || diagnostic.code.rfind("LTOBS-", 0) == 0) {
         description = "Correct the reported local input, then rerun " + retry + ".";
     } else {
         description = "Correct the reported selection, then rerun " + retry + ".";
@@ -600,8 +615,7 @@ std::vector<NavigationAction> action_navigation(const CommandDescriptor *help_ta
     result.push_back({"correct-and-retry", "instruction", std::move(description), ""});
     const auto guide = diagnostic_guide_invocation(usage, diagnostic);
     if (!guide.empty()) {
-        result.push_back(
-            {"inspect-guide", "command", "Inspect the applicable LTFA language guide.", guide});
+        result.push_back({"inspect-guide", "command", "Inspect the applicable LTFA Guide.", guide});
     }
     result.push_back(
         {"inspect-help", "command", std::move(help_description), help_invocation(help_target)});
@@ -732,9 +746,10 @@ void print_root_help(std::ostream &output) {
            << "  ltfa help <command>\n"
            << "  ltfa help <command> --format json\n"
            << "\n"
-           << "Language guide:\n"
+           << "Guides:\n"
            << "  ltfa guide\n"
            << "  ltfa guide syntax\n"
+           << "  ltfa guide observations\n"
            << "  ltfa guide <topic> <subtopic> --level detail\n"
            << "\n"
            << "Bash completion:\n"
@@ -813,8 +828,14 @@ void print_command_help(std::ostream &output, const CommandDescriptor &command) 
     output << "Navigation:\n"
            << "  help: " << help_invocation(&command) << '\n'
            << "  json-help: " << help_invocation(&command) << " --format json\n"
-           << "  language-guide: " << guide_invocation(command) << '\n'
-           << "  root-help: ltfa help\n";
+           << "  language-guide: " << guide_invocation(command) << '\n';
+    if (command.handler == CommandHandler::diagnose) {
+        const auto &observation = observation_guide_descriptor();
+        output << "  observation-guide: " << observation.guide_invocation << '\n'
+               << "  observation-manual: " << observation.reference_path << '\n'
+               << "  diagnosis-sample: " << observation.sample_path << '\n';
+    }
+    output << "  root-help: ltfa help\n";
 }
 
 void print_help_json(std::ostream &output, const CommandDescriptor *command) {

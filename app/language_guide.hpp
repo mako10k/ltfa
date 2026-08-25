@@ -30,7 +30,21 @@ struct GuideCatalog {
     std::size_t page_count;
 };
 
+struct ObservationGuideDescriptor {
+    std::string_view schema;
+    std::string_view framing;
+    std::string_view required_fields;
+    std::string_view optional_fields;
+    std::string_view kinds;
+    std::string_view outcomes;
+    std::string_view guide_invocation;
+    std::string_view error_guide_invocation;
+    std::string_view reference_path;
+    std::string_view sample_path;
+};
+
 [[nodiscard]] GuideCatalog guide_catalog();
+[[nodiscard]] const ObservationGuideDescriptor &observation_guide_descriptor();
 [[nodiscard]] const GuidePageDescriptor *find_guide_page(std::string_view topic,
                                                          std::string_view subtopic = {});
 [[nodiscard]] std::string suggest_guide_topic(std::string_view topic);

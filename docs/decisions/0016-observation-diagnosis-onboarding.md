@@ -239,16 +239,19 @@ are a distinct data contract.
 - Add focused Guide, error-action, synchronization, completion, install, decoder-parity, and
   offline regressions before updating acceptance evidence.
 
-Proposed implementation actions trace as follows:
+Implementation actions trace as follows:
 
-- **A-OBSONB-001 (proposed):** Add observation Guide descriptors and structured contract output.
+- **A-OBSONB-001 (implemented):** Add observation Guide descriptors and structured contract
+  output.
   - References: C-OBSONB-001, C-OBSONB-002
-- **A-OBSONB-002 (proposed):** Synchronize diagnose help, Action Navigation, completion,
+- **A-OBSONB-002 (implemented):** Synchronize diagnose help, Action Navigation, completion,
   documentation, and the installed manual.
   - References: C-OBSONB-002, C-OBSONB-003
-- **A-OBSONB-003 (proposed):** Add and install the synthetic diagnosis example.
+- **A-OBSONB-003 (implemented):** Add and install the synthetic diagnosis example.
   - References: C-OBSONB-001, C-OBSONB-004
-- **A-OBSONB-004 (proposed):** Run the pre-implementation test matrix and record bounded evidence.
+- **A-OBSONB-004 (implementation gate verified):** Run focused, full GCC Release, install-tree,
+  and offline regressions and record bounded evidence. The complete candidate matrix remains a
+  separate PERT task.
   - References: C-OBSONB-002, C-OBSONB-003, C-OBSONB-004
 
 ## Review
@@ -258,6 +261,19 @@ The owner accepted the exact proposed contract and test plan at Git revision
 `RCPT_GUIDE_OWNER_ACCEPTED_20260825` records that acceptance. This post-acceptance status update
 does not alter the accepted boundary. Implementation remains limited to the actions and tests in
 this record.
+
+## Implementation Outcome
+
+The accepted public contract was implemented on 2026-08-25. The shared immutable observation
+descriptor now supplies Guide inventories and diagnose-help navigation; the Guide catalog supplies
+completion candidates. The observation manual and synthetic diagnosis tree are installed and
+covered by focused synchronization, error-navigation, restricted-output, install-smoke, and
+runtime network-syscall tests.
+
+Bounded implementation evidence and residual risks are recorded in
+[`observation-diagnosis-onboarding-implementation.md`](../acceptance/observation-diagnosis-onboarding-implementation.md).
+Complete Clang Release, sanitizer, fuzz-seed, hosted-CI, and aarch64 candidate validation remains
+owned by `VERIFY_V030A2_CANDIDATE`; this outcome does not accept that later milestone.
 
 ## Follow-ups
 

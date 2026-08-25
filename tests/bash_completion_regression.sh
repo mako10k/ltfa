@@ -62,3 +62,19 @@ COMP_WORDS=(ltfa guide statements r)
 COMP_CWORD=3
 _ltfa_complete
 [[ ${#COMPREPLY[@]} -eq 1 && ${COMPREPLY[0]} == relations ]]
+
+COMP_WORDS=(ltfa guide ob)
+COMP_CWORD=2
+_ltfa_complete
+[[ ${#COMPREPLY[@]} -eq 1 && ${COMPREPLY[0]} == observations ]]
+
+COMP_WORDS=(ltfa guide observations f)
+COMP_CWORD=3
+_ltfa_complete
+contains_reply fields
+contains_reply format
+
+COMP_WORDS=(ltfa guide samples d)
+COMP_CWORD=3
+_ltfa_complete
+[[ ${#COMPREPLY[@]} -eq 1 && ${COMPREPLY[0]} == diagnosis ]]

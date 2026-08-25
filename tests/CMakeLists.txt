@@ -279,6 +279,19 @@ add_test(
         -P ${CMAKE_CURRENT_SOURCE_DIR}/cli_guide_test.cmake
 )
 
+add_test(
+    NAME ltfa.cli.observation-onboarding
+    COMMAND ${CMAKE_COMMAND}
+        -DLTFA_CLI=$<TARGET_FILE:ltfa>
+        -DLTFA_EXAMPLE_ROOT=${PROJECT_SOURCE_DIR}/examples
+        -DLTFA_README=${PROJECT_SOURCE_DIR}/README.md
+        -DLTFA_DEVELOPMENT=${PROJECT_SOURCE_DIR}/docs/development.md
+        -DLTFA_OBSERVATION_MANUAL=${PROJECT_SOURCE_DIR}/docs/observations/ltfa-observation-v1.md
+        -DLTFA_COMPLETION_SCRIPT=${PROJECT_SOURCE_DIR}/completions/ltfa.bash
+        -DLTFA_TEST_ROOT=${CMAKE_CURRENT_BINARY_DIR}/observation-onboarding
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cli_observation_onboarding_test.cmake
+)
+
 find_program(LTFA_BASH_EXECUTABLE bash)
 if(LTFA_BASH_EXECUTABLE)
     add_test(
@@ -436,6 +449,15 @@ if(NOT LTFA_SANITIZERS AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
                 -DLTFA_HISTORY_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/redacted-history
                 -DLTFA_TRACE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-slice4-cli-offline-runtime.trace
                 -P ${PROJECT_SOURCE_DIR}/cmake/verify_offline_slice4_cli_runtime.cmake
+        )
+        add_test(
+            NAME ltfa.boundary.observation-onboarding-offline-runtime
+            COMMAND ${CMAKE_COMMAND}
+                -DLTFA_STRACE=${LTFA_STRACE_EXECUTABLE}
+                -DLTFA_CLI=$<TARGET_FILE:ltfa>
+                -DLTFA_DIAGNOSIS_ROOT=${PROJECT_SOURCE_DIR}/examples/diagnosis
+                -DLTFA_TRACE=${CMAKE_CURRENT_BINARY_DIR}/ltfa-observation-onboarding.trace
+                -P ${PROJECT_SOURCE_DIR}/cmake/verify_offline_onboarding_runtime.cmake
         )
     endif()
 endif()

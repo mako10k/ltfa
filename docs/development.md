@@ -69,8 +69,13 @@ Exercise the built CLI directly:
 ./build/release/ltfa help diagnose --format json
 ./build/release/ltfa guide
 ./build/release/ltfa guide syntax
+./build/release/ltfa guide observations
+./build/release/ltfa guide observations fields --level detail --format json
 ./build/release/ltfa guide statements relations --level detail
 ./build/release/ltfa guide samples minimal --format json
+./build/release/ltfa guide samples diagnosis --format json
+./build/release/ltfa diagnose --model-root examples/diagnosis --input main.ltfa \
+    --observations observations.jsonl --analysis-at 2030-01-01T00:10:30Z --format json
 ./build/release/ltfa model \
     --model-root tests/fixtures/slice1 \
     --input main.ltfa \
@@ -105,6 +110,11 @@ source completions/ltfa.bash
 The private `__completion --bash` transport is covered by CTest. Keep command, option, enum,
 Guide-topic, and Guide-subtopic candidates descriptor-backed; do not add a parallel table to the
 bash script or semantic completion that loads model inputs.
+
+The `ltfa.observation/v1` presentation inventory is shared by Guide output, diagnose help
+navigation, and completion. `tests/cli_observation_onboarding_test.cmake` verifies that the
+inventory remains synchronized with README, this development guide, the installed
+`docs/observations/ltfa-observation-v1.md` manual, decoder behavior, and the diagnosis sample.
 
 Tests are dependency-free executables registered with CTest. Name test sources
 descriptively and CTest cases with the `ltfa.<area>[.<behavior>]` pattern. Add
@@ -144,9 +154,9 @@ external test/rendering tool and is never linked or invoked by LTFA.
 ## Install-tree verification
 
 `ltfa.install.smoke` owns only the build-local `install-smoke` prefix. It recreates that prefix,
-installs the candidate, checks the executable, distribution documents, language reference,
-normative samples, and bash completion, and exercises installed version, help, Guide, completion
-discovery, both samples, JSON model, semantic DOT model, and assurance operations.
+installs the candidate, checks the executable, distribution documents, language and observation
+references, normative samples, and bash completion, and exercises installed version, help, Guide,
+completion discovery, all samples, JSON model, semantic DOT model, assurance, and diagnosis.
 
 Do not use this test with a user or system installation prefix.
 
@@ -172,7 +182,7 @@ selection rules are in [AGENTS.md](../AGENTS.md).
 ```text
 app/                 CLI entry point and output adapters
 cmake/               Build and verification scripts
-examples/            Installed normative LTFA DSL v1 sample trees
+examples/            Installed normative model and synthetic diagnosis sample trees
 include/ltfa/        Public core headers
 src/ltfa/            Core implementation
 tests/               Dependency-free CTest targets
@@ -181,6 +191,7 @@ tests/fixtures/      Synthetic offline acceptance inputs
 docs/acceptance/     Requirement traces and accepted boundaries
 docs/decisions/      Project-local architecture decisions
 docs/language/       Installed user-facing language reference
+docs/observations/   Installed user-facing observation JSON Lines manual
 docs/plans/          Completed PERT task evidence
 docs/releases/       Historical release notes
 plans/               Residual perttool plans
@@ -215,6 +226,7 @@ Repository-local decisions define the implemented boundary:
 - [two-tier benchmark acceptance](decisions/0013-two-tier-mvp-benchmark-acceptance.md)
 - [CLI action navigation and bash completion](decisions/0014-cli-action-navigation-and-bash-completion.md)
 - [bundled LTFA language guide](decisions/0015-bundled-language-guide.md)
+- [observation diagnosis onboarding](decisions/0016-observation-diagnosis-onboarding.md)
 
 Accepted implementation and release evidence is retained under
 `docs/acceptance/` and `docs/plans/`. In particular:
@@ -239,6 +251,7 @@ Accepted implementation and release evidence is retained under
 - [v0.2.1 release history](plans/v0.2.1-release-history.md)
 - [v0.3.0-alpha.1 release metadata](acceptance/r030a1-release-metadata.md)
 - [v0.3.0-alpha.1 release preparation history](plans/v0.3.0-alpha.1-release-history.md)
+- [observation diagnosis onboarding implementation](acceptance/observation-diagnosis-onboarding-implementation.md)
 
 ## Plan maintenance
 

@@ -78,7 +78,16 @@ if(NOT EXISTS "${installed_language_reference}")
     )
 endif()
 
-foreach(sample minimal resilience)
+set(installed_observation_reference
+    "${LTFA_INSTALL_PREFIX}/${LTFA_INSTALL_DOCDIR}/docs/observations/ltfa-observation-v1.md"
+)
+if(NOT EXISTS "${installed_observation_reference}")
+    message(FATAL_ERROR
+        "installed observation reference not found: ${installed_observation_reference}"
+    )
+endif()
+
+foreach(sample minimal resilience diagnosis)
     set(installed_sample
         "${LTFA_INSTALL_PREFIX}/${LTFA_INSTALL_DOCDIR}/examples/${sample}/main.ltfa"
     )
@@ -86,6 +95,15 @@ foreach(sample minimal resilience)
         message(FATAL_ERROR "installed normative sample not found: ${installed_sample}")
     endif()
 endforeach()
+
+set(installed_diagnosis_observations
+    "${LTFA_INSTALL_PREFIX}/${LTFA_INSTALL_DOCDIR}/examples/diagnosis/observations.jsonl"
+)
+if(NOT EXISTS "${installed_diagnosis_observations}")
+    message(FATAL_ERROR
+        "installed diagnosis observations not found: ${installed_diagnosis_observations}"
+    )
+endif()
 
 set(installed_completion
     "${LTFA_INSTALL_PREFIX}/${LTFA_INSTALL_DATADIR}/bash-completion/completions/ltfa"
@@ -117,13 +135,35 @@ execute_process(
 )
 if(NOT help_result EQUAL 0 OR
    NOT help_output MATCHES "ltfa model --model-root" OR
-   NOT help_output MATCHES "Language guide:" OR
+   NOT help_output MATCHES "Guides:" OR
    NOT help_output MATCHES "ltfa guide syntax" OR
+   NOT help_output MATCHES "ltfa guide observations" OR
    NOT help_output MATCHES "standard bash-completion directory" OR
    NOT help_error STREQUAL "")
     message(FATAL_ERROR
         "installed help check failed: status=${help_result}\n"
         "stdout=${help_output}\nstderr=${help_error}"
+    )
+endif()
+
+execute_process(
+    COMMAND "${installed_cli}" guide observations fields --format json
+    RESULT_VARIABLE observation_guide_result
+    OUTPUT_VARIABLE observation_guide_output
+    ERROR_VARIABLE observation_guide_error
+)
+string(JSON observation_guide_schema ERROR_VARIABLE observation_guide_json_error
+    GET "${observation_guide_output}" observation_contract schema)
+string(JSON observation_guide_reference ERROR_VARIABLE observation_reference_json_error
+    GET "${observation_guide_output}" navigation observation_reference)
+if(NOT observation_guide_result EQUAL 0 OR NOT observation_guide_error STREQUAL "" OR
+   observation_guide_json_error OR observation_reference_json_error OR
+   NOT observation_guide_schema STREQUAL "ltfa.observation/v1" OR
+   NOT observation_guide_reference STREQUAL
+       "share/doc/ltfa/docs/observations/ltfa-observation-v1.md")
+    message(FATAL_ERROR
+        "installed observation Guide failed: ${observation_guide_error}"
+        "${observation_guide_json_error}${observation_reference_json_error}"
     )
 endif()
 
@@ -172,7 +212,23 @@ if(NOT guide_completion_result EQUAL 0 OR NOT guide_completion_error STREQUAL ""
     )
 endif()
 
-foreach(sample minimal resilience)
+execute_process(
+    COMMAND "${installed_cli}" __completion --bash guide observations f
+    RESULT_VARIABLE observation_completion_result
+    OUTPUT_VARIABLE observation_completion_output
+    ERROR_VARIABLE observation_completion_error
+)
+if(NOT observation_completion_result EQUAL 0 OR
+   NOT observation_completion_error STREQUAL "" OR
+   NOT observation_completion_output STREQUAL
+       "__ltfa_completion_mode=plain\nformat\nfields\n")
+    message(FATAL_ERROR
+        "installed observation completion failed: status=${observation_completion_result}\n"
+        "stdout=${observation_completion_output}\nstderr=${observation_completion_error}"
+    )
+endif()
+
+foreach(sample minimal resilience diagnosis)
     execute_process(
         COMMAND "${installed_cli}" model
             --model-root "${LTFA_INSTALL_PREFIX}/${LTFA_INSTALL_DOCDIR}/examples/${sample}"
@@ -205,6 +261,26 @@ if(NOT model_result EQUAL 0 OR NOT model_error STREQUAL "")
     message(FATAL_ERROR
         "installed model check failed: status=${model_result}\n"
         "stdout=${model_output}\nstderr=${model_error}"
+    )
+endif()
+
+execute_process(
+    COMMAND "${installed_cli}" diagnose
+        --model-root "${LTFA_INSTALL_PREFIX}/${LTFA_INSTALL_DOCDIR}/examples/diagnosis"
+        --input main.ltfa --observations observations.jsonl
+        --analysis-at 2030-01-01T00:10:30Z --format json
+    RESULT_VARIABLE installed_diagnosis_result
+    OUTPUT_VARIABLE installed_diagnosis_output
+    ERROR_VARIABLE installed_diagnosis_error
+)
+string(JSON installed_diagnosis_schema ERROR_VARIABLE installed_diagnosis_json_error
+    GET "${installed_diagnosis_output}" schema)
+if(NOT installed_diagnosis_result EQUAL 0 OR NOT installed_diagnosis_error STREQUAL "" OR
+   installed_diagnosis_json_error OR
+   NOT installed_diagnosis_schema STREQUAL "ltfa.diagnosis-cli/v1")
+    message(FATAL_ERROR
+        "installed synthetic diagnosis failed: ${installed_diagnosis_error}"
+        "${installed_diagnosis_json_error}"
     )
 endif()
 

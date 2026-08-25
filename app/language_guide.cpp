@@ -16,7 +16,42 @@ namespace {
 
 constexpr char kItemSeparator = '\x1e';
 
-constexpr std::array<GuidePageDescriptor, 19> kGuidePages{{
+constexpr ObservationGuideDescriptor kObservationGuide{
+    "ltfa.observation/v1",
+    "json-lines",
+    "schema\x1e"
+    "probe_id\x1e"
+    "target\x1e"
+    "vantage\x1e"
+    "kind\x1e"
+    "outcome\x1e"
+    "observed_at\x1e"
+    "valid_for_ms",
+    "duration_ms\x1e"
+    "value\x1e"
+    "unit\x1e"
+    "state\x1e"
+    "producer_sequence\x1e"
+    "producer_id\x1e"
+    "evidence_ref\x1e"
+    "detail",
+    "icmp\x1e"
+    "tcp-connect\x1e"
+    "custom-heartbeat\x1e"
+    "metric\x1e"
+    "discrete-state",
+    "pass\x1e"
+    "fail\x1e"
+    "timeout\x1e"
+    "error\x1e"
+    "unknown",
+    "ltfa guide observations",
+    "ltfa guide observations errors",
+    "share/doc/ltfa/docs/observations/ltfa-observation-v1.md",
+    "share/doc/ltfa/examples/diagnosis",
+};
+
+constexpr std::array<GuidePageDescriptor, 25> kGuidePages{{
     {"syntax", "", "DSL syntax", "LTFA DSL v1 document shape, lexical rules, values, and comments.",
      "Every source begins with exactly 'ltfa 1'.\x1e"
      "Statements are line-oriented; blank lines and text after # are ignored.\x1e"
@@ -178,6 +213,19 @@ constexpr std::array<GuidePageDescriptor, 19> kGuidePages{{
      "ltfa model --model-root examples/resilience --input main.ltfa --format dot "
      "--dot-view protection",
      "ltfa guide statements relations\x1eltfa guide workflows analyze"},
+    {"samples", "diagnosis", "Sample: diagnosis",
+     "A complete synthetic model, registered probe, and ltfa.observation/v1 JSON Lines input.",
+     "Copy the complete diagnosis sample tree.\x1e"
+     "Validate the model before running diagnosis.\x1e"
+     "Pass an explicit --analysis-at later than the sample observation time.",
+     "ltfa model --model-root examples/diagnosis --input main.ltfa\x1e"
+     "ltfa diagnose --model-root examples/diagnosis --input main.ltfa "
+     "--observations observations.jsonl --analysis-at 2030-01-01T00:10:30Z",
+     "Repository: examples/diagnosis.\x1e"
+     "Installed: share/doc/ltfa/examples/diagnosis.\x1e"
+     "The sample is synthetic and does not confirm a live failure cause.",
+     "ltfa guide observations fields\x1eltfa help diagnose",
+     "ltfa guide observations\x1eltfa guide workflows diagnose"},
     {"errors", "", "Diagnostics",
      "Stable diagnostic families for syntax, include loading, and normalized-model validation.",
      "Read the first stable code and source location.\x1e"
@@ -233,6 +281,72 @@ constexpr std::array<GuidePageDescriptor, 19> kGuidePages{{
      "Run ltfa model first to validate and summarize the normalized model.",
      "ltfa model --model-root topology --input main.ltfa",
      "ltfa guide attributes\x1eltfa guide workflows model"},
+    {"observations", "", "Observation JSON Lines",
+     "Author bounded ltfa.observation/v1 JSON Lines for offline diagnosis.",
+     "Use one UTF-8 JSON object per physical line.\x1e"
+     "Keep observation production outside LTFA.\x1e"
+     "Pass --analysis-at explicitly when diagnosing the local file.",
+     "ltfa guide observations format\x1e"
+     "ltfa guide observations fields\x1e"
+     "ltfa guide observations semantics\x1e"
+     "ltfa guide observations errors",
+     "Observation JSON Lines is a separate data contract, not LTFA DSL v1.\x1e"
+     "The decoder returns no partial observation batch on any rejected record.",
+     "ltfa guide samples diagnosis\x1eltfa help diagnose",
+     "ltfa guide workflows diagnose\x1eltfa guide samples diagnosis"},
+    {"observations", "format", "Observation framing and bounds",
+     "Encode one strict ltfa.observation/v1 object on each bounded UTF-8 line.",
+     "Use LF or CRLF line endings.\x1e"
+     "Do not add blank interior lines, comments, JSON5, trailing commas, NaN, or infinity.\x1e"
+     "Treat one final line delimiter as optional.",
+     "{\"schema\":\"ltfa.observation/v1\",...}\x1e"
+     "{\"schema\":\"ltfa.observation/v1\",...}",
+     "Defaults bound the complete input to 64 MiB, one record to 64 KiB, and the batch to "
+     "100000 records.\x1e"
+     "Any JSON, UTF-8, schema, semantic, or limit error rejects the complete batch.",
+     "ltfa guide samples diagnosis",
+     "ltfa guide observations fields\x1eltfa guide observations errors"},
+    {"observations", "fields", "Observation fields",
+     "Use all eight required fields and only the documented optional or x- extension fields.",
+     "Required: schema, probe_id, target, vantage, kind, outcome, observed_at, valid_for_ms.\x1e"
+     "Optional: duration_ms, value, unit, state, producer_sequence, producer_id, evidence_ref, "
+     "detail.\x1e"
+     "Extensions use bounded lowercase x- keys and scalar values only.",
+     "schema=ltfa.observation/v1\x1e"
+     "kind=icmp|tcp-connect|custom-heartbeat|metric|discrete-state\x1e"
+     "outcome=pass|fail|timeout|error|unknown",
+     "value requires unit and is valid only for kind=metric.\x1e"
+     "state is valid only for kind=discrete-state.\x1e"
+     "Secret-bearing extension names and nested arrays or objects are rejected.",
+     "ltfa guide samples diagnosis",
+     "ltfa guide observations format\x1eltfa guide observations semantics"},
+    {"observations", "semantics", "Observation semantics",
+     "Interpret observations as time-bounded evidence rather than confirmed live causes.",
+     "Use an RFC3339 observed_at with a known offset.\x1e"
+     "Compare freshness with explicit --analysis-at and valid_for_ms.\x1e"
+     "Keep probe_id, target, vantage, and kind consistent with the registered model probe.",
+     "observed_at=<RFC3339-timestamp>\x1e"
+     "valid_for_ms=<unsigned-integer>\x1e"
+     "--analysis-at <RFC3339-timestamp>",
+     "A timeout remains a typed outcome; it is not proof that a device is down.\x1e"
+     "Conflicting current observations remain qualified evidence.\x1e"
+     "A next-observation recommendation names a registered probe but never executes it.",
+     "ltfa diagnose --model-root examples/diagnosis --input main.ltfa "
+     "--observations observations.jsonl --analysis-at 2030-01-01T00:10:30Z",
+     "ltfa guide workflows diagnose\x1eltfa guide observations errors"},
+    {"observations", "errors", "Observation diagnostics",
+     "Recover from local observation loading, timestamp, decoding, and evidence-contract errors.",
+     "LTOBS-001: resolve a contained local observation file.\x1e"
+     "LTOBS-002: correct the explicit RFC3339 analysis time.\x1e"
+     "LTOBS-003: correct JSON Lines framing, schema, fields, or limits.\x1e"
+     "LTOBS-004: align observations with registered probes and explicit reference time.",
+     "correct local input -> rerun ltfa diagnose\x1e"
+     "inspect guide -> ltfa guide observations errors\x1e"
+     "inspect help -> ltfa help diagnose",
+     "The diagnostic and Guide never edit input or retry diagnosis.\x1e"
+     "Structured failures retain ltfa.cli-error/v1 and ordered navigation actions.",
+     "ltfa guide observations fields\x1eltfa help diagnose",
+     "ltfa guide observations\x1eltfa guide samples diagnosis"},
     {"workflows", "", "Offline workflows",
      "Use validation before bounded analysis and keep every operation local and one-shot.",
      "Start with ltfa model.\x1e"
@@ -274,7 +388,8 @@ constexpr std::array<GuidePageDescriptor, 19> kGuidePages{{
      "--analysis-at <RFC3339-timestamp>",
      "The observation file uses ltfa.observation/v1 JSON Lines, not LTFA DSL v1.\x1e"
      "The diagnosis is evidence-qualified and does not confirm a live root cause.",
-     "ltfa help diagnose", "ltfa guide statements assurance\x1eltfa help diagnose"},
+     "ltfa help diagnose",
+     "ltfa guide observations\x1eltfa guide samples diagnosis\x1eltfa help diagnose"},
 }};
 
 template <typename Callback> void for_each_item(std::string_view items, Callback callback) {
@@ -450,9 +565,46 @@ void print_topic_index_json(std::ostream &output, std::string_view key,
     output << ']';
 }
 
+std::string_view guide_domain(const GuidePageDescriptor *page) {
+    if (page == nullptr) {
+        return "guide";
+    }
+    if (page->topic == "observations" ||
+        (page->topic == "samples" && page->subtopic == "diagnosis")) {
+        return "observation-data";
+    }
+    if (page->topic == "workflows") {
+        return "workflow";
+    }
+    return "model-language";
+}
+
+void print_observation_contract_json(std::ostream &output, const GuidePageDescriptor *page) {
+    output << ",\"observation_contract\":";
+    if (page == nullptr || page->topic != "observations") {
+        output << "null";
+        return;
+    }
+    output << "{\"schema\":";
+    print_json_string(output, kObservationGuide.schema);
+    output << ",\"framing\":";
+    print_json_string(output, kObservationGuide.framing);
+    output << ",\"required_fields\":";
+    print_json_items(output, kObservationGuide.required_fields);
+    output << ",\"optional_fields\":";
+    print_json_items(output, kObservationGuide.optional_fields);
+    output << ",\"kinds\":";
+    print_json_items(output, kObservationGuide.kinds);
+    output << ",\"outcomes\":";
+    print_json_items(output, kObservationGuide.outcomes);
+    output << '}';
+}
+
 } // namespace
 
 GuideCatalog guide_catalog() { return {kGuidePages.data(), kGuidePages.size()}; }
+
+const ObservationGuideDescriptor &observation_guide_descriptor() { return kObservationGuide; }
 
 const GuidePageDescriptor *find_guide_page(std::string_view topic, std::string_view subtopic) {
     const auto found = std::find_if(kGuidePages.begin(), kGuidePages.end(),
@@ -491,14 +643,14 @@ GuideLevel default_guide_level(std::string_view topic, std::string_view subtopic
 
 void print_language_guide_text(std::ostream &output, const GuidePageDescriptor *page,
                                GuideLevel level) {
-    output << (page == nullptr ? "LTFA DSL v1 Guide" : page->title) << '\n'
+    output << (page == nullptr ? "LTFA Guide" : page->title) << '\n'
            << "\n"
            << "Topic: " << (page == nullptr ? "overview" : page->topic) << '\n';
     if (page != nullptr && !page->subtopic.empty()) {
         output << "Subtopic: " << page->subtopic << '\n';
     }
     output << "Level: " << to_string(level) << "\n\n"
-           << (page == nullptr ? "Bundled language and offline-workflow guidance for LTFA DSL v1."
+           << (page == nullptr ? "Bundled model-language, observation-data, and workflow guidance."
                                : page->summary)
            << '\n';
 
@@ -552,11 +704,14 @@ void print_language_guide_json(std::ostream &output, const GuidePageDescriptor *
     output << ",\"level\":";
     print_json_string(output, to_string(level));
     output << "},\"title\":";
-    print_json_string(output, page == nullptr ? "LTFA DSL v1 Guide" : page->title);
+    print_json_string(output, page == nullptr ? "LTFA Guide" : page->title);
     output << ",\"summary\":";
-    print_json_string(
-        output, page == nullptr ? "Bundled language and offline-workflow guidance for LTFA DSL v1."
-                                : page->summary);
+    print_json_string(output, page == nullptr
+                                  ? "Bundled model-language, observation-data, and workflow "
+                                    "guidance."
+                                  : page->summary);
+    output << ",\"domain\":";
+    print_json_string(output, guide_domain(page));
     output << ",\"quick_reference\":";
     print_json_items(output, page == nullptr || level == GuideLevel::index ? std::string_view{}
                                                                            : page->quick_reference);
@@ -578,9 +733,15 @@ void print_language_guide_json(std::ostream &output, const GuidePageDescriptor *
                            page == nullptr ? std::vector<const GuidePageDescriptor *>{}
                                            : subtopics(page->topic),
                            true);
+    print_observation_contract_json(output, page);
     output << ",\"navigation\":{\"guide_index\":\"ltfa guide\",\"command_help\":"
               "\"ltfa help guide\",\"language_reference\":"
-              "\"share/doc/ltfa/docs/language/ltfa-dsl-v1.md\"},\"diagnostics\":[]}\n";
+              "\"share/doc/ltfa/docs/language/ltfa-dsl-v1.md\","
+              "\"observation_reference\":";
+    print_json_string(output, kObservationGuide.reference_path);
+    output << ",\"diagnosis_sample\":";
+    print_json_string(output, kObservationGuide.sample_path);
+    output << "},\"diagnostics\":[]}\n";
 }
 
 } // namespace ltfa::app

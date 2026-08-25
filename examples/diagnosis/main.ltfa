@@ -1,0 +1,10 @@
+ltfa 1
+scope site:diagnosis kind=site label="Synthetic Diagnosis Example" completeness=verified evidence-quality=confirmed
+
+entity service:application kind=service plane=service layer=application scope=site:diagnosis
+entity process:worker kind=process plane=service layer=application scope=site:diagnosis
+entity process:observer kind=process plane=service layer=application scope=site:diagnosis
+
+relate service:application -> process:worker kind=depends_on
+failure failure:worker target=process:worker mode=heartbeat-failed
+probe probe:worker target=process:worker vantage=process:observer kind=icmp valid-for=60s

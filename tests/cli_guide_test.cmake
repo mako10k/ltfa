@@ -18,7 +18,7 @@ endfunction()
 
 run_guide(index guide)
 if(NOT index_result EQUAL 0 OR NOT index_error STREQUAL "" OR
-   NOT index_output MATCHES "^LTFA DSL v1 Guide" OR
+   NOT index_output MATCHES "^LTFA Guide" OR
    NOT index_output MATCHES "Topic: overview" OR
    NOT index_output MATCHES "syntax  LTFA DSL v1 document shape" OR
    NOT index_output MATCHES "workflows  Use validation before bounded analysis")
@@ -36,10 +36,10 @@ string(JSON index_topic TYPE "${index_json_output}" query topic)
 string(JSON index_level GET "${index_json_output}" query level)
 string(JSON index_topic_count LENGTH "${index_json_output}" topics)
 string(JSON index_syntax_count LENGTH "${index_json_output}" syntax)
-if(NOT index_schema STREQUAL "ltfa.language-guide/v1" OR NOT index_contract EQUAL 4 OR
+if(NOT index_schema STREQUAL "ltfa.language-guide/v1" OR NOT index_contract EQUAL 5 OR
    NOT index_version STREQUAL "${LTFA_EXPECTED_VERSION}" OR
    NOT index_topic STREQUAL "NULL" OR NOT index_level STREQUAL "index" OR
-   NOT index_topic_count EQUAL 8 OR NOT index_syntax_count EQUAL 0)
+   NOT index_topic_count EQUAL 9 OR NOT index_syntax_count EQUAL 0)
     message(FATAL_ERROR "structured guide index contract is incorrect")
 endif()
 
@@ -88,6 +88,40 @@ if(NOT minimal_result EQUAL 0 OR NOT minimal_error STREQUAL "" OR
     message(FATAL_ERROR "minimal sample guidance is incorrect")
 endif()
 
+run_guide(observation_fields guide observations fields --format json)
+string(JSON observation_domain GET "${observation_fields_output}" domain)
+string(JSON observation_schema GET
+    "${observation_fields_output}" observation_contract schema)
+string(JSON observation_required_count LENGTH
+    "${observation_fields_output}" observation_contract required_fields)
+string(JSON observation_optional_count LENGTH
+    "${observation_fields_output}" observation_contract optional_fields)
+string(JSON observation_kind_count LENGTH
+    "${observation_fields_output}" observation_contract kinds)
+string(JSON observation_outcome_count LENGTH
+    "${observation_fields_output}" observation_contract outcomes)
+string(JSON observation_reference GET
+    "${observation_fields_output}" navigation observation_reference)
+if(NOT observation_fields_result EQUAL 0 OR NOT observation_fields_error STREQUAL "" OR
+   NOT observation_domain STREQUAL "observation-data" OR
+   NOT observation_schema STREQUAL "ltfa.observation/v1" OR
+   NOT observation_required_count EQUAL 8 OR NOT observation_optional_count EQUAL 8 OR
+   NOT observation_kind_count EQUAL 5 OR NOT observation_outcome_count EQUAL 5 OR
+   NOT observation_reference STREQUAL
+       "share/doc/ltfa/docs/observations/ltfa-observation-v1.md")
+    message(FATAL_ERROR "observation field guidance is incorrect")
+endif()
+
+run_guide(diagnosis_sample guide samples diagnosis --format json)
+string(JSON diagnosis_sample_domain GET "${diagnosis_sample_output}" domain)
+string(JSON diagnosis_sample_path GET
+    "${diagnosis_sample_output}" navigation diagnosis_sample)
+if(NOT diagnosis_sample_result EQUAL 0 OR NOT diagnosis_sample_error STREQUAL "" OR
+   NOT diagnosis_sample_domain STREQUAL "observation-data" OR
+   NOT diagnosis_sample_path STREQUAL "share/doc/ltfa/examples/diagnosis")
+    message(FATAL_ERROR "diagnosis sample guidance is incorrect")
+endif()
+
 run_guide(unknown_topic guide statments)
 if(NOT unknown_topic_result EQUAL 2 OR NOT unknown_topic_output STREQUAL "" OR
    NOT unknown_topic_error MATCHES "^LTCLI-001 error: unknown guide topic statments" OR
@@ -125,4 +159,19 @@ if(NOT resilience_model_result EQUAL 0 OR NOT resilience_model_error STREQUAL ""
    NOT resilience_model_output MATCHES "entities: 6" OR
    NOT resilience_model_output MATCHES "relations: 10")
     message(FATAL_ERROR "resilience normative sample is not a valid model")
+endif()
+
+run_guide(diagnosis_model model --model-root "${LTFA_EXAMPLE_ROOT}/diagnosis" --input main.ltfa)
+if(NOT diagnosis_model_result EQUAL 0 OR NOT diagnosis_model_error STREQUAL "" OR
+   NOT diagnosis_model_output MATCHES "entities: 3" OR
+   NOT diagnosis_model_output MATCHES "probes: 1")
+    message(FATAL_ERROR "diagnosis sample is not a valid model")
+endif()
+
+run_guide(diagnosis_run diagnose --model-root "${LTFA_EXAMPLE_ROOT}/diagnosis" --input main.ltfa
+    --observations observations.jsonl --analysis-at 2030-01-01T00:10:30Z --format json)
+string(JSON diagnosis_schema ERROR_VARIABLE diagnosis_json_error GET "${diagnosis_run_output}" schema)
+if(NOT diagnosis_run_result EQUAL 0 OR NOT diagnosis_run_error STREQUAL "" OR
+   diagnosis_json_error OR NOT diagnosis_schema STREQUAL "ltfa.diagnosis-cli/v1")
+    message(FATAL_ERROR "diagnosis sample did not complete: ${diagnosis_json_error}")
 endif()

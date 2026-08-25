@@ -76,7 +76,8 @@ cmake --install build/release --prefix /path/to/ltfa
 ```
 
 The executable is installed under `bin`. License, README, release notes, the
-[LTFA DSL v1 reference](docs/language/ltfa-dsl-v1.md), development guide, and
+[LTFA DSL v1 reference](docs/language/ltfa-dsl-v1.md),
+[observation JSON Lines manual](docs/observations/ltfa-observation-v1.md), development guide, and
 normative samples are installed under `share/doc/ltfa`. Bash completion is installed under
 `share/bash-completion/completions/ltfa`; a configured `bash-completion` installation loads it
 automatically.
@@ -96,13 +97,17 @@ ltfa help diagnose --format json
 ltfa help guide
 ```
 
-Learn the LTFA DSL v1 language and offline workflows through the bundled Guide:
+Learn the LTFA DSL v1 language, observation JSON Lines, and offline workflows through the bundled
+Guide:
 
 ```sh
 ltfa guide
 ltfa guide syntax
+ltfa guide observations
+ltfa guide observations fields --level detail
 ltfa guide statements relations --level detail
 ltfa guide samples minimal
+ltfa guide samples diagnosis
 ltfa guide errors dsl --format json
 ```
 
@@ -128,9 +133,9 @@ export LTFA_COMPLETION_BIN="$PWD/build/release/ltfa"
 source completions/ltfa.bash
 ```
 
-Completion candidates come from the same command descriptors as help and parsing, and Guide topics
-come from the same language catalog as Guide output. LTFA does not load a model or enumerate
-topology IDs during completion.
+Completion candidates come from the same command descriptors as help and parsing, and Guide topics,
+observation subtopics, and sample IDs come from the same catalog as Guide output. LTFA does not load
+a model or enumerate topology IDs during completion.
 
 Compile and render one local model:
 
@@ -208,11 +213,23 @@ ltfa diagnose --model-root topology --input main.ltfa \
 ```
 
 The observation path must remain below the model root. `--analysis-at` is explicit: LTFA does not
-read a clock. Recommendations identify registered probes but never execute them.
+read a clock. Recommendations identify registered probes but never execute them. A complete
+synthetic example is available under `examples/diagnosis`:
+
+```sh
+ltfa model --model-root examples/diagnosis --input main.ltfa
+ltfa diagnose --model-root examples/diagnosis --input main.ltfa \
+    --observations observations.jsonl --analysis-at 2030-01-01T00:10:30Z --format json
+```
+
+The eight required fields are `schema`, `probe_id`, `target`, `vantage`, `kind`, `outcome`,
+`observed_at`, and `valid_for_ms`. See `ltfa guide observations`, the
+[observation manual](docs/observations/ltfa-observation-v1.md), and `ltfa help diagnose` for the
+synchronized field, enum, error-recovery, and offline contracts.
 
 ## Public contracts
 
-- CLI Contract: 4
+- CLI Contract: 5
 - DSL: LTFA DSL v1
 - Observation input: `ltfa.observation/v1` JSON Lines core API
 - Observation analysis: C++17 evidence-index and bounded-diagnosis core APIs

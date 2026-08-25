@@ -56,6 +56,22 @@ if(NOT guide_subtopic_output STREQUAL "__ltfa_completion_mode=plain\nrelations\n
     message(FATAL_ERROR "guide-subtopic completion is incorrect: ${guide_subtopic_output}")
 endif()
 
+run_completion(observation_topic guide ob)
+if(NOT observation_topic_output STREQUAL "__ltfa_completion_mode=plain\nobservations\n")
+    message(FATAL_ERROR "observation-topic completion is incorrect: ${observation_topic_output}")
+endif()
+
+run_completion(observation_subtopic guide observations f)
+if(NOT observation_subtopic_output STREQUAL "__ltfa_completion_mode=plain\nformat\nfields\n")
+    message(FATAL_ERROR
+        "observation-subtopic completion is incorrect: ${observation_subtopic_output}")
+endif()
+
+run_completion(diagnosis_sample guide samples d)
+if(NOT diagnosis_sample_output STREQUAL "__ltfa_completion_mode=plain\ndiagnosis\n")
+    message(FATAL_ERROR "diagnosis-sample completion is incorrect: ${diagnosis_sample_output}")
+endif()
+
 run_completion(guide_level guide syntax --level d)
 if(NOT guide_level_output STREQUAL "__ltfa_completion_mode=plain\ndetail\n")
     message(FATAL_ERROR "guide-level completion is incorrect: ${guide_level_output}")

@@ -45,8 +45,9 @@ if(NOT root_help_output STREQUAL root_help_short_output OR
    NOT root_help_output STREQUAL root_help_command_output OR
    NOT root_help_output MATCHES "The current core is offline" OR
    NOT root_help_output MATCHES "Bash completion:" OR
-   NOT root_help_output MATCHES "Language guide:" OR
+   NOT root_help_output MATCHES "Guides:" OR
    NOT root_help_output MATCHES "ltfa guide syntax" OR
+   NOT root_help_output MATCHES "ltfa guide observations" OR
    NOT root_help_output MATCHES "ltfa help <command> --format json")
     message(FATAL_ERROR "root help routes must be equivalent and state the offline boundary")
 endif()
@@ -97,7 +98,7 @@ string(JSON help_contract GET "${help_json_first_output}" cli_contract_version)
 string(JSON help_tool_version GET "${help_json_first_output}" tool_version)
 string(JSON help_operation GET "${help_json_first_output}" operation)
 string(JSON help_command_count LENGTH "${help_json_first_output}" commands)
-if(NOT help_schema STREQUAL "ltfa.command-help/v1" OR NOT help_contract EQUAL 4 OR
+if(NOT help_schema STREQUAL "ltfa.command-help/v1" OR NOT help_contract EQUAL 5 OR
    NOT help_tool_version STREQUAL "${LTFA_EXPECTED_VERSION}" OR
    NOT help_operation STREQUAL "help" OR NOT help_command_count EQUAL 6)
     message(FATAL_ERROR "structured root help contract is incorrect")

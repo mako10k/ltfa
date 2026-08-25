@@ -151,7 +151,12 @@ install(FILES
     docs/language/ltfa-dsl-v1.md
     DESTINATION ${CMAKE_INSTALL_DOCDIR}/docs/language
 )
+install(FILES
+    docs/observations/ltfa-observation-v1.md
+    DESTINATION ${CMAKE_INSTALL_DOCDIR}/docs/observations
+)
 install(DIRECTORY
+    examples/diagnosis
     examples/minimal
     examples/resilience
     DESTINATION ${CMAKE_INSTALL_DOCDIR}/examples
