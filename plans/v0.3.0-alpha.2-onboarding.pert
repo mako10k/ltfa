@@ -255,3 +255,16 @@ work_event verify-v030a2-candidate-finish-20260825:
   task VERIFY_V030A2_CANDIDATE
   kind finish
   occurred_at 2026-08-25T19:22:38+09:00
+
+milestone_acceptance_receipt RCPT_CANDIDATE_OWNER_ACCEPTED_20260825:
+  model 1
+  set V030A2_CANDIDATE_ACCEPTED_R1
+  set_commitment sha256:17b58f1e3cbcebfcd83e74dba02c8697296436ab7340cd6081951f220a7efcf5
+  criterion CANDIDATE_OWNER_ACCEPTED
+  criterion_commitment sha256:b0c59410a2c252c5f702e90814f9699d691d09db601a70a7a68f13c14da7ae33
+  action verify
+  evidence_kind owner
+  evidence_reference "Owner accepts the exact bounded v0.3.0-alpha.2 candidate at validation revision 8a4468b1a4f20b513b983ddcd7e8ac1b3ee5e3db, candidate evidence commit 6df84455c7ff61fc41406105589920b8a1d1bbd6, validation receipt commit 2d251de23604f9d6da1f689d82b48a2ba4cc1554, and validation completion commit 2a7a95458038dab6f948e3e9ae9962033dc83d6d; this acceptance does not authorize a tag, GitHub Release, package publication, stable promotion, or any additional push"
+  evidence_revision 2a7a95458038dab6f948e3e9ae9962033dc83d6d
+  verifier user
+  occurred_at 2026-08-25T10:27:29Z
