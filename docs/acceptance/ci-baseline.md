@@ -4,7 +4,7 @@ Date: 2026-08-25
 
 Task: `ESTABLISH_CI_BASELINE`
 
-Status: local workflow contract implemented and validated; hosted-run readback pending
+Status: local and GitHub-hosted validation passed; PERT acceptance declaration pending
 
 ## Claims
 
@@ -14,8 +14,8 @@ Status: local workflow contract implemented and validated; hosted-run readback p
 - `C-CI-002` (high confidence) — The workflow candidate is least privilege: it grants only
   `contents: read`, reads no repository secret, avoids `pull_request_target`, and disables persisted
   checkout credentials.
-- `C-CI-003` (medium confidence) — The workflow is ready for hosted execution, but no claim of a
-  successful GitHub-hosted run is made until the candidate is pushed and the run is read back.
+- `C-CI-003` (high confidence) — The pushed candidate completed every GitHub-hosted matrix job
+  successfully at the same commit verified on `origin/main`.
 
 ## Evidence
 
@@ -33,21 +33,29 @@ Status: local workflow contract implemented and validated; hosted-run readback p
 - `E-CI-005` — The first Clang Release build rejected an unused lambda capture in
   `app/cli_contract.cpp` under `-Werror`. Removing only that unused capture preserved behavior; the
   repeated GCC and Clang Release suites then passed in full.
+- `E-CI-006` — GitHub Actions run
+  [32799735043](https://github.com/mako10k/ltfa/actions/runs/32799735043) completed with conclusion
+  `success` for head `b74ee0173649358b9fccc23e42f161753c618df5`. Its five jobs —
+  `gcc-release`, `clang-release`, `gcc-asan-ubsan`, `gcc-lsan`, and `clang-fuzz-seeds` — each
+  completed with conclusion `success`.
+- `E-CI-007` — After the run completed, local `HEAD`, `origin/main`, and remote branch readback all
+  resolved to `b74ee0173649358b9fccc23e42f161753c618df5`.
 
 ## Reasoning
 
 Existing presets already define the project validation boundary. Reusing them prevents a second CI
 build contract from drifting away from local development. A full commit SHA makes the only external
 action reference immutable, while read-only token permissions and non-persisted credentials bound
-the effect of untrusted pull-request code. The hosted result remains unknown until an authorized
-push activates the workflow.
+the effect of untrusted pull-request code. The authorized push and exact-SHA readback confirm that
+the same candidate passed both local and hosted validation.
 
 ## Actions
 
 - `A-CI-001` [executed] — Add the least-privilege pinned workflow and its static contract test.
 - `A-CI-002` [executed] — Run the local matrix and record exact results below.
-- `A-CI-003` [pending] — Push an immutable candidate, read back every hosted matrix result, and only
-  then finish `ESTABLISH_CI_BASELINE`.
+- `A-CI-003` [executed] — Push the immutable candidate once and read back every hosted matrix result.
+- `A-CI-004` [pending] — Obtain owner acceptance of the exact Grammar 7 milestone criteria before
+  finishing and advancing `ESTABLISH_CI_BASELINE`.
 
 ## Local validation results
 
@@ -61,11 +69,24 @@ push activates the workflow.
 
 Both Release runs included install-smoke, the static offline boundary, eleven runtime `strace`
 checks, and eight Graphviz render checks. The workflow YAML syntax check, the new `ltfa.ci.contract`
-test, and `git diff --check` also passed. These are local results; hosted GitHub Actions status
-remains unknown until push and readback.
+test, and `git diff --check` also passed.
+
+## GitHub-hosted validation results
+
+| Job | Result | Duration |
+| --- | --- | ---: |
+| `gcc-release` | success | 58 seconds |
+| `clang-release` | success | 61 seconds |
+| `gcc-lsan` | success | 77 seconds |
+| `clang-fuzz-seeds` | success | 126 seconds |
+| `gcc-asan-ubsan` | success | 191 seconds |
+
+Run `32799735043` was triggered by the authorized push event at
+`b74ee0173649358b9fccc23e42f161753c618df5`; it completed with overall conclusion `success`.
 
 ## Boundary
 
-This evidence does not authorize a push, change branch protection, use secrets, contact a product
-endpoint, publish a tag or GitHub Release, or promote a stable version. `apt-get` is confined to
-installing validation tools on an ephemeral CI runner and is never called by LTFA.
+The one authorized push has completed. This evidence does not authorize another push, change branch
+protection, use secrets, contact a product endpoint, publish a tag or GitHub Release, or promote a
+stable version. `apt-get` is confined to installing validation tools on an ephemeral CI runner and
+is never called by LTFA.
