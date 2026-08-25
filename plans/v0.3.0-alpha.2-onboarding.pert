@@ -87,7 +87,7 @@ task ESTABLISH_CI_BASELINE EVIDENCE_RECONCILED -> CI_BASELINE_READY:
     optimistic 2p
     most_likely 3p
     pessimistic 5p
-  status active
+  status done
   priority 90
   requires:
     CODEX 1
@@ -168,3 +168,140 @@ work_event establish-ci-baseline-start-20260825:
   kind start
   occurred_at 2026-08-25T10:35:41+09:00
   planned_value 19/6p
+
+milestone_criterion_set EVIDENCE_RECONCILED_R1:
+  milestone EVIDENCE_RECONCILED
+  revision R1
+  commitment sha256:ace28594e7e1d53249fd280a03171e5e9fca07c8b13ad18c599c74c7907466d5
+  criterion MVP_STATUS_CURRENT required test "Current MVP PERT reports MVP_ACCEPTED with no blocking criterion"
+  criterion HISTORY_RECONCILED required artifact "Post-acceptance ADR and acceptance dispositions are committed without rewriting historical evidence"
+
+milestone_criterion_set CI_BASELINE_READY_R1:
+  milestone CI_BASELINE_READY
+  revision R1
+  commitment sha256:4e98a1f65c001b0eed6ef5e07529da270d8033342b7e8386ae159a4bd32c2691
+  criterion PINNED_LEAST_PRIVILEGE required artifact "Workflow uses a full checkout SHA, contents read, no secrets, no pull_request_target, and non-persisted credentials"
+  criterion LOCAL_MATRIX_PASS required test "GCC and Clang Release, ASan UBSan, LSan, and fuzz-seed local suites pass"
+  criterion HOSTED_MATRIX_PASS required test "GitHub Actions five-job matrix passes for the exact remote main SHA"
+  criterion CI_EVIDENCE_COMMITTED required artifact "Local and hosted CI evidence is committed"
+
+milestone_criterion_set GUIDE_CONTRACT_REVIEWED_R1:
+  milestone GUIDE_CONTRACT_REVIEWED
+  revision R1
+  commitment sha256:62801e4f09ce13992e80c5ee2cd61f18087e3715ddd2f2513342342a03eb751e
+  criterion GUIDE_ADR_AUDITED required artifact "Proposed ADR covers domain separation, public routes, schemas, error navigation, completion, compatibility, and offline boundaries"
+  criterion GUIDE_TEST_PLAN_REVIEWED required artifact "Focused success, failure, install, and offline tests are specified before implementation"
+
+milestone_criterion_set GUIDE_CONTRACT_ACCEPTED_R1:
+  milestone GUIDE_CONTRACT_ACCEPTED
+  revision R1
+  commitment sha256:d1d19dc5dc9432996d65b7e0a276744a2c9deadc1c5b22f324005b59e6a35b0e
+  criterion GUIDE_OWNER_ACCEPTED required owner "Owner accepts the exact proposed ADR before implementation"
+
+milestone_criterion_set DIAGNOSIS_ONBOARDING_READY_R1:
+  milestone DIAGNOSIS_ONBOARDING_READY
+  revision R1
+  commitment sha256:4e7099c341e87890de6f4999e7fe041456f187020bbbe3da95d35093ba84aa6a
+  criterion GUIDE_BEHAVIOR_PASS required test "Descriptor-backed observation guidance, help, error navigation, and bash completion focused tests pass"
+  criterion INSTALLED_EXAMPLE_PASS required test "Synthetic diagnosis example and Guide routes pass from an installed tree"
+  criterion OFFLINE_BOUNDARY_PASS required test "Static and runtime offline boundaries pass without active probes or implicit effects"
+  criterion IMPLEMENTATION_EVIDENCE_COMMITTED required artifact "Accepted ADR, implementation tests, and residual risks are committed"
+
+milestone_criterion_set CANDIDATE_EVIDENCE_READY_R1:
+  milestone CANDIDATE_EVIDENCE_READY
+  revision R1
+  commitment sha256:7a4f29750cb30df5f5cd302895134a0bf7da929a4401c5b171edd2e15a0895fe
+  criterion REFERENCE_MATRIX_PASS required test "Complete GCC and Clang Release, sanitizer, fuzz, install, and offline gates pass"
+  criterion HOSTED_CI_PASS required test "Exact candidate GitHub Actions matrix passes"
+  criterion AARCH64_PASS required test "Qualified aarch64 Release semantics, install, and portability gates pass on raspi4"
+  criterion CANDIDATE_EVIDENCE_COMMITTED required artifact "Candidate evidence and residual risks are committed"
+
+milestone_criterion_set V030A2_CANDIDATE_ACCEPTED_R1:
+  milestone V030A2_CANDIDATE_ACCEPTED
+  revision R1
+  commitment sha256:17b58f1e3cbcebfcd83e74dba02c8697296436ab7340cd6081951f220a7efcf5
+  criterion CANDIDATE_OWNER_ACCEPTED required owner "Owner accepts the exact bounded candidate evidence"
+
+work_event establish-ci-baseline-finish-20260825:
+  model 1
+  task ESTABLISH_CI_BASELINE
+  kind finish
+  occurred_at 2026-08-25T11:15:20+09:00
+
+milestone_acceptance_receipt RCPT_MVP_STATUS_CURRENT_20260825:
+  model 1
+  set EVIDENCE_RECONCILED_R1
+  set_commitment sha256:ace28594e7e1d53249fd280a03171e5e9fca07c8b13ad18c599c74c7907466d5
+  criterion MVP_STATUS_CURRENT
+  criterion_commitment sha256:7f0039b01b7eca0a90351af56b44194bf8c8a4c51571901954d0073f9205439d
+  action verify
+  evidence_kind test
+  evidence_reference "perttool dag next plans/ltfa-mvp.pert reports MVP_ACCEPTED accepted with no blocking required criteria; source digest sha256:27dc24627077cdb8f30310e3aeca88c5e6717383c6a29be7a156cdfada439858"
+  evidence_revision 6a286b105b9536c191db45552c35513e537ae347
+  verifier codex
+  occurred_at 2026-08-25T02:20:00Z
+
+milestone_acceptance_receipt RCPT_HISTORY_RECONCILED_20260825:
+  model 1
+  set EVIDENCE_RECONCILED_R1
+  set_commitment sha256:ace28594e7e1d53249fd280a03171e5e9fca07c8b13ad18c599c74c7907466d5
+  criterion HISTORY_RECONCILED
+  criterion_commitment sha256:b8b6908609ef1242687efe94e97e445bff582013c715a1fa92b99bbf9ed613f5
+  action verify
+  evidence_kind artifact
+  evidence_reference "Git commit 7e730257a07417530e426285a8ee2859c058e8e6 appends final MVP dispositions to acceptance records, ADRs 0012 and 0013, and plan history while preserving historical measurements and hashes"
+  evidence_revision 7e730257a07417530e426285a8ee2859c058e8e6
+  verifier codex
+  occurred_at 2026-08-25T02:20:00Z
+
+milestone_acceptance_receipt RCPT_PINNED_LEAST_PRIVILEGE_20260825:
+  model 1
+  set CI_BASELINE_READY_R1
+  set_commitment sha256:4e98a1f65c001b0eed6ef5e07529da270d8033342b7e8386ae159a4bd32c2691
+  criterion PINNED_LEAST_PRIVILEGE
+  criterion_commitment sha256:3b221f267e8cbf39b0060dcd7e1a6e36baf05933f945ec14e191df756decbba4
+  action verify
+  evidence_kind artifact
+  evidence_reference ".github/workflows/ci.yml and tests/ci_contract_test.cmake pin checkout to 3d3c42e5aac5ba805825da76410c181273ba90b1, grant contents read, disable persisted credentials, and reject secrets and pull_request_target"
+  evidence_revision b74ee0173649358b9fccc23e42f161753c618df5
+  verifier codex
+  occurred_at 2026-08-25T02:20:00Z
+
+milestone_acceptance_receipt RCPT_LOCAL_MATRIX_PASS_20260825:
+  model 1
+  set CI_BASELINE_READY_R1
+  set_commitment sha256:4e98a1f65c001b0eed6ef5e07529da270d8033342b7e8386ae159a4bd32c2691
+  criterion LOCAL_MATRIX_PASS
+  criterion_commitment sha256:edd43807b05df10c06ef74cd279d4746de0ded46da71d85ebd95997f01fe389c
+  action verify
+  evidence_kind test
+  evidence_reference "docs/acceptance/ci-baseline.md records GCC Release 53/53, Clang Release 53/53, GCC ASan UBSan 42/42, GCC LSan 42/42, and Clang fuzz seeds 44/44"
+  evidence_revision b74ee0173649358b9fccc23e42f161753c618df5
+  verifier codex
+  occurred_at 2026-08-25T02:20:00Z
+
+milestone_acceptance_receipt RCPT_HOSTED_MATRIX_PASS_20260825:
+  model 1
+  set CI_BASELINE_READY_R1
+  set_commitment sha256:4e98a1f65c001b0eed6ef5e07529da270d8033342b7e8386ae159a4bd32c2691
+  criterion HOSTED_MATRIX_PASS
+  criterion_commitment sha256:dcdd75b3816bd2beab6ecb932faea84230451a3003ce0c657f580f9c47a11832
+  action verify
+  evidence_kind test
+  evidence_reference "GitHub Actions run 32799735043 completed success for b74ee0173649358b9fccc23e42f161753c618df5 with all five jobs successful"
+  evidence_revision b74ee0173649358b9fccc23e42f161753c618df5
+  verifier codex
+  occurred_at 2026-08-25T02:20:00Z
+
+milestone_acceptance_receipt RCPT_CI_EVIDENCE_COMMITTED_20260825:
+  model 1
+  set CI_BASELINE_READY_R1
+  set_commitment sha256:4e98a1f65c001b0eed6ef5e07529da270d8033342b7e8386ae159a4bd32c2691
+  criterion CI_EVIDENCE_COMMITTED
+  criterion_commitment sha256:88c00cc10dceed8c879ef9fad15e796c93d8f10856d68bd2e80c57d7f5ab92f3
+  action verify
+  evidence_kind artifact
+  evidence_reference "Git commit da30e85085172756a816b7c66bdffd1daa6523e4 records local and GitHub-hosted CI evidence in docs/acceptance/ci-baseline.md"
+  evidence_revision da30e85085172756a816b7c66bdffd1daa6523e4
+  verifier codex
+  occurred_at 2026-08-25T02:20:00Z
