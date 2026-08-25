@@ -54,7 +54,7 @@ task IMPLEMENT_DIAGNOSIS_ONBOARDING GUIDE_CONTRACT_ACCEPTED -> DIAGNOSIS_ONBOARD
     optimistic 3p
     most_likely 5p
     pessimistic 8p
-  status active
+  status done
   priority 70
   requires:
     CODEX 1
@@ -132,3 +132,61 @@ work_event implement-diagnosis-onboarding-start-20260825:
   kind start
   occurred_at 2026-08-25T11:33:06+09:00
   planned_value 31/6p
+
+milestone_acceptance_receipt RCPT_GUIDE_BEHAVIOR_PASS_20260825:
+  model 1
+  set DIAGNOSIS_ONBOARDING_READY_R1
+  set_commitment sha256:4e7099c341e87890de6f4999e7fe041456f187020bbbe3da95d35093ba84aa6a
+  criterion GUIDE_BEHAVIOR_PASS
+  criterion_commitment sha256:e02eff7f3afaebdc20965b76d436f687bbfd195305e4a1122ce944459d3d5131
+  action verify
+  evidence_kind test
+  evidence_reference "GCC Release CTest 55/55 passed at 3b91ce043ae6fa4482d575b4dc98563cc17accac including exact observation Guide text and JSON routes, help, LTOBS-001..004 Action Navigation, bash completion, typo recovery, decoder, bounded-incomplete, and restricted-output coverage"
+  evidence_revision 3b91ce043ae6fa4482d575b4dc98563cc17accac
+  verifier codex
+  occurred_at 2026-08-25T02:54:52Z
+
+milestone_acceptance_receipt RCPT_INSTALLED_EXAMPLE_PASS_20260825:
+  model 1
+  set DIAGNOSIS_ONBOARDING_READY_R1
+  set_commitment sha256:4e7099c341e87890de6f4999e7fe041456f187020bbbe3da95d35093ba84aa6a
+  criterion INSTALLED_EXAMPLE_PASS
+  criterion_commitment sha256:dbbe1d877f25a38762f0de2b0cda5fc35af8bbc5e6100adfb0030fd77c59926c
+  action verify
+  evidence_kind test
+  evidence_reference "ltfa.install.smoke passed at 3b91ce043ae6fa4482d575b4dc98563cc17accac; the temporary prefix contained the observation manual and diagnosis sample, and installed Guide, completion, model, and ltfa.diagnosis-cli/v1 diagnosis routes succeeded"
+  evidence_revision 3b91ce043ae6fa4482d575b4dc98563cc17accac
+  verifier codex
+  occurred_at 2026-08-25T02:54:52Z
+
+milestone_acceptance_receipt RCPT_OFFLINE_BOUNDARY_PASS_20260825:
+  model 1
+  set DIAGNOSIS_ONBOARDING_READY_R1
+  set_commitment sha256:4e7099c341e87890de6f4999e7fe041456f187020bbbe3da95d35093ba84aa6a
+  criterion OFFLINE_BOUNDARY_PASS
+  criterion_commitment sha256:06ef070855101dd9f6e1ce38eedbf186f492be99bfe5005c5d635a3ef6832910
+  action verify
+  evidence_kind test
+  evidence_reference "GCC Release CTest 55/55 passed at 3b91ce043ae6fa4482d575b4dc98563cc17accac including ltfa.boundary.offline and ltfa.boundary.observation-onboarding-offline-runtime; help, Guide, completion, and diagnosis traces contained zero network syscalls"
+  evidence_revision 3b91ce043ae6fa4482d575b4dc98563cc17accac
+  verifier codex
+  occurred_at 2026-08-25T02:54:52Z
+
+milestone_acceptance_receipt RCPT_IMPLEMENTATION_EVIDENCE_COMMITTED_20260825:
+  model 1
+  set DIAGNOSIS_ONBOARDING_READY_R1
+  set_commitment sha256:4e7099c341e87890de6f4999e7fe041456f187020bbbe3da95d35093ba84aa6a
+  criterion IMPLEMENTATION_EVIDENCE_COMMITTED
+  criterion_commitment sha256:11dfed68c088925917780a64830fc4cd81fd8c26a5428cf7f70f3177dbe86d57
+  action verify
+  evidence_kind artifact
+  evidence_reference "Git commit 3b91ce043ae6fa4482d575b4dc98563cc17accac contains accepted ADR 0016 implementation outcomes, synchronized help Guide manual and documentation, focused implementation tests, docs/acceptance/observation-diagnosis-onboarding-implementation.md, and bounded residual risks"
+  evidence_revision 3b91ce043ae6fa4482d575b4dc98563cc17accac
+  verifier codex
+  occurred_at 2026-08-25T02:54:52Z
+
+work_event implement-diagnosis-onboarding-finish-20260825:
+  model 1
+  task IMPLEMENT_DIAGNOSIS_ONBOARDING
+  kind finish
+  occurred_at 2026-08-25T11:56:00+09:00
