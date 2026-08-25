@@ -1002,7 +1002,7 @@ void print_bash_completion_query(std::ostream &output, int argc, char *argv[], i
         }
         return static_cast<const OptionDescriptor *>(nullptr);
     };
-    const auto print_option_value = [&output, &print_mode,
+    const auto print_option_value = [&print_mode,
                                      &print_candidate](const OptionDescriptor &option) {
         if (!option.enum_values.empty()) {
             print_mode("plain");

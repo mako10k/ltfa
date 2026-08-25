@@ -46,6 +46,19 @@ ctest --test-dir build --output-on-failure
 Compiler warnings are errors. GCC and Clang use
 `-Wall -Wextra -Wpedantic -Werror`; MSVC uses `/W4 /WX`.
 
+## Continuous integration
+
+The `CI` workflow runs on pushes to `main`, pull requests, and explicit manual dispatch. It uses an
+`ubuntu-24.04` matrix for GCC and Clang Release builds, GCC ASan/UBSan and LSan builds, and Clang
+standalone fuzz-seed replay. Every matrix entry configures, builds, and tests through the committed
+CMake preset, so Release entries also exercise install-smoke and the static and runtime offline
+boundary checks.
+
+The workflow grants only `contents: read`, does not consume repository secrets, disables persisted
+checkout credentials, and pins `actions/checkout` to the full commit SHA for v7.0.1. Graphviz and
+`strace` are installed only as validation tools on the disposable runner; LTFA neither links nor
+invokes them. The Release and safety commands below are the local equivalent of the CI matrix.
+
 ## Focused development
 
 Exercise the built CLI directly:

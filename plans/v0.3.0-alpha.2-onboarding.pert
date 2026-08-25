@@ -87,7 +87,7 @@ task ESTABLISH_CI_BASELINE EVIDENCE_RECONCILED -> CI_BASELINE_READY:
     optimistic 2p
     most_likely 3p
     pessimistic 5p
-  status planned
+  status active
   priority 90
   requires:
     CODEX 1
@@ -161,3 +161,10 @@ work_event reconcile-acceptance-status-finish-20260825:
   task RECONCILE_ACCEPTANCE_STATUS
   kind finish
   occurred_at 2026-08-25T10:33:24+09:00
+
+work_event establish-ci-baseline-start-20260825:
+  model 1
+  task ESTABLISH_CI_BASELINE
+  kind start
+  occurred_at 2026-08-25T10:35:41+09:00
+  planned_value 19/6p

@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: gcc-release
+            cc: gcc
+            cxx: g++
+            preset: release
+          - name: clang-release
+            cc: clang-18
+            cxx: clang++-18
+            preset: release
+          - name: gcc-asan-ubsan
+            cc: gcc
+            cxx: g++
+            preset: asan-ubsan
+          - name: gcc-lsan
+            cc: gcc
+            cxx: g++
+            preset: lsan
+          - name: clang-fuzz-seeds
+            cc: clang-18
+            cxx: clang++-18
+            preset: fuzz-seeds
+    env:
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
+      LTFA_PRESET: ${{ matrix.preset }}
+    steps:
+      - name: Check out the candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install validation-only tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes graphviz strace
+
+      - name: Configure
+        run: cmake --preset "$LTFA_PRESET"
+
+      - name: Build
+        run: cmake --build --preset "$LTFA_PRESET" --parallel 2
+
+      - name: Test
+        run: ctest --preset "$LTFA_PRESET"

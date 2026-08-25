@@ -8,6 +8,13 @@ ltfa_enable_warnings(ltfa_smoke_test)
 
 add_test(NAME ltfa.smoke COMMAND ltfa_smoke_test)
 
+add_test(
+    NAME ltfa.ci.contract
+    COMMAND ${CMAKE_COMMAND}
+        -DLTFA_CI_WORKFLOW=${PROJECT_SOURCE_DIR}/.github/workflows/ci.yml
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/ci_contract_test.cmake
+)
+
 add_executable(ltfa_benchmark_driver EXCLUDE_FROM_ALL
     benchmark/benchmark_driver.cpp
 )
