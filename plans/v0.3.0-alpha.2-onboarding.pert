@@ -60,7 +60,7 @@ task RECONCILE_ACCEPTANCE_STATUS ISSUE_REGISTERED -> EVIDENCE_RECONCILED:
     optimistic 1p
     most_likely 2p
     pessimistic 3p
-  status planned
+  status done
   priority 100
   requires:
     CODEX 1
@@ -137,3 +137,16 @@ task VERIFY_V030A2_CANDIDATE DIAGNOSIS_ONBOARDING_READY -> CANDIDATE_EVIDENCE_RE
 
 gate OWNER_CANDIDATE_APPROVAL CANDIDATE_EVIDENCE_READY -> V030A2_CANDIDATE_ACCEPTED:
   reason "The user must accept the exact candidate evidence; this gate does not authorize a tag, GitHub Release, stable promotion, or publication."
+
+work_event reconcile-acceptance-status-start-20260825:
+  model 1
+  task RECONCILE_ACCEPTANCE_STATUS
+  kind start
+  occurred_at 2026-08-25T10:27:21+09:00
+  planned_value 2p
+
+work_event reconcile-acceptance-status-finish-20260825:
+  model 1
+  task RECONCILE_ACCEPTANCE_STATUS
+  kind finish
+  occurred_at 2026-08-25T10:33:24+09:00

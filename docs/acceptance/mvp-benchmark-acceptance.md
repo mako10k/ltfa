@@ -4,10 +4,16 @@ Date: 2026-08-24
 
 Task: `MVP_BENCHMARK_ACCEPTANCE`
 
-Status: two-tier target disposition accepted; bounded memory optimization and repeat measurement
-complete; final owner acceptance and PERT transition remain open
+Measurement status at capture: two-tier target disposition accepted; bounded memory optimization
+and repeat measurement complete; final owner acceptance and PERT transition were the remaining
+gates
 
-## Claim
+Post-acceptance status: final owner acceptance recorded and `MVP_ACCEPTED` reached on 2026-08-24
+
+## Claims at the measurement checkpoint
+
+The claims in this section describe the measurement state before the subsequent final owner
+acceptance and PERT transition recorded in the post-acceptance status above.
 
 `C-BENCH-ACC-001` 📜✅ — The pinned five-run protocol completed on the x86_64 reference host and
 the aarch64 portability host with identical fixture hashes and semantic counts. The x86_64 result
@@ -207,8 +213,9 @@ improvement rather than a workload reduction.
   sizes and Pi thermal/throttle state. References `C-BENCH-ACC-001`.
 - `A-BENCH-ACC-003` 🧪 [executed] — Collected allocation-level evidence for both RSS misses without
   changing the measured build. References `C-BENCH-ACC-001`.
-- `A-BENCH-ACC-004` ⛔ [pending] — Obtain explicit owner acceptance after the target misses are
-  optimized or formally qualified; do not finish the PERT task or reach `MVP_ACCEPTED` first.
+- `A-BENCH-ACC-004` ⛔ [historical gate; satisfied 2026-08-24] — At measurement time, obtain
+  explicit owner acceptance after the target misses are optimized or formally qualified; do not
+  finish the PERT task or reach `MVP_ACCEPTED` first.
   References `C-BENCH-ACC-002`.
 - `A-BENCH-ACC-005` 🚀 [executed] — Reviewed and bounded the optimization to observation ownership
   lifetimes and the CLI copy; parser streaming remains outside this task. References
@@ -220,6 +227,9 @@ improvement rather than a workload reduction.
   References `C-BENCH-ACC-001`.
 - `A-BENCH-ACC-008` 🚀 [executed] — Released unused observation storage, removed the product CLI
   copy, and repeated the pinned measurements and sanitizer suites. References `C-BENCH-ACC-002`.
+- `A-BENCH-ACC-009` 🚀 [executed] — Recorded final owner acceptance through
+  `RCPT_MVP_OWNER_ACCEPTED_20260824`, completed `MVP_BENCHMARK_ACCEPTANCE`, and advanced the accepted
+  plan to `MVP_ACCEPTED`. References `C-BENCH-ACC-002`.
 
 ## Raw evidence
 
@@ -255,5 +265,11 @@ material values and qualification boundaries.
 
 ## Boundary
 
-This evidence is ready for final owner acceptance but does not itself finish
-`MVP_BENCHMARK_ACCEPTANCE`, reach `MVP_ACCEPTED`, publish a release, or authorize any live probe.
+At the measurement checkpoint, this evidence did not itself finish `MVP_BENCHMARK_ACCEPTANCE` or
+reach `MVP_ACCEPTED`. The owner subsequently accepted the sealed evidence in commit
+`bf053b17f7a0ba85b241fa48a63b8ca2ec6bf8a1`; the task completed in
+`d18cafdf014acae4a930af5b4fb526c10bcef965`, and the plan reached `MVP_ACCEPTED` in
+`85faabf1129a7fb3dd44b3e451ba705395f6f6d1`.
+
+Neither the measurement evidence nor that later acceptance publishes a release or authorizes a
+live probe.

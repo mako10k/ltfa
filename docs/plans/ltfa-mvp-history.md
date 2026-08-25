@@ -741,8 +741,9 @@ Status: implementation checkpoint accepted by the residual plan
 The installed one-shot CLI added `cuts` and `diagnose` with bounded human, JSON, and DOT results,
 canonical observation-root confinement, stable error routing, installed-tree coverage, and
 zero-network-syscall tests. The Release suite passed 49/49 and the focused UBSan CLI gate passed
-1/1. The exact architecture contract remains separately marked as explicit owner acceptance pending
-in ADR 0012. Evidence is recorded in `docs/acceptance/m4-cli-wiring.md`.
+1/1. At this checkpoint the exact architecture contract still required explicit owner acceptance
+in ADR 0012; final MVP acceptance later satisfied that gate. Evidence is recorded in
+`docs/acceptance/m4-cli-wiring.md`.
 
 ## 2026-08-24 — MVP_PIN_BENCHMARK_TARGETS
 
@@ -770,3 +771,22 @@ successor task produced the actual pre-advance digest
 repository-history proof matched commit `823dc9926b09ac70bd7b9817094415ef3fb825c4`, and guarded
 advancement produced digest
 `sha256:7b816abff2bdf70eb0c90c00e2aa71bac10863e39bcac01b30e6eedbf4499bdd`.
+
+## 2026-08-24 — MVP_BENCHMARK_ACCEPTANCE
+
+Status: completed with final owner acceptance
+
+The optimized x86_64 and aarch64 evidence satisfied every required ADR 0013 MVP gate while keeping
+the 64/96-MiB stretch misses visible. Commit
+`bf053b17f7a0ba85b241fa48a63b8ca2ec6bf8a1` records owner receipt
+`RCPT_MVP_OWNER_ACCEPTED_20260824`, and commit
+`d18cafdf014acae4a930af5b4fb526c10bcef965` completes the benchmark task.
+
+## 2026-08-24 — MVP_ACCEPTED
+
+Status: reached and accepted
+
+Commit `85faabf1129a7fb3dd44b3e451ba705395f6f6d1` advances the completed task and reaches the final
+milestone. The current plan has zero tasks and gates; `perttool dag next` reports no recommendation,
+acceptance `ok=true`, and no blocking required criterion. This acceptance does not publish a
+release or authorize any live probe.

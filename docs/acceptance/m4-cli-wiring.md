@@ -2,14 +2,21 @@
 
 Date: 2026-08-19
 
+Checkpoint status: implemented and tested
+
+Post-checkpoint disposition: accepted by final MVP owner acceptance on 2026-08-24
+
 The implementation adds `cuts` and `diagnose` to CLI Contract 2 discovery. Acceptance evidence
 must cover structured help, human and JSON results, diagnosis DOT, bounded incomplete results,
 usage/input/validation statuses, canonical observation-root confinement, installed execution,
 zero network syscalls, and the complete regression suite.
 
-The exact command and schema design is recorded in ADR 0012 with owner acceptance still pending.
-This checkpoint therefore records implemented and tested behavior, not an accepted architecture
-decision.
+At this checkpoint, the exact command and schema design in ADR 0012 still required owner
+acceptance. Final MVP receipt `RCPT_MVP_OWNER_ACCEPTED_20260824` subsequently satisfied that gate in
+commit `bf053b17f7a0ba85b241fa48a63b8ca2ec6bf8a1`; the task completed in
+`d18cafdf014acae4a930af5b4fb526c10bcef965` and the plan reached `MVP_ACCEPTED` in
+`85faabf1129a7fb3dd44b3e451ba705395f6f6d1`. This record remains the historical implementation
+checkpoint, while ADR 0012 now records the accepted architecture disposition.
 
 ## Evidence
 

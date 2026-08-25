@@ -110,6 +110,9 @@ Neutral:
 
 ## Follow-ups
 
-- Obtain final owner acceptance before finishing the PERT task or reaching `MVP_ACCEPTED`.
+- Final owner acceptance was recorded by receipt `RCPT_MVP_OWNER_ACCEPTED_20260824` in commit
+  `bf053b17f7a0ba85b241fa48a63b8ca2ec6bf8a1`; the task completed in
+  `d18cafdf014acae4a930af5b4fb526c10bcef965` and the plan reached `MVP_ACCEPTED` in
+  `85faabf1129a7fb3dd44b3e451ba705395f6f6d1`.
 - Keep parser streaming and the 64/96-MiB stretch targets as post-MVP work unless later evidence
   promotes them to a separately approved gate.
