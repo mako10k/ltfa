@@ -2,7 +2,9 @@
 
 Date: 2026-08-25
 
-Status: Proposed
+Status: Accepted
+
+Owner acceptance: 2026-08-25
 
 ## Context
 
@@ -251,9 +253,11 @@ Proposed implementation actions trace as follows:
 
 ## Review
 
-This record is proposed for the `OWNER_GUIDE_APPROVAL` gate. Approval of the earlier PERT or its
-criterion sets does not accept this exact public contract. Implementation must not begin until the
-owner accepts this ADR revision and its test plan.
+The owner accepted the exact proposed contract and test plan at Git revision
+`a154d23215d656d15e1780802446992959880dbf` on 2026-08-25. PERT receipt
+`RCPT_GUIDE_OWNER_ACCEPTED_20260825` records that acceptance. This post-acceptance status update
+does not alter the accepted boundary. Implementation remains limited to the actions and tests in
+this record.
 
 ## Follow-ups
 

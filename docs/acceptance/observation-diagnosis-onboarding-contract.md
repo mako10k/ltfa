@@ -4,7 +4,7 @@ Date: 2026-08-25
 
 Task: `DESIGN_OBSERVATION_GUIDE`
 
-Status: proposed ADR and pre-implementation tests audited; owner acceptance pending
+Status: exact ADR and pre-implementation tests accepted; PERT advance pending
 
 ## Claims
 
@@ -16,8 +16,8 @@ Status: proposed ADR and pre-implementation tests audited; owner acceptance pend
 - `C-ONBOARD-003` (high confidence) — The specified test plan covers focused success, failure,
   parity, synchronization, completion, synthetic example, install-tree, offline, and regression
   behavior before implementation begins.
-- `C-ONBOARD-004` (high confidence) — Implementation remains blocked on acceptance of the exact
-  proposed ADR.
+- `C-ONBOARD-004` (high confidence) — The owner accepted the exact proposed ADR; implementation
+  remains bounded by its actions and test plan.
 
 ## Evidence
 
@@ -32,6 +32,8 @@ Status: proposed ADR and pre-implementation tests audited; owner acceptance pend
 - `E-ONBOARD-005` — Current installation rules include the LTFA DSL v1 manual and the `minimal` and
   `resilience` model samples, but no observation manual or diagnosis sample.
 - `E-ONBOARD-006` — ADR 0016 records the exact proposed contract and pre-implementation test plan.
+- `E-ONBOARD-007` — PERT receipt `RCPT_GUIDE_OWNER_ACCEPTED_20260825` records owner acceptance of
+  Git revision `a154d23215d656d15e1780802446992959880dbf`.
 
 ## Reasoning
 
@@ -80,8 +82,8 @@ output.
 - `A-ONBOARD-001` [executed] — Audit ADRs 0007, 0012, 0014, and 0015 and the current CLI,
   documentation, completion, install, and diagnostic surfaces.
 - `A-ONBOARD-002` [executed] — Draft ADR 0016 with the exact bounded contract and test plan.
-- `A-ONBOARD-003` [pending] — Obtain owner acceptance of ADR 0016.
-- `A-ONBOARD-004` [blocked by A-ONBOARD-003] — Implement only the accepted revision.
+- `A-ONBOARD-003` [executed] — Obtain owner acceptance of ADR 0016.
+- `A-ONBOARD-004` [pending] — Implement only the accepted revision after the PERT advance.
 
 ## Residual risks
 
@@ -94,6 +96,6 @@ output.
 
 ## Boundary
 
-This review authorizes no implementation, push, tag, Release, active probe, network access,
-producer integration, automatic repair, or retry. The next permitted mutation after this review is
-owner acceptance of the exact proposed ADR.
+This review authorizes implementation only within accepted ADR 0016 after the PERT advance. It
+does not authorize a push, tag, Release, active probe, network access, producer integration,
+automatic repair, or retry.
