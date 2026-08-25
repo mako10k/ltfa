@@ -69,7 +69,7 @@ task VERIFY_V030A2_CANDIDATE DIAGNOSIS_ONBOARDING_READY -> CANDIDATE_EVIDENCE_RE
     optimistic 2p
     most_likely 3p
     pessimistic 5p
-  status active
+  status done
   priority 60
   requires:
     CODEX 1
@@ -249,3 +249,9 @@ milestone_acceptance_receipt RCPT_CANDIDATE_EVIDENCE_COMMITTED_20260825:
   evidence_revision 6df84455c7ff61fc41406105589920b8a1d1bbd6
   verifier codex
   occurred_at 2026-08-25T10:12:36Z
+
+work_event verify-v030a2-candidate-finish-20260825:
+  model 1
+  task VERIFY_V030A2_CANDIDATE
+  kind finish
+  occurred_at 2026-08-25T19:22:38+09:00
