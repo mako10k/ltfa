@@ -1,4 +1,4 @@
-// Responsibility: validate Turbo Ring switching, uncertainty and topology rejection.
+// R: validate Turbo Ring switching, uncertainty and topology rejection.
 #include "ltfa/dsl/parser.hpp"
 #include "ltfa/forwarding_analysis.hpp"
 #include "ltfa/model_compiler.hpp"
@@ -235,5 +235,28 @@ int main() {
     s.entity_states[0] = static_cast<AvailabilityState>(999);
     check(analyze_forwarding(m, s, domain, source).status == AnalysisStatus::invalid,
           "invalid state enum rejected");
+    auto ingress_model = m;
+    Endpoint ingress = ingress_model.endpoints[0];
+    ingress.id = EndpointId{static_cast<std::uint32_t>(ingress_model.endpoints.size())};
+    ingress.owner = EntityId{source.index};
+    ingress_model.scopes.push_back(ingress_model.scopes[0]);
+    ingress_model.scopes.back().id = ScopeId{1};
+    ingress_model.scopes.back().completeness = Completeness::partial;
+    ingress_model.scopes.back().evidence_quality = EvidenceQuality::inferred;
+    ingress.scope = ScopeId{1};
+    ingress_model.endpoints.push_back(ingress);
+    auto ingress_snapshot = make_availability_snapshot(ingress_model);
+    check(ingress_snapshot.set(ObjectRef::from(ingress.id), AvailabilityState::unknown),
+          "set ingress");
+    auto ingress_result =
+        analyze_forwarding(ingress_model, ingress_snapshot, domain, ObjectRef::from(ingress.id));
+    check(ingress_result.status == AnalysisStatus::incomplete && !ingress_result.backup_activated &&
+              !ingress_result.backup_activation_unknown &&
+              ingress_result.links.back().logical == ForwardingState::blocking &&
+              count(ingress_result, ForwardingReachability::unknown) == 5,
+          "source-only uncertainty preserves ring block");
+    check(ingress_result.qualification.completeness == Completeness::partial &&
+              ingress_result.qualification.evidence_quality == EvidenceQuality::inferred,
+          "ingress qualification preserved");
     std::cout << "Turbo Ring forwarding tests passed\n";
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-// Responsibility: immutable physical-to-logical Turbo Ring forwarding analysis.
+// R: immutable physical-to-logical Turbo Ring forwarding analysis.
 #include "ltfa/path_analysis.hpp"
 #include <string>
 namespace ltfa {

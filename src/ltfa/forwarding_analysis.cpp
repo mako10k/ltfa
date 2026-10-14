@@ -1,4 +1,4 @@
-// Responsibility: validate a declared ring and bound post-switch reachability.
+// R: validate a declared ring and bound post-switch reachability.
 #include "ltfa/forwarding_analysis.hpp"
 #include <algorithm>
 #include <map>
@@ -216,6 +216,7 @@ ForwardingResult analyze_forwarding(const NormalizedModel &m, const Availability
     auto ds = s.state(ObjectRef::from(domain));
     unknown |= ds == AvailabilityState::unknown;
     r.contains_degraded_availability |= ds == AvailabilityState::degraded;
+    const bool ring_unknown = unknown;
     r.contains_unknown_availability = unknown;
     r.status = unknown ? AnalysisStatus::incomplete : AnalysisStatus::complete;
     r.qualification = {Completeness::verified, EvidenceQuality::confirmed};
@@ -259,7 +260,7 @@ ForwardingResult analyze_forwarding(const NormalizedModel &m, const Availability
         if (l.physical == AvailabilityState::unavailable || ds == AvailabilityState::unavailable)
             l.logical = ForwardingState::unavailable;
         else if (ds == AvailabilityState::unknown || l.physical == AvailabilityState::unknown ||
-                 (l.backup && !failure && unknown))
+                 (l.backup && !failure && ring_unknown))
             l.logical = ForwardingState::unknown;
         else if (l.backup && !failure)
             l.logical = ForwardingState::blocking;
