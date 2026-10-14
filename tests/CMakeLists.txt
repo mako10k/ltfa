@@ -582,3 +582,17 @@ if(LTFA_BUILD_FUZZERS)
         )
     endif()
 endif()
+
+add_executable(ltfa_forwarding_analysis_test forwarding_analysis_test.cpp)
+target_link_libraries(ltfa_forwarding_analysis_test PRIVATE ltfa::core)
+target_compile_features(ltfa_forwarding_analysis_test PRIVATE cxx_std_17)
+set_target_properties(ltfa_forwarding_analysis_test PROPERTIES CXX_EXTENSIONS OFF)
+ltfa_enable_warnings(ltfa_forwarding_analysis_test)
+add_test(NAME ltfa.analysis.forwarding COMMAND ltfa_forwarding_analysis_test)
+
+add_test(NAME ltfa.cli.forwarding
+    COMMAND ${CMAKE_COMMAND}
+        -DLTFA_CLI=$<TARGET_FILE:ltfa>
+        -DLTFA_RING_ROOT=${PROJECT_SOURCE_DIR}/examples/turbo-ring
+        -DLTFA_SCRATCH=${PROJECT_BINARY_DIR}/forwarding-cli-fixtures
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cli_forwarding_test.cmake)

@@ -1,3 +1,4 @@
+// R: Execute registered offline commands with bounded input, analysis, and output.
 #include "cli.hpp"
 
 #include "advanced_output.hpp"
@@ -8,11 +9,13 @@
 #include "ltfa/dsl/include_resolver.hpp"
 #include "ltfa/error.hpp"
 #include "ltfa/failure_propagation.hpp"
+#include "ltfa/forwarding_analysis.hpp"
 #include "ltfa/model_compiler.hpp"
 #include "ltfa/model_output.hpp"
 #include "ltfa/path_analysis.hpp"
 #include "ltfa/spof_analysis.hpp"
 #include "ltfa/version.hpp"
+#include <algorithm>
 
 #include <array>
 #include <charconv>
@@ -965,6 +968,372 @@ int run_analyze(const CommandDescriptor &command, const ParsedArguments &parsed,
     return kExitSuccess;
 }
 
+void forwarding_json_string(std::ostream &out, std::string_view value) {
+    static constexpr char hex[] = "0123456789abcdef";
+    out << '"';
+    for (const unsigned char byte : value) {
+        if (byte == '"' || byte == '\\') {
+            out << '\\' << static_cast<char>(byte);
+        } else if (byte < 32) {
+            out << "\\u00" << hex[byte >> 4U] << hex[byte & 15U];
+        } else {
+            out << static_cast<char>(byte);
+        }
+    }
+    out << '"';
+}
+
+std::string_view forwarding_status(AnalysisStatus status) {
+    switch (status) {
+    case AnalysisStatus::complete:
+        return "complete";
+    case AnalysisStatus::incomplete:
+        return "incomplete";
+    case AnalysisStatus::invalid:
+        return "invalid";
+    }
+    return "invalid";
+}
+
+void write_forwarding_snapshot(std::ostream &out, const NormalizedModel &model,
+                               const ForwardingResult &result, bool json) {
+    const auto id = [&](EntityId value) {
+        return model.string(model.entities[value.value()].external_id);
+    };
+    if (!json) {
+        out << "  result: " << forwarding_status(result.status)
+            << "\n  protocol: " << result.protocol
+            << "\n  qualification: " << to_string(result.qualification.completeness) << "/"
+            << to_string(result.qualification.evidence_quality) << "\n  backup-activated: "
+            << (result.backup_activation_unknown ? "unknown"
+                : result.backup_activated        ? "true"
+                                                 : "false")
+            << "\n  contains-unknown-availability: "
+            << (result.contains_unknown_availability ? "true" : "false")
+            << "\n  contains-degraded-availability: "
+            << (result.contains_degraded_availability ? "true" : "false")
+            << "\n  recovery-time: unknown\n";
+        for (const auto &reason : result.reasons) {
+            out << "  reason: " << reason << '\n';
+        }
+        for (const auto &link : result.links) {
+            out << "  link " << id(link.link)
+                << ": intrinsic-physical=" << to_string(link.intrinsic_physical)
+                << " effective-physical=" << to_string(link.physical)
+                << " logical=" << to_string(link.logical) << (link.backup ? " backup" : "") << '\n';
+        }
+        for (const auto &target : result.targets) {
+            out << "  device " << id(target.target) << ": " << to_string(target.reachability)
+                << " path=";
+            for (const auto device : target.devices) {
+                out << id(device) << ' ';
+            }
+            out << "links=";
+            for (const auto link : target.links) {
+                out << id(link) << ' ';
+            }
+            out << '\n';
+        }
+        out << "  usage: objects=" << result.usage.visited_objects
+            << " relations=" << result.usage.examined_relations << '\n';
+        return;
+    }
+    out << "{\"result\":";
+    forwarding_json_string(out, forwarding_status(result.status));
+    out << ",\"protocol\":";
+    forwarding_json_string(out, result.protocol);
+    out << ",\"qualification\":{\"completeness\":";
+    forwarding_json_string(out, to_string(result.qualification.completeness));
+    out << ",\"evidence_quality\":";
+    forwarding_json_string(out, to_string(result.qualification.evidence_quality));
+    out << "},\"backup_activated\":";
+    if (result.backup_activation_unknown) {
+        out << "null";
+    } else {
+        out << (result.backup_activated ? "true" : "false");
+    }
+    out << ",\"backup_activation_unknown\":"
+        << (result.backup_activation_unknown ? "true" : "false")
+        << ",\"contains_unknown_availability\":"
+        << (result.contains_unknown_availability ? "true" : "false")
+        << ",\"contains_degraded_availability\":"
+        << (result.contains_degraded_availability ? "true" : "false")
+        << ",\"recovery_time_ms\":null,\"recovery_time_known\":false,\"reasons\":[";
+    bool first = true;
+    for (const auto &reason : result.reasons) {
+        if (!first) {
+            out << ',';
+        }
+        first = false;
+        forwarding_json_string(out, reason);
+    }
+    out << "],\"links\":[";
+    first = true;
+    for (const auto &link : result.links) {
+        if (!first) {
+            out << ',';
+        }
+        first = false;
+        out << "{\"id\":";
+        forwarding_json_string(out, id(link.link));
+        out << ",\"intrinsic_physical\":";
+        forwarding_json_string(out, to_string(link.intrinsic_physical));
+        out << ",\"effective_physical\":";
+        forwarding_json_string(out, to_string(link.physical));
+        out << ",\"logical\":";
+        forwarding_json_string(out, to_string(link.logical));
+        out << ",\"backup\":" << (link.backup ? "true" : "false") << '}';
+    }
+    out << "],\"devices\":[";
+    first = true;
+    for (const auto &target : result.targets) {
+        if (!first) {
+            out << ',';
+        }
+        first = false;
+        out << "{\"id\":";
+        forwarding_json_string(out, id(target.target));
+        out << ",\"reachability\":";
+        forwarding_json_string(out, to_string(target.reachability));
+        out << ",\"path\":{\"devices\":[";
+        bool first_path = true;
+        for (const auto device : target.devices) {
+            if (!first_path) {
+                out << ',';
+            }
+            first_path = false;
+            forwarding_json_string(out, id(device));
+        }
+        out << "],\"links\":[";
+        first_path = true;
+        for (const auto link : target.links) {
+            if (!first_path) {
+                out << ',';
+            }
+            first_path = false;
+            forwarding_json_string(out, id(link));
+        }
+        out << "]}}";
+    }
+    out << "],\"usage\":{\"visited_objects\":" << result.usage.visited_objects
+        << ",\"examined_relations\":" << result.usage.examined_relations << "}}";
+}
+
+int run_forwarding(const CommandDescriptor &command, const ParsedArguments &parsed,
+                   std::ostream &output, std::ostream &error, bool json) {
+    UsageError usage;
+    const auto options = model_options(command, parsed, usage);
+    if (!options) {
+        return emit_usage_error(output, error, usage, json);
+    }
+    TraversalBudget budget;
+    PropagationBudget propagation_budget;
+    if (!parse_positive_count(command, parsed, "max-visited-objects", 100'000,
+                              budget.max_visited_objects, usage) ||
+        !parse_positive_count(command, parsed, "max-examined-relations", 500'000,
+                              budget.max_examined_relations, usage) ||
+        !parse_positive_count(command, parsed, "max-events", 1'000'000,
+                              propagation_budget.max_events, usage) ||
+        !parse_positive_count(command, parsed, "max-state-transitions", 300'000,
+                              propagation_budget.max_state_transitions, usage)) {
+        return emit_usage_error(output, error, usage, json);
+    }
+    const auto domain_name = parsed.option_value("domain").value_or("");
+    const auto source_name = parsed.option_value("source").value_or("");
+    if (domain_name.empty() || source_name.empty()) {
+        usage = make_usage_error("invalid_option_value", "domain and source must not be empty", "",
+                                 &command);
+        return emit_usage_error(output, error, usage, json);
+    }
+    std::vector<std::string> failure_names;
+    for (const auto &option : parsed.options) {
+        if (option.descriptor->name == "failure") {
+            if (option.value.empty()) {
+                usage = make_usage_error("invalid_option_value",
+                                         "option --failure must not be empty", "", &command);
+                return emit_usage_error(output, error, usage, json);
+            }
+            failure_names.emplace_back(option.value);
+        }
+    }
+    std::sort(failure_names.begin(), failure_names.end());
+    failure_names.erase(std::unique(failure_names.begin(), failure_names.end()),
+                        failure_names.end());
+    std::error_code filesystem_error;
+    const auto canonical_root = fs::canonical(options->model_root, filesystem_error);
+    const auto loaded =
+        dsl::load_document_tree(options->model_root, options->input, kDefaultModelLimits);
+    if (!loaded.ok()) {
+        if (loaded.error) {
+            return emit_model_diagnostic(output, error, kExitInput, *loaded.error, loaded.sources,
+                                         filesystem_error ? fs::path{} : canonical_root, command,
+                                         json);
+        }
+        return kExitInput;
+    }
+    const auto compiled = compile_model(*loaded.document, kDefaultModelLimits);
+    if (!compiled.ok()) {
+        if (compiled.error) {
+            return emit_model_diagnostic(output, error, kExitValidation, *compiled.error,
+                                         loaded.sources, loaded.document->canonical_model_root,
+                                         command, json);
+        }
+        return kExitValidation;
+    }
+    const auto &model = *compiled.model;
+    if (!options->include_restricted && model_contains_restricted(model)) {
+        return emit_analysis_diagnostic(
+            output, error, command,
+            "restricted model IDs require --include-restricted for forwarding analysis", json);
+    }
+    const auto domain_object = find_object(model, domain_name);
+    const auto source = find_object(model, source_name);
+    if (!domain_object || domain_object->kind != ObjectKind::entity || !source) {
+        return emit_analysis_diagnostic(output, error, command,
+                                        "declared domain or source object not found", json);
+    }
+    const auto domain = EntityId{domain_object->index};
+    std::vector<FailureModeId> failures;
+    for (const auto &name : failure_names) {
+        const auto failure = find_failure(model, name);
+        if (!failure) {
+            return emit_analysis_diagnostic(output, error, command,
+                                            "declared failure not found: " + name, json);
+        }
+        if (model.failure_modes[failure->value()].kind == FailureModeKind::extension) {
+            return emit_analysis_diagnostic(output, error, command,
+                                            "unsupported declared failure mode: " + name, json);
+        }
+        failures.push_back(*failure);
+    }
+    const auto initial = make_availability_snapshot(model);
+    const auto normal = analyze_forwarding(model, initial, domain, *source, budget);
+    if (normal.status == AnalysisStatus::invalid) {
+        return emit_analysis_diagnostic(
+            output, error, command,
+            normal.reasons.empty() ? "invalid forwarding domain" : normal.reasons.front(), json);
+    }
+    auto snapshot = initial;
+    PropagationUsage propagation_usage;
+    bool propagation_incomplete = false;
+    if (!failures.empty()) {
+        // R: This command computes converged availability, not failure onset timing.
+        // Install all declared adverse states together; a weaker mode cannot repair
+        // an unavailable target named by another selected failure.
+        std::vector<FailureInjection> injections;
+        for (const auto failure : failures) {
+            const auto &mode = model.failure_modes[failure.value()];
+            const auto state = failure_mode_result(mode.kind);
+            auto existing = std::find_if(
+                injections.begin(), injections.end(),
+                [&](const FailureInjection &value) { return value.object_value == mode.target; });
+            if (existing == injections.end()) {
+                injections.push_back(FailureInjection::for_object(mode.target, state));
+            } else if (state == AvailabilityState::unavailable) {
+                existing->object_state = state;
+            }
+        }
+        const auto propagated = propagate_states(model, initial, injections, propagation_budget);
+        if (propagated.status == PropagationStatus::invalid) {
+            return emit_analysis_diagnostic(output, error, command,
+                                            "failure propagation rejected scenario", json);
+        }
+        propagation_usage = propagated.usage;
+        snapshot = propagated.final_snapshot;
+        propagation_incomplete = propagated.status == PropagationStatus::incomplete;
+    }
+    std::optional<ForwardingResult> post;
+    if (!failures.empty()) {
+        auto remaining = budget;
+        remaining.max_visited_objects =
+            remaining_work_budget(budget.max_visited_objects, normal.usage.visited_objects);
+        remaining.max_examined_relations =
+            remaining_work_budget(budget.max_examined_relations, normal.usage.examined_relations);
+        post = analyze_forwarding(model, snapshot, domain, *source, remaining);
+        if (post->status == AnalysisStatus::invalid) {
+            return emit_analysis_diagnostic(output, error, command,
+                                            "post-failure forwarding rejected scenario", json);
+        }
+        if (propagation_incomplete) {
+            post->status = AnalysisStatus::incomplete;
+            post->backup_activation_unknown = true;
+            post->backup_activated = false;
+            post->contains_unknown_availability = true;
+            if (post->qualification.completeness == Completeness::verified) {
+                post->qualification.completeness = Completeness::partial;
+            }
+            post->reasons.push_back("physical_failure_propagation_budget_exhausted");
+            for (auto &target : post->targets) {
+                target.reachability = ForwardingReachability::unknown;
+                target.devices.clear();
+                target.links.clear();
+            }
+            for (auto &link : post->links) {
+                link.logical = ForwardingState::unknown;
+            }
+        }
+    }
+    const bool incomplete = normal.status == AnalysisStatus::incomplete ||
+                            (post && post->status == AnalysisStatus::incomplete);
+    if (options->format == OutputFormat::json) {
+        output << "{\"schema\":\"ltfa.forwarding/v1\",\"result\":\""
+               << (incomplete ? "incomplete" : "complete")
+               << "\",\"scenario\":\"declared_offline\",\"domain\":";
+        forwarding_json_string(output, domain_name);
+        output << ",\"source\":";
+        forwarding_json_string(output, source_name);
+        output << ",\"model_inputs\":[";
+        bool first = true;
+        for (const auto &file : loaded.sources) {
+            if (!first) {
+                output << ',';
+            }
+            first = false;
+            forwarding_json_string(output, display_source(file.id, loaded.sources,
+                                                          loaded.document->canonical_model_root));
+        }
+        output << "],\"failures\":[";
+        first = true;
+        for (const auto &name : failure_names) {
+            if (!first) {
+                output << ',';
+            }
+            first = false;
+            forwarding_json_string(output, name);
+        }
+        output << "],\"budgets\":{\"max_visited_objects\":" << budget.max_visited_objects
+               << ",\"max_examined_relations\":" << budget.max_examined_relations
+               << ",\"max_events\":" << propagation_budget.max_events
+               << ",\"max_state_transitions\":" << propagation_budget.max_state_transitions
+               << "},\"propagation_usage\":{\"scheduled_events\":"
+               << propagation_usage.scheduled_events
+               << ",\"processed_events\":" << propagation_usage.processed_events
+               << ",\"state_transitions\":" << propagation_usage.state_transitions
+               << "},\"normal\":";
+        write_forwarding_snapshot(output, model, normal, true);
+        output << ",\"post_failure\":";
+        if (post) {
+            write_forwarding_snapshot(output, model, *post, true);
+        } else {
+            output << "null";
+        }
+        output << "}\n";
+    } else {
+        output << "Forwarding: " << domain_name << " from " << source_name
+               << "\nDeclared offline scenario; recovery time unknown.\nNormal:\n";
+        write_forwarding_snapshot(output, model, normal, false);
+        if (post) {
+            output << "Post-failure:";
+            for (const auto &name : failure_names) {
+                output << ' ' << name;
+            }
+            output << '\n';
+            write_forwarding_snapshot(output, model, *post, false);
+        }
+    }
+    return finish_output(output, error, "forwarding");
+}
+
 int run_cuts(const CommandDescriptor &command, const ParsedArguments &parsed, std::ostream &output,
              std::ostream &error, bool json) {
     UsageError usage;
@@ -1225,6 +1594,8 @@ int run_cli(int argc, char *argv[], std::ostream &output, std::ostream &error) {
         return run_model(*command, parsed, output, error, json);
     case CommandHandler::analyze:
         return run_analyze(*command, parsed, output, error, json);
+    case CommandHandler::forwarding:
+        return run_forwarding(*command, parsed, output, error, json);
     case CommandHandler::cuts:
         return run_cuts(*command, parsed, output, error, json);
     case CommandHandler::diagnose:

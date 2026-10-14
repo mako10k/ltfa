@@ -100,7 +100,7 @@ string(JSON help_operation GET "${help_json_first_output}" operation)
 string(JSON help_command_count LENGTH "${help_json_first_output}" commands)
 if(NOT help_schema STREQUAL "ltfa.command-help/v1" OR NOT help_contract EQUAL 5 OR
    NOT help_tool_version STREQUAL "${LTFA_EXPECTED_VERSION}" OR
-   NOT help_operation STREQUAL "help" OR NOT help_command_count EQUAL 6)
+   NOT help_operation STREQUAL "help" OR NOT help_command_count EQUAL 7)
     message(FATAL_ERROR "structured root help contract is incorrect")
 endif()
 

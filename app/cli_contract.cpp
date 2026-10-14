@@ -1,3 +1,4 @@
+// R: Render and query the canonical command catalogue for help and completion.
 #include "cli_contract.hpp"
 #include "language_guide.hpp"
 
@@ -149,6 +150,33 @@ constexpr std::array<OptionDescriptor, 14> kCutsOptions{{
      "10000000", "", "", "", "Bound max-flow transitions."},
 }};
 
+constexpr std::array<OptionDescriptor, 12> kForwardingOptions{{
+    {"help", "h", OptionKind::flag, "", "", false, false, "false", "", "all other arguments", "",
+     "Print forwarding help."},
+    {"model-root", "", OptionKind::value, "directory", "local-directory", true, false, "", "", "",
+     "", "Select the explicit local model root."},
+    {"input", "", OptionKind::value, "file", "relative-file", true, false, "", "", "", "",
+     "Select the entry file relative to the root."},
+    {"domain", "", OptionKind::value, "domain-id", "external-id", true, false, "", "", "", "",
+     "Select one protection control-domain."},
+    {"source", "", OptionKind::value, "object-id", "external-id", true, false, "", "", "", "",
+     "Select a member device or its network endpoint."},
+    {"failure", "", OptionKind::value, "failure-id", "external-id", false, true, "", "", "", "",
+     "Simulate declared physical failures together; repeat for multiple faults."},
+    {"format", "", OptionKind::value, "format", "output-format", false, false, "human",
+     "human|json", "", "", "Select human or ltfa.forwarding/v1 JSON output."},
+    {"include-restricted", "", OptionKind::flag, "", "", false, false, "false", "", "", "",
+     "Explicitly permit restricted model IDs and provenance."},
+    {"max-visited-objects", "", OptionKind::value, "count", "positive-integer", false, false,
+     "100000", "", "", "", "Bound cumulative normal and post-failure object work."},
+    {"max-examined-relations", "", OptionKind::value, "count", "positive-integer", false, false,
+     "500000", "", "", "", "Bound cumulative normal and post-failure relation work."},
+    {"max-events", "", OptionKind::value, "count", "positive-integer", false, false, "1000000", "",
+     "", "", "Bound cumulative physical failure propagation events."},
+    {"max-state-transitions", "", OptionKind::value, "count", "positive-integer", false, false,
+     "300000", "", "", "", "Bound cumulative physical state transitions."},
+}};
+
 constexpr std::array<OptionDescriptor, 14> kDiagnoseOptions{{
     {"help", "h", OptionKind::flag, "", "", false, false, "false", "", "all other arguments", "",
      "Print detailed help for the diagnose command."},
@@ -250,7 +278,18 @@ constexpr std::array<ExampleDescriptor, 2> kDiagnoseExamples{{
      "Emit deterministic diagnosis and next-observation JSON."},
 }};
 
-constexpr std::array<CommandDescriptor, 6> kCommands{{
+constexpr std::array<ExampleDescriptor, 2> kForwardingExamples{{
+    {"normal",
+     "ltfa forwarding --model-root examples/turbo-ring --input main.ltfa --domain ring:main "
+     "--source switch:1",
+     "Inspect normal logical blocking and device reachability."},
+    {"fault",
+     "ltfa forwarding --model-root examples/turbo-ring --input main.ltfa --domain ring:main "
+     "--source switch:1 --failure failure:link-1 --format json",
+     "Inspect a declared link fault after convergence; recovery time remains unknown."},
+}};
+
+constexpr std::array<CommandDescriptor, 7> kCommands{{
     {"model", "model", "Load, validate, normalize, and render one local topology model.",
      "ltfa model --model-root <directory> --input <file> "
      "[--format human|json|dot] "
@@ -272,6 +311,14 @@ constexpr std::array<CommandDescriptor, 6> kCommands{{
      "local-model-tree", "human|json", "assurance", "read", "ltfa.assurance/v1|ltfa.cli-error/v1",
      kAnalyzeExitStatuses.data(), kAnalyzeExitStatuses.size(), kAnalyzeExamples.data(),
      kAnalyzeExamples.size()},
+    {"forwarding", "forwarding", "Evaluate normal and post-failure Turbo Ring forwarding offline.",
+     "ltfa forwarding --model-root <directory> --input <file> --domain <domain-id> --source "
+     "<object-id> "
+     "[--failure <failure-id> ...] [--format human|json] [--include-restricted] [work budgets]",
+     CommandHandler::forwarding, nullptr, 0, kForwardingOptions.data(), kForwardingOptions.size(),
+     "local-model-tree", "human|json", "forwarding", "read", "ltfa.forwarding/v1|ltfa.cli-error/v1",
+     kAnalyzeExitStatuses.data(), kAnalyzeExitStatuses.size(), kForwardingExamples.data(),
+     kForwardingExamples.size()},
     {"cuts", "cuts", "Find bounded object, relation, and failure-domain service cuts.",
      "ltfa cuts --model-root <directory> --input <file> --scope <scope-id> --source <object-id> "
      "--target <object-id> [--format human|json] [--include-restricted] [work budgets]",
@@ -412,6 +459,8 @@ std::string guide_invocation(const CommandDescriptor &command) {
     case CommandHandler::analyze:
     case CommandHandler::cuts:
         return "ltfa guide workflows analyze";
+    case CommandHandler::forwarding:
+        return "ltfa guide workflows forwarding";
     case CommandHandler::diagnose:
         return "ltfa guide workflows diagnose";
     case CommandHandler::help:
