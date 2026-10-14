@@ -1,0 +1,62 @@
+project TURBORING:
+  version 5
+  title "Turbo Ring logical forwarding analysis"
+  description "user_baseline: extend LTFA offline core to distinguish physical failure and logical blocking, reopen redundant link following ring failure, calculate post-switch reachability. Generic Turbo Ring; v2-specific differences excluded by user. No live probes, website deployment, release or remote writes."
+  duration_unit point
+  finish DONE
+
+milestone START:
+  title "Owner requested Turbo Ring extension"
+  state reached
+milestone DESIGN:
+  title "Current contracts and extension design reconciled"
+  state planned
+milestone CORE:
+  title "Core state and reachability implemented"
+  state planned
+milestone CLI:
+  title "Offline command and qualified output available"
+  state planned
+milestone DONE:
+  title "Full build/tests and review verified"
+  state planned
+resource CORE_WORK:
+  title "Core implementation"
+  capacity 1
+resource CLI_WORK:
+  title "Command implementation"
+  capacity 1
+task SPEC START -> DESIGN:
+  title "Discover existing protection contract and define deterministic semantics"
+  duration 1p
+  status done
+  source "docs/decisions/0017-turbo-ring-forwarding.md"
+task ENGINE DESIGN -> CORE:
+  title "Implement bounded Turbo Ring forwarding and post-failure paths"
+  duration 2p
+  status active
+  requires:
+    CORE_WORK 1
+task COMMAND CORE -> CLI:
+  title "CLI output and operational documentation"
+  duration 1p
+  status planned
+  requires:
+    CLI_WORK 1
+task VERIFY CLI -> DONE:
+  title "Integration, regressions and independent review"
+  duration 1p
+  status planned
+
+work_event WE-321b11070d2277a1f33cbed9095d39573f810a91c3b2a9a23dbb6095a3d79995:
+  model 1
+  task SPEC
+  kind finish
+  occurred_at 2026-10-14T14:37:45+09:00
+
+work_event WE-ed4607b3b67f079adf83bbe6ce76ef37269c8b5ad05d64b97ab0b03e3b72123d:
+  model 1
+  task ENGINE
+  kind start
+  occurred_at 2026-10-14T14:38:00+09:00
+  planned_value 2p
