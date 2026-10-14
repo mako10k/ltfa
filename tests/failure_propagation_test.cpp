@@ -1,3 +1,4 @@
+// R: Verify propagation semantics, simultaneous-state behavior and single-injection compatibility.
 #include "ltfa/dsl/parser.hpp"
 #include "ltfa/failure_propagation.hpp"
 #include "ltfa/model_compiler.hpp"
@@ -386,11 +387,55 @@ void test_budget_and_invalid_input(const ltfa::NormalizedModel &model) {
            "overflowing fixed-delay timestamps must fail closed");
 }
 
+void test_simultaneous_states(const ltfa::NormalizedModel &model) {
+    using S = ltfa::AvailabilityState;
+    auto initial = ltfa::make_availability_snapshot(model);
+    auto breaker = find_object(model, "facility:breaker");
+    auto backup = find_object(model, "facility:backup");
+    auto redundant = find_object(model, "service:redundant");
+    auto a = ltfa::FailureInjection::for_object(breaker, S::unavailable);
+    auto b = ltfa::FailureInjection::for_object(backup, S::unavailable);
+    auto normal = ltfa::FailureInjection::for_object(redundant, S::available);
+    auto combined = ltfa::propagate_states(model, initial, {a, b, normal});
+    auto reversed = ltfa::propagate_states(model, initial, {normal, b, a});
+    expect(combined.status == ltfa::PropagationStatus::complete, "batch must complete");
+    expect(combined.final_snapshot.state(redundant) == S::unavailable,
+           "two failed any providers must fail consumer despite consumer available input");
+    expect(combined.final_snapshot.entity_states == reversed.final_snapshot.entity_states &&
+               event_facts(model, combined.events) == event_facts(model, reversed.events),
+           "batch must be order independent");
+    expect(ltfa::propagate_failure(model, initial, a).final_snapshot.state(redundant) ==
+               S::available,
+           "single failed any provider must preserve redundant consumer");
+    auto degraded = ltfa::propagate_states(
+        model, initial, {ltfa::FailureInjection::for_object(breaker, S::degraded)});
+    expect(degraded.final_snapshot.state(find_object(model, "service:immediate")) == S::degraded,
+           "degraded must propagate");
+    auto unknown = ltfa::propagate_states(
+        model, initial, {ltfa::FailureInjection::for_object(breaker, S::unknown)});
+    expect(unknown.final_snapshot.state(find_object(model, "service:immediate")) == S::unknown,
+           "unknown must propagate");
+    expect(ltfa::propagate_states(model, initial, {a, a}).status ==
+               ltfa::PropagationStatus::invalid,
+           "duplicate objects rejected");
+    expect(ltfa::propagate_states(model, initial, {}).status == ltfa::PropagationStatus::complete,
+           "empty input is nominal");
+    ltfa::PropagationBudget budget;
+    budget.max_events = 1;
+    expect(ltfa::propagate_states(model, initial, {a, b}, budget).status ==
+               ltfa::PropagationStatus::incomplete,
+           "batch event budget enforced");
+    expect(ltfa::propagate_failure(model, initial, normal).status ==
+               ltfa::PropagationStatus::invalid,
+           "single available injection compatibility preserved");
+}
+
 } // namespace
 
 int main() {
     const auto model = compile_fixture();
     test_failure_mode_table();
+    test_simultaneous_states(model);
     test_breaker_and_hold_up(model);
     test_degraded_and_unknown_modes(model);
     test_domain_endpoint_and_relation_injection(model);

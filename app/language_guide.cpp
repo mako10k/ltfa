@@ -1,3 +1,4 @@
+// R: Provide bundled DSL, observation, sample, and offline workflow guidance.
 #include "language_guide.hpp"
 
 #include "cli_contract.hpp"
@@ -51,7 +52,7 @@ constexpr ObservationGuideDescriptor kObservationGuide{
     "share/doc/ltfa/examples/diagnosis",
 };
 
-constexpr std::array<GuidePageDescriptor, 25> kGuidePages{{
+constexpr std::array<GuidePageDescriptor, 27> kGuidePages{{
     {"syntax", "", "DSL syntax", "LTFA DSL v1 document shape, lexical rules, values, and comments.",
      "Every source begins with exactly 'ltfa 1'.\x1e"
      "Statements are line-oriented; blank lines and text after # are ignored.\x1e"
@@ -347,12 +348,21 @@ constexpr std::array<GuidePageDescriptor, 25> kGuidePages{{
      "Structured failures retain ltfa.cli-error/v1 and ordered navigation actions.",
      "ltfa guide observations fields\x1eltfa help diagnose",
      "ltfa guide observations\x1eltfa guide samples diagnosis"},
+    {"samples", "turbo-ring", "Turbo Ring sample",
+     "A four-switch simple cycle with one explicitly blocked backup link.",
+     "Locate the installed sample at share/doc/ltfa/examples/turbo-ring.\x1e"
+     "Compare normal forwarding with one or two declared link failures.",
+     "ltfa forwarding --model-root <installed-sample-directory> --input main.ltfa "
+     "--domain ring:main --source switch:1 [--failure failure:link-1]",
+     "The sample is synthetic topology evidence; it is not an actual site configuration.\x1e"
+     "Recovery timing and Turbo Ring version-specific selection are outside this analysis.",
+     "ltfa help forwarding", "ltfa guide workflows forwarding"},
     {"workflows", "", "Offline workflows",
      "Use validation before bounded analysis and keep every operation local and one-shot.",
      "Start with ltfa model.\x1e"
      "Use declared IDs only after validation succeeds.\x1e"
      "Select JSON for automation and human or DOT output for inspection.",
-     "model -> analyze|cuts\x1emodel + observations -> diagnose",
+     "model -> analyze|cuts|forwarding\x1emodel + observations -> diagnose",
      "LTFA does not discover systems, run probes, execute commands, or access the network.\x1e"
      "Restricted IDs require explicit --include-restricted output authority.",
      "ltfa model --model-root topology --input main.ltfa",
@@ -379,6 +389,19 @@ constexpr std::array<GuidePageDescriptor, 25> kGuidePages{{
      "The result separates complete and bounded-incomplete analysis.\x1e"
      "A declared failure is simulated; it is not asserted as a live cause.",
      "ltfa help analyze", "ltfa guide statements assurance\x1eltfa help analyze\x1eltfa help cuts"},
+    {"workflows", "forwarding", "Evaluate Turbo Ring forwarding",
+     "Separate physical failures from normal logical blocking and post-convergence reachability.",
+     "Declare protocol=turbo-ring and explicit member_of device/link membership.\x1e"
+     "Use one simple cycle and exactly one normal-state=blocking|standby|discarding backup "
+     "link.\x1e"
+     "Repeat --failure for simultaneous declared physical faults.",
+     "ltfa forwarding --model-root <directory> --input <file> --domain <domain-id> --source "
+     "<object-id> "
+     "[--failure <failure-id> ...] [--format human|json]",
+     "This is an offline declared scenario, not measured fault diagnosis.\x1e"
+     "Other protection protocols remain explicitly unsupported for this algorithm.\x1e"
+     "Recovery time is unknown; generic SPOF analysis is not substituted.",
+     "ltfa help forwarding", "ltfa guide statements relations\x1eltfa help forwarding"},
     {"workflows", "diagnose", "Diagnose local observations",
      "Combine one validated local model with explicit observation JSON Lines and reference time.",
      "Keep observation production outside LTFA.\x1e"

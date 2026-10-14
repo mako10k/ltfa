@@ -1,3 +1,4 @@
+// R: Define the discoverable command, option, diagnostic, and completion contract.
 #pragma once
 
 #include <cstddef>
@@ -19,6 +20,7 @@ enum class CommandHandler {
     guide,
     model,
     analyze,
+    forwarding,
     cuts,
     diagnose,
 };

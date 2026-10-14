@@ -93,6 +93,7 @@ set(LTFA_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/diagnosis_output.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/error.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/evidence.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/forwarding_analysis.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/failure_propagation.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/model.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ltfa/model_compiler.cpp
@@ -144,6 +145,15 @@ install(FILES
     DESTINATION ${CMAKE_INSTALL_DOCDIR}
 )
 install(FILES
+    docs/acceptance/turbo-ring-forwarding.md
+    DESTINATION ${CMAKE_INSTALL_DOCDIR}/docs/acceptance
+)
+install(FILES
+    docs/decisions/0017-turbo-ring-forwarding.md
+    DESTINATION ${CMAKE_INSTALL_DOCDIR}/docs/decisions
+)
+install(FILES
+    docs/turbo-ring-forwarding.md
     docs/development.md
     DESTINATION ${CMAKE_INSTALL_DOCDIR}/docs
 )
@@ -156,6 +166,7 @@ install(FILES
     DESTINATION ${CMAKE_INSTALL_DOCDIR}/docs/observations
 )
 install(DIRECTORY
+    examples/turbo-ring
     examples/diagnosis
     examples/minimal
     examples/resilience

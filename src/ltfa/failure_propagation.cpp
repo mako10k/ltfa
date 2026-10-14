@@ -1,3 +1,4 @@
+// R: Evaluate injected intrinsic states and dependency impacts with one bounded event engine.
 #include "ltfa/failure_propagation.hpp"
 
 #include <algorithm>
@@ -505,9 +506,10 @@ AvailabilityState failure_mode_result(FailureModeKind mode) noexcept {
     return AvailabilityState::unknown;
 }
 
-PropagationResult propagate_failure(const NormalizedModel &model,
-                                    const AvailabilitySnapshot &initial, FailureInjection injection,
-                                    const PropagationBudget &budget) {
+static PropagationResult propagate_impl(const NormalizedModel &model,
+                                        const AvailabilitySnapshot &initial,
+                                        FailureInjection injection, const PropagationBudget &budget,
+                                        const std::vector<FailureInjection> *states) {
     PropagationResult result;
     result.injection = injection;
     result.final_snapshot = initial;
@@ -517,12 +519,25 @@ PropagationResult propagate_failure(const NormalizedModel &model,
         return result;
     }
     const auto resolved = resolve_injection(model, injection);
-    if (!resolved.has_value()) {
+    if (states == nullptr && !resolved.has_value()) {
         return result;
     }
-    result.unresolved_failure_mode = resolved->unresolved_failure_mode;
+    result.unresolved_failure_mode = resolved.has_value() && resolved->unresolved_failure_mode;
 
     AvailabilitySnapshot intrinsic = initial;
+    if (states != nullptr) {
+        std::vector<ObjectRef> seen;
+        for (const auto &value : *states) {
+            if (value.kind != FailureInjectionKind::object || value.delay_ms != 0 ||
+                !valid_object(model, value.object_value) ||
+                !valid_availability_state(value.object_state) ||
+                std::find(seen.begin(), seen.end(), value.object_value) != seen.end()) {
+                return result;
+            }
+            seen.push_back(value.object_value);
+            (void)intrinsic.set(value.object_value, value.object_state);
+        }
+    }
     std::vector<bool> failed_relations(model.relations.size(), false);
     std::vector<AvailabilityState> group_states;
     group_states.reserve(model.requirement_groups.size());
@@ -551,7 +566,25 @@ PropagationResult propagate_failure(const NormalizedModel &model,
         return true;
     };
 
-    if (!schedule({resolved->delay_ms, resolved->stable_id, WorkKind::injection, {}, {}, {}})) {
+    if (states != nullptr) {
+        // R: Install all simultaneous intrinsic states before dependency evaluation.
+        auto ordered = *states;
+        std::sort(ordered.begin(), ordered.end(), [&](const auto &a, const auto &b) {
+            return model.external_id(a.object_value) < model.external_id(b.object_value);
+        });
+        for (const auto &value : ordered) {
+            if (!schedule({0,
+                           std::string{model.external_id(value.object_value)},
+                           WorkKind::recompute,
+                           value.object_value,
+                           {},
+                           {PropagationCauseKind::injection, {}, {}}})) {
+                result.status = PropagationStatus::incomplete;
+                return result;
+            }
+        }
+    } else if (!schedule(
+                   {resolved->delay_ms, resolved->stable_id, WorkKind::injection, {}, {}, {}})) {
         result.status = PropagationStatus::incomplete;
         return result;
     }
@@ -746,6 +779,19 @@ PropagationResult propagate_failure(const NormalizedModel &model,
                      });
     classify_result(model, result);
     return result;
+}
+
+PropagationResult propagate_failure(const NormalizedModel &model,
+                                    const AvailabilitySnapshot &initial, FailureInjection injection,
+                                    const PropagationBudget &budget) {
+    return propagate_impl(model, initial, injection, budget, nullptr);
+}
+
+PropagationResult propagate_states(const NormalizedModel &model,
+                                   const AvailabilitySnapshot &initial,
+                                   const std::vector<FailureInjection> &states,
+                                   const PropagationBudget &budget) {
+    return propagate_impl(model, initial, {}, budget, &states);
 }
 
 } // namespace ltfa

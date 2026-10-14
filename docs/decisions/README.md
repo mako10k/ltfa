@@ -20,3 +20,4 @@ evidence.
 - [0014 — CLI Action Navigation And Bash Completion](0014-cli-action-navigation-and-bash-completion.md)
 - [0015 — Bundled LTFA Language Guide](0015-bundled-language-guide.md)
 - [0016 — Observation Diagnosis Onboarding](0016-observation-diagnosis-onboarding.md)
+- [0017 — Turbo Ring forwarding and failure reachability](0017-turbo-ring-forwarding.md)

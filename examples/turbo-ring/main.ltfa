@@ -1,0 +1,40 @@
+ltfa 1
+scope site:ring kind=site completeness=verified evidence-quality=confirmed
+entity switch:1 kind=device plane=communication layer=physical scope=site:ring
+endpoint switch:1:a owner=switch:1 kind=network
+endpoint switch:1:b owner=switch:1 kind=network
+entity switch:2 kind=device plane=communication layer=physical scope=site:ring
+endpoint switch:2:a owner=switch:2 kind=network
+endpoint switch:2:b owner=switch:2 kind=network
+entity switch:3 kind=device plane=communication layer=physical scope=site:ring
+endpoint switch:3:a owner=switch:3 kind=network
+endpoint switch:3:b owner=switch:3 kind=network
+entity switch:4 kind=device plane=communication layer=physical scope=site:ring
+endpoint switch:4:a owner=switch:4 kind=network
+endpoint switch:4:b owner=switch:4 kind=network
+entity link:1 kind=link plane=communication layer=physical scope=site:ring
+connect switch:1:b -- link:1 kind=network
+connect link:1 -- switch:2:a kind=network
+entity link:2 kind=link plane=communication layer=physical scope=site:ring
+connect switch:2:b -- link:2 kind=network
+connect link:2 -- switch:3:a kind=network
+entity link:3 kind=link plane=communication layer=physical scope=site:ring
+connect switch:3:b -- link:3 kind=network
+connect link:3 -- switch:4:a kind=network
+entity link:4 kind=link plane=communication layer=physical scope=site:ring
+connect switch:4:b -- link:4 kind=network
+connect link:4 -- switch:1:a kind=network
+entity ring:main kind=control-domain plane=communication layer=l2 scope=site:ring protocol=turbo-ring
+relate switch:1 -> ring:main kind=member_of role=manager
+relate switch:2 -> ring:main kind=member_of
+relate switch:3 -> ring:main kind=member_of
+relate switch:4 -> ring:main kind=member_of
+relate link:1 -> ring:main kind=member_of normal-state=forwarding
+relate link:2 -> ring:main kind=member_of normal-state=forwarding
+relate link:3 -> ring:main kind=member_of normal-state=forwarding
+relate link:4 -> ring:main kind=member_of normal-state=blocking
+failure failure:link-1 target=link:1 mode=link-down
+failure failure:link-2 target=link:2 mode=link-down
+failure failure:link-3 target=link:3 mode=link-down
+failure failure:link-4 target=link:4 mode=link-down
+failure failure:switch-2 target=switch:2 mode=power-loss
