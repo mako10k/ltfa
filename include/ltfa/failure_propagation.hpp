@@ -1,3 +1,4 @@
+// R: Define bounded single-failure and simultaneous-state propagation interfaces.
 #pragma once
 
 #include "ltfa/availability.hpp"
@@ -124,5 +125,12 @@ struct PropagationResult {
                                                   const AvailabilitySnapshot &initial,
                                                   FailureInjection injection,
                                                   const PropagationBudget &budget = {});
+
+// R: Apply distinct object states simultaneously at time zero, then propagate
+// dependencies with the same bounded engine. available remains subject to providers.
+[[nodiscard]] PropagationResult propagate_states(const NormalizedModel &model,
+                                                 const AvailabilitySnapshot &initial,
+                                                 const std::vector<FailureInjection> &states,
+                                                 const PropagationBudget &budget = {});
 
 } // namespace ltfa
