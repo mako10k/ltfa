@@ -34,19 +34,19 @@ task SPEC START -> DESIGN:
 task ENGINE DESIGN -> CORE:
   title "Implement bounded Turbo Ring forwarding and post-failure paths"
   duration 2p
-  status active
+  status done
   requires:
     CORE_WORK 1
 task COMMAND CORE -> CLI:
   title "CLI output and operational documentation"
   duration 1p
-  status planned
+  status done
   requires:
     CLI_WORK 1
 task VERIFY CLI -> DONE:
   title "Integration, regressions and independent review"
   duration 1p
-  status planned
+  status done
 
 work_event WE-321b11070d2277a1f33cbed9095d39573f810a91c3b2a9a23dbb6095a3d79995:
   model 1
@@ -60,3 +60,35 @@ work_event WE-ed4607b3b67f079adf83bbe6ce76ef37269c8b5ad05d64b97ab0b03e3b72123d:
   kind start
   occurred_at 2026-10-14T14:38:00+09:00
   planned_value 2p
+
+work_event WE-20daa3b06378c3dd8b562aaa68d85c85f03881edb677f43645f26e46d5b9e383:
+  model 1
+  task ENGINE
+  kind finish
+  occurred_at 2026-10-14T14:42:36+09:00
+
+work_event WE-974823dd2db8914a302e55f63d8636c5288a3e266db1a2db31cc1690cd6369f5:
+  model 1
+  task COMMAND
+  kind start
+  occurred_at 2026-10-14T14:42:36+09:00
+  planned_value 1p
+
+work_event WE-eed0c8049f6f05fd817e348592b25164f18db729c87afab5543a0aff95d6113f:
+  model 1
+  task COMMAND
+  kind finish
+  occurred_at 2026-10-14T14:45:20+09:00
+
+work_event WE-64970999604c0aecdffdaa9313acc731c55fd369c1b35b4e38e75543717d8c49:
+  model 1
+  task VERIFY
+  kind start
+  occurred_at 2026-10-14T14:45:20+09:00
+  planned_value 1p
+
+work_event WE-8fc69102c9a216847e68ac80d0434e73ffe4db97dc8ef38b8115dcbd244c8864:
+  model 1
+  task VERIFY
+  kind finish
+  occurred_at 2026-10-14T14:46:31+09:00

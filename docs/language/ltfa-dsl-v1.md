@@ -76,6 +76,10 @@ Aggregate and control-domain entities have additional validated `protocol`, `mod
 metadata rules. Use `ltfa guide statements relations --level detail` and validate the complete
 model before relying on aggregate availability.
 
+Turbo Ring forwarding uses the existing `control-domain protocol=turbo-ring` and membership
+`normal-state` fields. Physical availability and logical blocking are distinct; see
+[the forwarding contract](../turbo-ring-forwarding.md) for complete topology and policy inputs.
+
 ### Endpoint
 
 ```text

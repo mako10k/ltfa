@@ -16,6 +16,7 @@ dependencies beyond the C++ runtime. It does not access the network.
 - modeled object, relation, and failure-domain removal impact
 - requirement-group and failure-domain availability semantics
 - first-class point-to-point links, LAG/bond aggregates, and STP/ring control domains
+- bounded offline [Turbo Ring forwarding and post-failure reachability](docs/turbo-ring-forwarding.md)
 - K-of-N aggregate availability with `mode=at-least minimum=N`
 - immediate and fixed-delay declared-failure propagation
 - articulation, bridge, and completeness-qualified SPOF analysis

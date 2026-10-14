@@ -145,6 +145,14 @@ install(FILES
     DESTINATION ${CMAKE_INSTALL_DOCDIR}
 )
 install(FILES
+    docs/acceptance/turbo-ring-forwarding.md
+    DESTINATION ${CMAKE_INSTALL_DOCDIR}/docs/acceptance
+)
+install(FILES
+    docs/decisions/0017-turbo-ring-forwarding.md
+    DESTINATION ${CMAKE_INSTALL_DOCDIR}/docs/decisions
+)
+install(FILES
     docs/turbo-ring-forwarding.md
     docs/development.md
     DESTINATION ${CMAKE_INSTALL_DOCDIR}/docs
